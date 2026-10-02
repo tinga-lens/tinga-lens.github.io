@@ -22,6 +22,7 @@ header{padding:18px 0 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:
 .links{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:.92rem}
 .btn{display:inline-block;font:inherit;font-size:.86rem;font-weight:600;padding:5px 12px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);background:transparent;text-decoration:none;cursor:pointer}
 .btn.solid{background:var(--accent);color:var(--bg)}
+.btn:disabled{opacity:.45;cursor:default}
 nav{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 nav button{font:inherit;font-size:.9rem;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 nav button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
@@ -35,18 +36,26 @@ nav button:disabled small{opacity:.75;margin-left:4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
 .card h2{font-size:1rem;margin:0 0 4px}
 .sub{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.ctl{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;margin:0 0 6px;font-size:.84rem;color:var(--muted)}
+.ctl select{font:inherit;padding:4px 4px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px}
 .legend{list-style:none;margin:0 0 10px;padding:0;font-size:.88rem}
 .legend li{display:flex;align-items:center;gap:8px;padding:2px 0}
 .legend li span.n{color:var(--muted);font-size:.8rem}
 .legend b{margin-left:auto;font-variant-numeric:tabular-nums}
 .sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
 input[type=search]{width:100%;font:inherit;font-size:.92rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:10px}
 .big{font-size:1.9rem;font-weight:750;line-height:1.1;font-variant-numeric:tabular-nums}
 .pill{display:inline-block;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-left:6px}
 dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:10px 0;font-size:.9rem}
 dt{color:var(--muted)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 svg text{fill:var(--muted);font-size:10px}
+table.mv{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:8px}
+table.mv caption{text-align:left;color:var(--muted);font-size:.86rem;padding-bottom:2px}
+table.mv th{color:var(--muted);font-weight:600;text-align:right;padding:2px 0}
+table.mv td{text-align:right;padding:2px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.mv th:first-child,table.mv td:first-child{text-align:left}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
 .seg button{font:inherit;font-size:.82rem;padding:4px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--bg);font-weight:600}
@@ -62,6 +71,7 @@ section.notes p,section.notes li{font-size:.95rem;max-width:75ch}
 footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding:14px 0 30px;margin-top:20px}
 .leaflet-container{font:inherit;background:var(--map)}
 .leaflet-tooltip{font-size:.85rem}
+[hidden]{display:none !important}
 </style>
 </head>
 <body>
@@ -81,9 +91,21 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
       <div class="card">
         <h2 id="title">Loading…</h2>
         <p class="sub" id="subtitle"></p>
+        <div id="time" hidden>
+          <div class="ctl">
+            <label>Year <select id="yr"></select></label>
+            <label>Month <select id="mo"></select></label>
+            <label id="dy-wrap" hidden>Day <select id="dy"></select></label>
+            <button class="btn" id="latest" type="button">Latest</button>
+          </div>
+          <p class="sub" id="time-note"></p>
+        </div>
         <div class="bar" id="bar"></div>
         <ul class="legend" id="legend"></ul>
-        <button class="btn" id="download" type="button">Download this layer (CSV)</button>
+        <div class="btns">
+          <button class="btn" id="download" type="button">Download this map (CSV)</button>
+          <button class="btn" id="download-all" type="button" hidden>Download full record (CSV)</button>
+        </div>
       </div>
       <div class="card">
         <input type="search" id="search" list="names" placeholder="Find a district…" aria-label="Find a district">
@@ -92,7 +114,7 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
       </div>
       <div class="card">
         <h2>Ranking</h2>
-        <p class="sub" style="margin-bottom:8px">Districts by their main figure on this layer. Unrated districts are left out.</p>
+        <p class="sub" style="margin-bottom:8px">Districts by their main figure on this map. Unrated districts are left out.</p>
         <div class="seg" role="group" aria-label="Ranking order">
           <button type="button" id="rk-hi" aria-pressed="true">Highest 10</button><button type="button" id="rk-lo" aria-pressed="false">Lowest 10</button>
         </div>
@@ -125,12 +147,15 @@ const getJSON = u => fetch(u + "?" + Date.now()).then(r => { if (!r.ok) throw ne
 // dark text on light colours, white text on dark colours
 const ink = hex => { const n = parseInt(hex.slice(1), 16), l = 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return l > 150 ? "#1d2a26" : "#fff"; };
 const num = s => { const v = parseFloat(String(s).replace(/,/g, "")); return isNaN(v) ? null : v; };
+const MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
 const map = L.map("map", { zoomSnap: 0.25, attributionControl: false });
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, opacity: 0.35 }).addTo(map);
 
 let geoLayer, shapes = {}, selected = null, D = null, color = {}, label = {}, cache = {}, rankHigh = true;
+// for layers that carry a full record: BASE = latest map, REC = monthly record, DAYS = sampled-day record, VIEW = period shown
+let BASE = null, REC = null, DAYS = null, VIEW = null, recCache = {}, daysCache = {};
 
 // optional settings (sign-up link); the site works without this file
 getJSON("data/site.json").then(s => {
@@ -155,7 +180,13 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("tabs").addEventListener("click", e => { const k = e.target.closest("button")?.dataset.key; if (k) show(k); });
   const show = key => {
     const l = man.layers.find(x => x.key === key) || man.layers[0];
-    (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => render(l.key, d));
+    (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => {
+      BASE = d; REC = null; DAYS = daysCache[l.key] || null;
+      if (!d.history) return render(l.key, d);
+      (recCache[l.key] ? Promise.resolve(recCache[l.key]) : getJSON(d.history).then(h => recCache[l.key] = h))
+        .then(h => { REC = h; setView(h.months[h.months.length - 1]); })
+        .catch(() => render(l.key, d));              // no record available: show the latest map only
+    });
   };
   $("search").addEventListener("change", e => {
     const q = e.target.value.trim().toLowerCase();
@@ -166,6 +197,11 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("rk-lo").addEventListener("click", () => { rankHigh = false; ranking(); });
   $("rank").addEventListener("click", e => { const id = e.target.closest("li")?.dataset.id; if (id) focusOn(id); });
   $("download").addEventListener("click", download);
+  $("download-all").addEventListener("click", downloadAll);
+  $("yr").addEventListener("change", pick);
+  $("mo").addEventListener("change", pick);
+  $("dy").addEventListener("change", pick);
+  $("latest").addEventListener("click", () => setView(REC.months[REC.months.length - 1]));
   show(location.hash.slice(1));
 }).catch(e => { $("title").textContent = "Could not load the data files"; $("subtitle").textContent = e.message; });
 
@@ -176,8 +212,99 @@ function tip(p) {
   return esc(p.shapeName) + (x ? "<br><b>" + esc(x.tip) + "</b>" : "");
 }
 
+// ---------- layers with a full record: show any month or sampled day ----------
+function pick() {
+  const y = $("yr").value;
+  let m = $("mo").value;
+  if (!REC.months.includes(y + "-" + m)) m = REC.months.filter(k => k.startsWith(y)).pop().slice(5);   // month missing in that year
+  setView(y + "-" + m + ($("dy").value ? "-" + $("dy").value : ""));
+}
+
+function setView(key) {            // key is "YYYY-MM" (whole month) or "YYYY-MM-DD" (one sampled day)
+  const daily = key.length > 7;
+  if (daily && !DAYS) {
+    $("time-note").textContent = "Loading the day-by-day record…";
+    return getJSON(REC.days_file).then(x => { DAYS = daysCache[BASE.key] = x; setView(key); })
+      .catch(() => { $("time-note").textContent = "The day-by-day record could not be loaded."; setView(key.slice(0, 7)); });
+  }
+  if (daily && !DAYS.days.includes(key)) key = key.slice(0, 7);          // that day was not sampled
+  VIEW = key;
+  const y = key.slice(0, 4), m = key.slice(5, 7), dd = key.slice(8);
+  const years = [...new Set(REC.months.map(k => k.slice(0, 4)))];
+  $("yr").innerHTML = years.map(v => `<option${v === y ? " selected" : ""}>${v}</option>`).join("");
+  $("mo").innerHTML = REC.months.filter(k => k.startsWith(y)).map(k => k.slice(5))
+    .map(v => `<option value="${v}"${v === m ? " selected" : ""}>${MONS[+v - 1]}</option>`).join("");
+  $("dy-wrap").hidden = !REC.days_file;
+  const days = DAYS ? DAYS.days.filter(k => k.startsWith(y + "-" + m)).map(k => k.slice(8)) : (REC.sample_days || []).map(v => String(v).padStart(2, "0"));
+  $("dy").innerHTML = `<option value="">Whole month</option>` + days.map(v => `<option value="${v}"${v === dd ? " selected" : ""}>${+v}</option>`).join("");
+  $("latest").disabled = key === REC.months[REC.months.length - 1];
+  $("time-note").textContent = REC.note || "";
+  const axis = dd ? DAYS.days : REC.months, vals = dd ? DAYS.values : REC.values;
+  render(BASE.key, periodView(BASE, REC, axis, vals, axis.indexOf(key)));
+}
+
+function periodView(d, h, axis, vals, t) {
+  const key = axis[t], daily = key.length > 7;
+  const y = key.slice(0, 4), mon = MONS[+key.slice(5, 7) - 1], P = h.series[0], S = h.series[1];
+  const when = daily ? `${+key.slice(8)} ${mon} ${y}` : `${mon} ${y}`, unit = daily ? "date" : "month";
+  const short = k => daily ? `${+k.slice(8)} ${MONS[+k.slice(5, 7) - 1]}` : MONS[+k.slice(5, 7) - 1];
+  const need = h.min_years || 5;
+  const lab = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
+  // for each period, the same month (or month and day) in every other year
+  const bySeason = {};
+  axis.forEach((k, i) => (bySeason[k.slice(5)] = bySeason[k.slice(5)] || []).push(i));
+  const stat = (arr, i) => {
+    const cur = arr[i]; if (cur == null) return null;
+    const refs = [];
+    bySeason[axis[i].slice(5)].forEach(j => { if (j !== i && arr[j] != null) refs.push(arr[j]); });
+    if (refs.length < need) return { cur, n: refs.length };
+    const mean = refs.reduce((a, b) => a + b, 0) / refs.length;
+    const less = refs.filter(v => v < cur).length + 0.5 * refs.filter(v => v === cur).length;
+    const p = less / refs.length * 100;
+    return { cur, n: refs.length, mean, pct: cur / mean * 100, less: Math.round(less),
+             cat: p <= 10 ? "very_dry" : p <= 30 ? "dry" : p < 70 ? "normal" : p < 90 ? "wet" : "very_wet" };
+  };
+  const inYear = [], inTable = [];
+  axis.forEach((k, i) => { if (k.startsWith(y)) { inYear.push(i); if (!daily || k.startsWith(key.slice(0, 7))) inTable.push(i); } });
+  const districts = {}, counts = {};
+  let others = 0;
+  for (const [id, base] of Object.entries(d.districts)) {
+    const a = vals[P.key][id]; if (!a) continue;
+    const b = S ? vals[S.key][id] : null;
+    const s = stat(a, t), ss = b ? stat(b, t) : null, rated = !!(s && s.cat);
+    if (s) others = Math.max(others, s.n);
+    const yr = inYear.map(i => stat(a, i));
+    const cat = rated ? s.cat : "none";
+    counts[cat] = (counts[cat] || 0) + 1;
+    const rows = [];
+    if (s) rows.push([P.label, s.cur.toFixed(2) + " " + P.unit]);
+    if (rated) rows.push([`Normal for ${daily ? "this date" : mon}`, s.mean.toFixed(2) + " " + P.unit]);
+    if (ss) rows.push([S.label, ss.cur.toFixed(2) + " " + S.unit + (ss.cat ? ` (${Math.round(ss.pct)}% of normal)` : "")]);
+    if (rated) rows.push(["Other years that were drier", s.less + " of " + s.n]);
+    districts[id] = {
+      name: base.name, cat,
+      big: rated ? Math.round(s.pct) + "%" : "–",
+      big_note: rated ? `of normal ${P.noun}, ${when}` : (s ? `Too few other years to rate ${when}.` : `No value for ${when}.`),
+      tip: rated ? `${lab[cat]} · ${Math.round(s.pct)}% of normal` : "Not rated",
+      rows,
+      v: yr.map(q => q && q.cat ? Math.round((q.pct - 100) * 10) / 10 : null),
+      c: yr.map(q => q && q.cat ? q.cat : "none"),
+      table: { caption: daily ? `Sampled days, ${mon} ${y}` : `Monthly values, ${y}`,
+               head: [daily ? "Date" : "Month", `${P.short} (${P.unit})`, "% of normal"],
+               rows: inTable.map(i => { const q = yr[inYear.indexOf(i)]; return [short(axis[i]), q ? q.cur.toFixed(2) : "–", q && q.cat ? Math.round(q.pct) + "%" : "–"]; }) },
+    };
+  }
+  const categories = counts.none ? d.categories.concat([{ key: "none", label: "Not rated", note: "", color: "#bdbdbd" }]) : d.categories;
+  return { ...d, districts, counts, categories,
+    subtitle: `${when}, against the same ${unit} in ${others} other years`,
+    chart: { ...d.chart, x: inYear.map(i => short(axis[i])), caption: `${daily ? "Each sampled day" : "Each month"} of ${y}, ${P.short.toLowerCase()}` } };
+}
+
+// ---------- drawing ----------
 function render(key, d) {
   D = d;
+  $("time").hidden = !REC;
+  $("download-all").hidden = !REC;
   history.replaceState(null, "", "#" + key);
   document.querySelectorAll("#tabs button[data-key]").forEach(b => b.setAttribute("aria-current", b.dataset.key === key));
   $("demo").style.display = d.demo ? "block" : "none";
@@ -212,36 +339,57 @@ function ranking() {
   rows.sort((a, b) => (rankHigh ? b.v - a.v : a.v - b.v) || a.x.name.localeCompare(b.x.name));
   $("rank").innerHTML = rows.slice(0, 10).map((r, i) =>
     `<li data-id="${esc(r.id)}"><span class="i">${i + 1}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}</span><b>${esc(r.x.big)}</b></li>`).join("")
-    || '<li style="cursor:default;color:var(--muted)">No rated districts on this layer yet.</li>';
+    || '<li style="cursor:default;color:var(--muted)">No rated districts on this map.</li>';
 }
 
-function download() {
+// ---------- downloads ----------
+const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+const credit = () => q("Source: " + BASE.source + ". Updated " + BASE.updated + ". Tinga Lens, https://tinga-lens.github.io");
+
+function saveCSV(lines, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function download() {                  // the map as shown
   const cols = [];
   Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (!cols.includes(r[0])) cols.push(r[0]); }));
-  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
   const lines = [["District", "Rating", "Main figure", "What the figure means"].concat(cols).map(q).join(",")];
   Object.values(D.districts).sort((a, b) => a.name.localeCompare(b.name)).forEach(x => {
     const m = Object.fromEntries(x.rows);
     lines.push([x.name, label[x.cat], x.big, x.big_note].concat(cols.map(c => m[c] ?? "")).map(q).join(","));
   });
-  lines.push("", q("Source: " + D.source + ". Updated " + D.updated + ". Tinga Lens, https://tinga-lens.github.io"));
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
-  a.download = `tinga-lens-${D.key}-${D.updated}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  lines.push("", credit());
+  saveCSV(lines, `tinga-lens-${D.key}-${REC ? VIEW : D.updated}.csv`);
 }
 
+function downloadAll() {               // every district and every period on record
+  const go = () => {
+    const src = DAYS || REC, axis = DAYS ? DAYS.days : REC.months;
+    const lines = [["District", DAYS ? "Date" : "Month"].concat(REC.series.map(s => `${s.label} (${s.unit})`)).map(q).join(",")];
+    Object.entries(BASE.districts).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([id, x]) => {
+      axis.forEach((k, i) => lines.push([x.name, k].concat(REC.series.map(s => { const v = (src.values[s.key][id] || [])[i]; return v == null ? "" : v; })).map(q).join(",")));
+    });
+    lines.push("", credit());
+    saveCSV(lines, `tinga-lens-${BASE.key}-full-record-${DAYS ? "by-day" : "by-month"}-${BASE.updated}.csv`);
+  };
+  if (REC.days_file && !DAYS) getJSON(REC.days_file).then(x => { DAYS = daysCache[BASE.key] = x; go(); }).catch(go); else go();
+}
+
+// ---------- district panel ----------
 function chart(ch, x) {
-  const W = 300, H = 140, n = x.v.length, bw = W / n, pad = n > 16 ? 1 : 3, every = Math.ceil(n / 6);
-  const labels = ch.x.map((t, i) => (n - 1 - i) % every ? "" : `<text x="${i * bw + bw / 2}" y="${H - 2}" text-anchor="middle">${esc(t)}</text>`).join("");
+  const W = 300, H = 140, n = x.v.length, bw = W / n, pad = n > 40 ? 0.4 : n > 16 ? 1 : 3, every = Math.ceil(n / (n > 40 ? 4.5 : 6));
+  const labels = ch.x.map((t, i) => (n - 1 - i) % every ? "" : `<text x="${i * bw + bw / 2}" y="${H - 2}" text-anchor="${i > n - 3 && n > 16 ? "end" : "middle"}">${esc(t)}</text>`).join("");
   let bars, base;
   if (ch.kind === "diverging") {
     base = 70;
     bars = x.v.map((v, i) => {
       if (v == null) return `<rect x="${i * bw + pad}" y="${base - 2}" width="${bw - 2 * pad}" height="4" fill="#bdbdbd"><title>${esc(ch.x[i])}: not rated</title></rect>`;
       const c = Math.max(-ch.cap, Math.min(ch.cap, v)), h = Math.max(2, Math.abs(c) / ch.cap * 48);
-      return `<rect x="${i * bw + pad}" y="${c >= 0 ? base - h : base}" width="${bw - 2 * pad}" height="${h}" rx="2" fill="${color[x.c[i]]}" stroke="rgba(0,0,0,.3)" stroke-width=".5"><title>${esc(ch.x[i])}: ${v > 0 ? "+" : ""}${v}${esc(ch.unit)} (${esc(label[x.c[i]])})</title></rect>`;
+      return `<rect x="${i * bw + pad}" y="${c >= 0 ? base - h : base}" width="${bw - 2 * pad}" height="${h}" rx="${n > 40 ? 0 : 2}" fill="${color[x.c[i]]}" stroke="rgba(0,0,0,.3)" stroke-width="${n > 40 ? 0.2 : 0.5}"><title>${esc(ch.x[i])}: ${v > 0 ? "+" : ""}${v}${esc(ch.unit)} (${esc(label[x.c[i]])})</title></rect>`;
     }).join("");
   } else {
     base = H - 16;
@@ -263,13 +411,16 @@ function select(id) {
   selected = id;
   shapes[id].setStyle({ weight: 3, color: "#111" }).bringToFront();
   $("search").value = x.name;
+  const t = x.table;
   $("detail").innerHTML = `
     <h2>${esc(x.name)}</h2>
     <div><span class="big">${esc(x.big)}</span>
       <span class="pill" style="background:${color[x.cat]};color:${ink(color[x.cat])}">${esc(label[x.cat])}</span></div>
     <p class="sub">${esc(x.big_note)}</p>
     <dl>${x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
-    ${chart(D.chart, x)}`;
+    ${chart(D.chart, x)}
+    ${t ? `<table class="mv"><caption>${esc(t.caption)}</caption><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+      <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;
 }
 </script>
 </body>
