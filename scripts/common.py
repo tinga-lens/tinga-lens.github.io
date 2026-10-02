@@ -31,8 +31,9 @@ BBOX = (-3.5, 4.5, 1.5, 11.5)        # west, south, east, north (Ghana + margin)
 MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 # order of the tabs on the website; layers without a data file are left out
-ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("forest", "Forest loss")]
-PLANNED = ["Vegetation", "Mining"]
+ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("vegetation", "Vegetation"),
+         ("fires", "Fires"), ("forest", "Forest loss")]
+PLANNED = ["Mining"]
 
 BOUNDARY_CREDIT = {"text": "Boundaries: geoBoundaries (CC BY 4.0; source USAID Ghana HPNO and Ghana Statistical Service)",
                    "url": "https://www.geoboundaries.org"}

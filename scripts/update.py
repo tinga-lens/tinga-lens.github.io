@@ -2,10 +2,12 @@
 """
 Tinga Lens - run every layer that is due.
 
-  drought : every run
-  soil    : every run, if a NASA Earthdata login is available
-  forest  : only when asked (FOREST=true) or when it has never been built,
-            because the source changes once a year and the download is large
+  drought    : every run
+  soil       : every run, if a NASA Earthdata login is available
+  vegetation : every run, if a NASA Earthdata login is available
+  fires      : every run, if a FIRMS map key is available
+  forest     : only when asked (FOREST=true) or when it has never been built,
+               because the source changes once a year and the download is large
 
 One layer failing does not stop the others; the run is marked failed at the end.
 """
@@ -17,11 +19,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA = HERE.parent / "data"
 
+earthdata = bool(os.environ.get("EARTHDATA_USERNAME") or os.environ.get("EARTHDATA_TOKEN"))
 jobs = [("drought", "drought.py")]
-if os.environ.get("EARTHDATA_USERNAME") or os.environ.get("EARTHDATA_TOKEN"):
-    jobs.append(("soil", "smap.py"))
+if earthdata:
+    jobs += [("soil", "smap.py"), ("vegetation", "vegetation.py")]
 else:
-    print("Skipping soil moisture: no EARTHDATA_USERNAME / EARTHDATA_PASSWORD set.")
+    print("Skipping soil moisture and vegetation: no EARTHDATA_USERNAME / EARTHDATA_PASSWORD set.")
+if os.environ.get("FIRMS_MAP_KEY"):
+    jobs.append(("fires", "fires.py"))
+else:
+    print("Skipping fires: no FIRMS_MAP_KEY set.")
 if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").exists():
     jobs.append(("forest", "forest.py"))
 else:

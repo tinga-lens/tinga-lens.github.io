@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tinga Lens | Environmental monitoring for Ghana</title>
-<meta name="description" content="Open, satellite-based environmental monitoring for Ghana, by district: rainfall and drought, soil moisture, forest loss.">
+<meta name="description" content="Open, satellite-based environmental monitoring for Ghana, by district: rainfall and drought, soil moisture, vegetation, fires and forest loss.">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <style>
 :root{ --bg:#f6f4ef; --card:#ffffff; --ink:#1d2a26; --muted:#5f6b66; --line:#dcd8cf; --accent:#0b5d4f; --map:#e8edf0; }
@@ -16,9 +16,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-app
 a{color:var(--accent)}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 header{padding:18px 0 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
-.brand{font-size:1.45rem;font-weight:750;letter-spacing:-.01em}
+.brand{font-size:1.45rem;font-weight:750;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
 .brand span{color:var(--accent)}
 .tag{color:var(--muted);font-size:.95rem}
+.links{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:.92rem}
+.btn{display:inline-block;font:inherit;font-size:.86rem;font-weight:600;padding:5px 12px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);background:transparent;text-decoration:none;cursor:pointer}
+.btn.solid{background:var(--accent);color:var(--bg)}
 nav{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 nav button{font:inherit;font-size:.9rem;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 nav button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
@@ -33,7 +36,7 @@ nav button:disabled small{opacity:.75;margin-left:4px}
 .card h2{font-size:1rem;margin:0 0 4px}
 .sub{color:var(--muted);font-size:.86rem;margin:0 0 10px}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px}
-.legend{list-style:none;margin:0;padding:0;font-size:.88rem}
+.legend{list-style:none;margin:0 0 10px;padding:0;font-size:.88rem}
 .legend li{display:flex;align-items:center;gap:8px;padding:2px 0}
 .legend li span.n{color:var(--muted);font-size:.8rem}
 .legend b{margin-left:auto;font-variant-numeric:tabular-nums}
@@ -44,6 +47,15 @@ input[type=search]{width:100%;font:inherit;font-size:.92rem;padding:7px 10px;bor
 dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:10px 0;font-size:.9rem}
 dt{color:var(--muted)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 svg text{fill:var(--muted);font-size:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.seg button{font:inherit;font-size:.82rem;padding:4px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--bg);font-weight:600}
+ol.rank{list-style:none;margin:0;padding:0;font-size:.88rem}
+ol.rank li{display:flex;align-items:center;gap:8px;padding:3px 4px;border-radius:6px;cursor:pointer}
+ol.rank li:hover{background:var(--bg)}
+ol.rank .i{width:1.4em;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+ol.rank .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ol.rank b{font-variant-numeric:tabular-nums}
 section.notes{margin:22px 0}
 section.notes h2{font-size:1.1rem;margin:14px 0 6px}
 section.notes p,section.notes li{font-size:.95rem;max-width:75ch}
@@ -55,8 +67,9 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">Tinga <span>Lens</span></div>
+    <a class="brand" href="./">Tinga <span>Lens</span></a>
     <div class="tag">Environmental monitoring for Ghana, from satellites, by district</div>
+    <div class="links"><a href="about.html">About</a><a class="btn solid" id="signup" href="#" hidden>Get updates</a></div>
   </header>
 
   <nav aria-label="Layers" id="tabs"></nav>
@@ -70,11 +83,20 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
         <p class="sub" id="subtitle"></p>
         <div class="bar" id="bar"></div>
         <ul class="legend" id="legend"></ul>
+        <button class="btn" id="download" type="button">Download this layer (CSV)</button>
       </div>
       <div class="card">
         <input type="search" id="search" list="names" placeholder="Find a district…" aria-label="Find a district">
         <datalist id="names"></datalist>
         <div id="detail"></div>
+      </div>
+      <div class="card">
+        <h2>Ranking</h2>
+        <p class="sub" style="margin-bottom:8px">Districts by their main figure on this layer. Unrated districts are left out.</p>
+        <div class="seg" role="group" aria-label="Ranking order">
+          <button type="button" id="rk-hi" aria-pressed="true">Highest 10</button><button type="button" id="rk-lo" aria-pressed="false">Lowest 10</button>
+        </div>
+        <ol class="rank" id="rank"></ol>
       </div>
     </aside>
   </div>
@@ -91,7 +113,7 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
     <span id="credits"></span>
     Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0; source USAID Ghana HPNO and Ghana Statistical Service).
     Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Map library: Leaflet.
-    Tinga Lens is an independent, non-commercial project.
+    Tinga Lens is an independent, non-commercial project. <a href="about.html">About and contact</a>.
   </footer>
 </div>
 
@@ -102,12 +124,18 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 const getJSON = u => fetch(u + "?" + Date.now()).then(r => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
 // dark text on light colours, white text on dark colours
 const ink = hex => { const n = parseInt(hex.slice(1), 16), l = 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return l > 150 ? "#1d2a26" : "#fff"; };
+const num = s => { const v = parseFloat(String(s).replace(/,/g, "")); return isNaN(v) ? null : v; };
 const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
 const map = L.map("map", { zoomSnap: 0.25, attributionControl: false });
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, opacity: 0.35 }).addTo(map);
 
-let geoLayer, shapes = {}, selected = null, D = null, color = {}, label = {}, cache = {};
+let geoLayer, shapes = {}, selected = null, D = null, color = {}, label = {}, cache = {}, rankHigh = true;
+
+// optional settings (sign-up link); the site works without this file
+getJSON("data/site.json").then(s => {
+  if (s.signup_url) { $("signup").href = s.signup_url; $("signup").hidden = false; }
+}).catch(() => {});
 
 Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).then(([geo, man]) => {
   geoLayer = L.geoJSON(geo, {
@@ -132,10 +160,16 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("search").addEventListener("change", e => {
     const q = e.target.value.trim().toLowerCase();
     const id = Object.keys(D.districts).find(k => D.districts[k].name.toLowerCase() === q);
-    if (id) { select(id); map.fitBounds(shapes[id].getBounds().pad(1.5)); }
+    if (id) focusOn(id);
   });
+  $("rk-hi").addEventListener("click", () => { rankHigh = true; ranking(); });
+  $("rk-lo").addEventListener("click", () => { rankHigh = false; ranking(); });
+  $("rank").addEventListener("click", e => { const id = e.target.closest("li")?.dataset.id; if (id) focusOn(id); });
+  $("download").addEventListener("click", download);
   show(location.hash.slice(1));
 }).catch(e => { $("title").textContent = "Could not load the data files"; $("subtitle").textContent = e.message; });
+
+function focusOn(id) { select(id); map.fitBounds(shapes[id].getBounds().pad(1.5)); }
 
 function tip(p) {
   const x = D && D.districts[p.shapeID];
@@ -167,7 +201,35 @@ function render(key, d) {
   $("limits").innerHTML = d.limits.concat(["District boundaries are the 260 districts of 2019. Newer districts are not yet shown."]).map(t => `<li>${esc(t)}</li>`).join("");
   $("stamp").textContent = "Updated " + d.updated + " · Source: " + d.source + ".";
   $("credits").innerHTML = d.credits.map(c => `<a href="${esc(c.url)}">${esc(c.text)}</a>. `).join("");
+  ranking();
   if (selected && d.districts[selected]) select(selected); else { selected = null; $("detail").innerHTML = EMPTY; }
+}
+
+function ranking() {
+  $("rk-hi").setAttribute("aria-pressed", rankHigh);
+  $("rk-lo").setAttribute("aria-pressed", !rankHigh);
+  const rows = Object.entries(D.districts).map(([id, x]) => ({ id, x, v: num(x.big) })).filter(r => r.v !== null);
+  rows.sort((a, b) => (rankHigh ? b.v - a.v : a.v - b.v) || a.x.name.localeCompare(b.x.name));
+  $("rank").innerHTML = rows.slice(0, 10).map((r, i) =>
+    `<li data-id="${esc(r.id)}"><span class="i">${i + 1}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}</span><b>${esc(r.x.big)}</b></li>`).join("")
+    || '<li style="cursor:default;color:var(--muted)">No rated districts on this layer yet.</li>';
+}
+
+function download() {
+  const cols = [];
+  Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (!cols.includes(r[0])) cols.push(r[0]); }));
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const lines = [["District", "Rating", "Main figure", "What the figure means"].concat(cols).map(q).join(",")];
+  Object.values(D.districts).sort((a, b) => a.name.localeCompare(b.name)).forEach(x => {
+    const m = Object.fromEntries(x.rows);
+    lines.push([x.name, label[x.cat], x.big, x.big_note].concat(cols.map(c => m[c] ?? "")).map(q).join(","));
+  });
+  lines.push("", q("Source: " + D.source + ". Updated " + D.updated + ". Tinga Lens, https://tinga-lens.github.io"));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+  a.download = `tinga-lens-${D.key}-${D.updated}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function chart(ch, x) {
