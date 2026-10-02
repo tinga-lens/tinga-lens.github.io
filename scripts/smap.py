@@ -40,6 +40,8 @@ SAMPLE_TIME = "T103000"                 # one 3-hourly file per sampled day (10:
 MIN_REF_YEARS = 5                       # earlier years needed before a month is rated
 HISTORY_MONTHS = 12
 SAVE_EVERY = 25                         # save progress after this many files
+RETRIES = 3                             # tries per file before it is skipped
+MIN_SAMPLES = 4                         # sampled days a month needs before it is used
 # --------------------------------------------------------------------------
 CACHE_FILE = CACHE / "smap_l4.npz"
 
@@ -92,6 +94,30 @@ def read_window(fobj, grid_slices):
     return out[0], out[1], grid_slices
 
 
+def read_with_retry(earthaccess, granule, slices, key):
+    """Open and read one file, trying again if the server sends a bad response."""
+    import time
+    for attempt in range(1, RETRIES + 1):
+        try:
+            fobj = earthaccess.open([granule])[0]
+            try:
+                return read_window(fobj, slices)
+            finally:
+                try:
+                    fobj.close()
+                except Exception:
+                    pass
+        except Exception as e:                       # network hiccup, expired login, damaged file
+            print(f"  {key}: attempt {attempt} failed ({type(e).__name__}: {str(e)[:120]})", flush=True)
+            if attempt < RETRIES:
+                time.sleep(20 * attempt)
+                try:
+                    earthaccess.login(strategy="environment")    # refresh the login
+                except Exception:
+                    pass
+    return None
+
+
 def load_real(today):
     import earthaccess
     auth = earthaccess.login(strategy="environment")
@@ -101,7 +127,7 @@ def load_real(today):
     have, grid = load_cache()
     slices = None
     months = month_list(FIRST_MONTH, (today.year, today.month))
-    done = 0
+    done, skipped = 0, []
     for (y, m) in months:
         wanted = [day_key(y, m, d) for d in SAMPLE_DAYS]
         missing = [k for k in wanted if k not in have]
@@ -118,10 +144,12 @@ def load_real(today):
                     pick[k] = g
         if not pick:
             continue
-        keys = sorted(pick)
-        files = earthaccess.open([pick[k] for k in keys])
-        for k, fobj in zip(keys, files):
-            root, surf, slices_new = read_window(fobj, slices)
+        for k in sorted(pick):
+            got = read_with_retry(earthaccess, pick[k], slices, k)
+            if got is None:
+                skipped.append(k)
+                continue
+            root, surf, slices_new = got
             if slices is None:
                 slices = slices_new
                 if grid is not None and (len(grid[0]) != len(slices[2]) or len(grid[1]) != len(slices[3])):
@@ -132,6 +160,8 @@ def load_real(today):
             if done % SAVE_EVERY == 0:
                 save_cache(have, grid)
                 print(f"  {done} files read (up to {k})", flush=True)
+    if skipped:
+        print(f"Could not read {len(skipped)} file(s), they will be tried again next run: {', '.join(skipped)}")
     if not have:
         sys.exit(f"No {SHORT_NAME} v{VERSION} files were found. Check VERSION in scripts/smap.py.")
     save_cache(have, grid)
@@ -175,13 +205,13 @@ def cells_per_district(gdf, lat, lon, valid):
     return out
 
 
-def monthly_district_means(have, cells):
-    """Months with every sample day present -> (months, root[time, district], surf[time, district])."""
+def monthly_district_means(have, cells, this_month):
+    """Finished months with enough sample days -> (months, root[time, district], surf[time, district])."""
     months, root, surf = [], [], []
     ym = sorted({(int(k[:4]), int(k[4:6])) for k in have})
     for (y, m) in ym:
-        keys = [day_key(y, m, d) for d in SAMPLE_DAYS]
-        if not all(k in have for k in keys):
+        keys = [k for k in (day_key(y, m, d) for d in SAMPLE_DAYS) if k in have]
+        if (y, m) >= this_month or len(keys) < MIN_SAMPLES:    # month still running, or too few samples
             continue
         r = np.mean(np.stack([have[k][0] for k in keys]), axis=0).ravel()
         s = np.mean(np.stack([have[k][1] for k in keys]), axis=0).ravel()
@@ -212,7 +242,7 @@ def main():
     have, (lat, lon), source = (load_demo if args.demo else load_real)(today)
     valid = ~np.isnan(next(iter(have.values()))[0])
     cells = cells_per_district(gdf, lat, lon, valid)
-    months, root, surf = monthly_district_means(have, cells)
+    months, root, surf = monthly_district_means(have, cells, (today.year, today.month))
     if not months:
         sys.exit("No complete month of SMAP data yet.")
     T = len(months) - 1
@@ -263,7 +293,7 @@ def main():
             f"The SMAP record starts in 2015, so \"normal\" rests on only {n} earlier years. Rankings are coarser than for rainfall.",
             "The grid is about 9 km. It suits district averages, not individual farms, and small districts rest on one or two grid cells.",
             "Under dense forest in the south the satellite signal is weak, so values there lean more on the model.",
-            f"Each month is sampled on {len(SAMPLE_DAYS)} days at one time of day, not averaged over every hour.",
+            f"Each month is sampled on up to {len(SAMPLE_DAYS)} days at one time of day, not averaged over every hour.",
             "The estimates have not been checked against soil sensors in Ghana.",
         ],
         "credits": [{"text": "Soil moisture: NASA SMAP L4 (SPL4SMGP), NSIDC DAAC", "url": "https://nsidc.org/data/spl4smgp"}],
