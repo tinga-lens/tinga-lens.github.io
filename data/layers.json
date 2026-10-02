@@ -6,6 +6,11 @@
    "file": "data/drought.json"
   },
   {
+   "key": "soil",
+   "label": "Soil moisture",
+   "file": "data/soil.json"
+  },
+  {
    "key": "forest",
    "label": "Forest loss",
    "file": "data/forest.json"
