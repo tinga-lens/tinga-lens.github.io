@@ -11,6 +11,16 @@
    "file": "data/soil.json"
   },
   {
+   "key": "vegetation",
+   "label": "Vegetation",
+   "file": "data/vegetation.json"
+  },
+  {
+   "key": "fires",
+   "label": "Fires",
+   "file": "data/fires.json"
+  },
+  {
    "key": "forest",
    "label": "Forest loss",
    "file": "data/forest.json"
