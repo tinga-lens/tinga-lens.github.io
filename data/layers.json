@@ -1,0 +1,13 @@
+{
+ "layers": [
+  {
+   "key": "drought",
+   "label": "Drought",
+   "file": "data/drought.json"
+  }
+ ],
+ "planned": [
+  "Vegetation",
+  "Mining"
+ ]
+}

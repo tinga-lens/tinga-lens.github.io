@@ -4,14 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tinga Lens | Environmental monitoring for Ghana</title>
-<meta name="description" content="Open, satellite-based environmental monitoring for Ghana, by district. First layer: rainfall and drought.">
+<meta name="description" content="Open, satellite-based environmental monitoring for Ghana, by district: rainfall and drought, soil moisture, forest loss.">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <style>
-:root{
-  --bg:#f6f4ef; --card:#ffffff; --ink:#1d2a26; --muted:#5f6b66; --line:#dcd8cf; --accent:#0b5d4f;
-  --map:#e8edf0;
-  --very_dry:#8c510a; --dry:#d8b365; --normal:#f3efe4; --wet:#5ab4ac; --very_wet:#01665e; --dry_season:#bdbdbd;
-}
+:root{ --bg:#f6f4ef; --card:#ffffff; --ink:#1d2a26; --muted:#5f6b66; --line:#dcd8cf; --accent:#0b5d4f; --map:#e8edf0; }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#141a18; --card:#1d2523; --ink:#e9eeec; --muted:#9daaa5; --line:#33403c; --accent:#6fd0bd; --map:#232d2b; }
 }
@@ -24,8 +20,9 @@ header{padding:18px 0 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:
 .brand span{color:var(--accent)}
 .tag{color:var(--muted);font-size:.95rem}
 nav{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
-nav button{font:inherit;font-size:.9rem;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-nav button[aria-current]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+nav button{font:inherit;font-size:.9rem;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+nav button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+nav button:disabled{color:var(--muted);cursor:default}
 nav button:disabled small{opacity:.75;margin-left:4px}
 #demo{display:none;background:#fff3cd;color:#5c4400;border:1px solid #e6cf85;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.92rem}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
@@ -38,16 +35,17 @@ nav button:disabled small{opacity:.75;margin-left:4px}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px}
 .legend{list-style:none;margin:0;padding:0;font-size:.88rem}
 .legend li{display:flex;align-items:center;gap:8px;padding:2px 0}
+.legend li span.n{color:var(--muted);font-size:.8rem}
 .legend b{margin-left:auto;font-variant-numeric:tabular-nums}
 .sw{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
 input[type=search]{width:100%;font:inherit;font-size:.92rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:10px}
 .big{font-size:1.9rem;font-weight:750;line-height:1.1;font-variant-numeric:tabular-nums}
-.pill{display:inline-block;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid rgba(0,0,0,.25);color:#1d2a26;vertical-align:middle;margin-left:6px}
+.pill{display:inline-block;font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-left:6px}
 dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:10px 0;font-size:.9rem}
 dt{color:var(--muted)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
 svg text{fill:var(--muted);font-size:10px}
 section.notes{margin:22px 0}
-section.notes h2{font-size:1.1rem;margin:0 0 6px}
+section.notes h2{font-size:1.1rem;margin:14px 0 6px}
 section.notes p,section.notes li{font-size:.95rem;max-width:75ch}
 footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padding:14px 0 30px;margin-top:20px}
 .leaflet-container{font:inherit;background:var(--map)}
@@ -61,48 +59,36 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
     <div class="tag">Environmental monitoring for Ghana, from satellites, by district</div>
   </header>
 
-  <nav aria-label="Layers">
-    <button aria-current="true">Drought</button>
-    <button disabled>Vegetation <small>soon</small></button>
-    <button disabled>Forest loss <small>soon</small></button>
-    <button disabled>Mining <small>soon</small></button>
-  </nav>
-
-  <div id="demo"><strong>Demo data.</strong> These numbers are made up to preview the site. They are replaced with real rainfall the first time the update runs.</div>
+  <nav aria-label="Layers" id="tabs"></nav>
+  <div id="demo"><strong>Demo data.</strong> These numbers are made up to preview the site. They are replaced with real data the first time the update runs.</div>
 
   <div class="grid">
-    <div id="map" role="application" aria-label="Map of Ghana districts coloured by rainfall compared with normal"></div>
+    <div id="map" role="application" aria-label="Map of Ghana districts"></div>
     <aside>
       <div class="card">
-        <h2 id="title">Rainfall compared with normal</h2>
-        <p class="sub" id="period">Loading…</p>
+        <h2 id="title">Loading…</h2>
+        <p class="sub" id="subtitle"></p>
         <div class="bar" id="bar"></div>
         <ul class="legend" id="legend"></ul>
       </div>
       <div class="card">
         <input type="search" id="search" list="names" placeholder="Find a district…" aria-label="Find a district">
         <datalist id="names"></datalist>
-        <div id="detail"><p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p></div>
+        <div id="detail"></div>
       </div>
     </aside>
   </div>
 
   <section class="notes">
     <h2>How to read this map</h2>
-    <p>Each district shows its rainfall over the latest three months, compared with the same three months in every year from <span id="b0">1991</span> to <span id="b1">2020</span>. A district is "very dry" when this year is among the driest 10% of those years, "dry" when among the driest 30%, and the same in reverse for "wet" and "very wet".</p>
+    <p id="how"></p>
     <h2>Limits</h2>
-    <ul>
-      <li>This is a rainfall indicator. It does not measure crop damage, river levels or groundwater.</li>
-      <li>The rainfall estimate blends satellite and rain-gauge data on a grid of about 5 km. It suits district averages, not individual farms.</li>
-      <li>When the normal three-month rainfall is under <span id="dsm">30</span> mm, the district is shown as "dry season" and not rated, because small differences would look like large percentages.</li>
-      <li>District boundaries are the 260 districts of 2019. Newer districts are not yet shown.</li>
-      <li>The map has not been checked against ground reports. Treat it as a guide, not an official drought declaration.</li>
-    </ul>
+    <ul id="limits"></ul>
   </section>
 
   <footer>
     <div id="stamp"></div>
-    Rainfall: <a href="https://www.chc.ucsb.edu/data/chirps">CHIRPS</a>, Climate Hazards Center, UC Santa Barbara.
+    <span id="credits"></span>
     Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0; source USAID Ghana HPNO and Ghana Statistical Service).
     Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Map library: Leaflet.
     Tinga Lens is an independent, non-commercial project.
@@ -111,106 +97,118 @@ footer{color:var(--muted);font-size:.84rem;border-top:1px solid var(--line);padd
 
 <script src="vendor/leaflet.js"></script>
 <script>
-const CATS = [
-  ["very_dry",  "Very dry",   "driest 10% of years"],
-  ["dry",       "Dry",        "driest 30% of years"],
-  ["normal",    "Near normal","middle 40% of years"],
-  ["wet",       "Wet",        "wettest 30% of years"],
-  ["very_wet",  "Very wet",   "wettest 10% of years"],
-  ["dry_season","Dry season", "not rated"],
-];
-const NAME = Object.fromEntries(CATS.map(c => [c[0], c[1]]));
-const css = k => getComputedStyle(document.documentElement).getPropertyValue("--" + k).trim();
-const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const ym = s => { const [y, m] = s.split("-"); return MON[+m - 1] + " " + y; };
+const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const getJSON = u => fetch(u + "?" + Date.now()).then(r => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+// dark text on light colours, white text on dark colours
+const ink = hex => { const n = parseInt(hex.slice(1), 16), l = 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return l > 150 ? "#1d2a26" : "#fff"; };
+const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
 const map = L.map("map", { zoomSnap: 0.25, attributionControl: false });
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, opacity: 0.35 }).addTo(map);
 
-Promise.all([
-  fetch("data/districts.geojson").then(r => r.json()),
-  fetch("data/drought.json?" + Date.now()).then(r => r.json()),
-]).then(([geo, d]) => {
-  if (d.demo) document.getElementById("demo").style.display = "block";
-  const D = d.districts, layers = {};
-  let selected = null;
+let geoLayer, shapes = {}, selected = null, D = null, color = {}, label = {}, cache = {};
 
-  const style = f => {
-    const x = D[f.properties.shapeID];
-    return { fillColor: x ? css(x.category) : "#999", fillOpacity: 0.9, color: "#55605c", weight: 0.6 };
-  };
-  const layer = L.geoJSON(geo, {
-    style,
+Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).then(([geo, man]) => {
+  geoLayer = L.geoJSON(geo, {
+    style: { fillColor: "#999", fillOpacity: 0.9, color: "#55605c", weight: 0.6 },
     onEachFeature: (f, l) => {
-      const x = D[f.properties.shapeID];
-      layers[f.properties.shapeID] = l;
-      l.bindTooltip(esc(f.properties.shapeName) + (x ? "<br><b>" + NAME[x.category] + "</b>" + (x.pct_normal != null && x.category !== "dry_season" ? " · " + x.pct_normal + "% of normal" : "") : ""), { sticky: true });
+      shapes[f.properties.shapeID] = l;
+      l.bindTooltip(() => tip(f.properties), { sticky: true });
       l.on("click", () => select(f.properties.shapeID));
     },
   }).addTo(map);
-  map.fitBounds(layer.getBounds(), { padding: [8, 8] });
-  map.setMaxBounds(layer.getBounds().pad(0.6));
+  map.fitBounds(geoLayer.getBounds(), { padding: [8, 8] });
+  map.setMaxBounds(geoLayer.getBounds().pad(0.6));
   map.setMinZoom(map.getZoom() - 0.5);
 
-  // headline, summary bar, legend
-  document.getElementById("title").textContent = "Rainfall compared with normal";
-  document.getElementById("period").textContent = ym(d.period.from) + " to " + ym(d.period.to) + " · " + Object.keys(D).length + " districts";
-  const total = Object.keys(D).length;
-  document.getElementById("bar").innerHTML = CATS.map(([k, n]) => {
-    const c = d.counts[k] || 0;
-    return c ? `<div title="${n}: ${c} districts" style="width:${c / total * 100}%;background:var(--${k})"></div>` : "";
-  }).join("");
-  document.getElementById("legend").innerHTML = CATS.map(([k, n, why]) =>
-    `<li><span class="sw" style="background:var(--${k})"></span>${n} <span style="color:var(--muted);font-size:.8rem">${why}</span><b>${d.counts[k] || 0}</b></li>`).join("");
-  document.getElementById("b0").textContent = d.baseline[0];
-  document.getElementById("b1").textContent = d.baseline[1];
-  document.getElementById("dsm").textContent = d.dry_season_mm;
-  document.getElementById("stamp").textContent = "Updated " + d.updated + " · Source: " + d.source + " · Baseline " + d.baseline.join("–") + ".";
-
-  // search
-  const byName = {};
-  for (const [id, x] of Object.entries(D)) byName[x.name.toLowerCase()] = id;
-  document.getElementById("names").innerHTML = Object.values(D).map(x => x.name).sort().map(n => `<option value="${esc(n)}">`).join("");
-  document.getElementById("search").addEventListener("change", e => {
-    const id = byName[e.target.value.trim().toLowerCase()];
-    if (id) { select(id); map.fitBounds(layers[id].getBounds().pad(1.5)); }
+  $("tabs").innerHTML = man.layers.map(l => `<button data-key="${esc(l.key)}">${esc(l.label)}</button>`).join("")
+    + (man.planned || []).map(p => `<button disabled>${esc(p)} <small>soon</small></button>`).join("");
+  $("tabs").addEventListener("click", e => { const k = e.target.closest("button")?.dataset.key; if (k) show(k); });
+  const show = key => {
+    const l = man.layers.find(x => x.key === key) || man.layers[0];
+    (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => render(l.key, d));
+  };
+  $("search").addEventListener("change", e => {
+    const q = e.target.value.trim().toLowerCase();
+    const id = Object.keys(D.districts).find(k => D.districts[k].name.toLowerCase() === q);
+    if (id) { select(id); map.fitBounds(shapes[id].getBounds().pad(1.5)); }
   });
+  show(location.hash.slice(1));
+}).catch(e => { $("title").textContent = "Could not load the data files"; $("subtitle").textContent = e.message; });
 
-  function chart(h) {
-    // bars = % of normal minus 100, so above the line is wetter than normal
-    const W = 300, H = 120, mid = 58, bw = W / h.length, cap = 100;
-    const bars = h.map((p, i) => {
-      if (p.pct == null || p.cat === "dry_season")
-        return `<rect x="${i * bw + 3}" y="${mid - 2}" width="${bw - 6}" height="4" fill="var(--dry_season)"><title>${ym(p.m)}: dry season</title></rect>`;
-      const v = Math.max(-cap, Math.min(cap, p.pct - 100)), hh = Math.max(2, Math.abs(v) / cap * 48);
-      return `<rect x="${i * bw + 3}" y="${v >= 0 ? mid - hh : mid}" width="${bw - 6}" height="${hh}" rx="2" fill="var(--${p.cat})" stroke="rgba(0,0,0,.3)" stroke-width=".5"><title>${ym(p.m)}: ${p.pct}% of normal (${NAME[p.cat]})</title></rect>`;
+function tip(p) {
+  const x = D && D.districts[p.shapeID];
+  return esc(p.shapeName) + (x ? "<br><b>" + esc(x.tip) + "</b>" : "");
+}
+
+function render(key, d) {
+  D = d;
+  history.replaceState(null, "", "#" + key);
+  document.querySelectorAll("#tabs button[data-key]").forEach(b => b.setAttribute("aria-current", b.dataset.key === key));
+  $("demo").style.display = d.demo ? "block" : "none";
+  color = Object.fromEntries(d.categories.map(c => [c.key, c.color]));
+  label = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
+  geoLayer.eachLayer(l => {
+    const x = d.districts[l.feature.properties.shapeID];
+    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: "#55605c", weight: 0.6 });
+  });
+  const total = Object.keys(d.districts).length;
+  $("title").textContent = d.title;
+  $("subtitle").textContent = d.subtitle + " · " + total + " districts";
+  $("bar").innerHTML = d.categories.map(c => {
+    const n = d.counts[c.key] || 0;
+    return n ? `<div title="${esc(c.label)}: ${n} districts" style="width:${n / total * 100}%;background:${c.color}"></div>` : "";
+  }).join("");
+  $("legend").innerHTML = d.categories.map(c =>
+    `<li><span class="sw" style="background:${c.color}"></span>${esc(c.label)} <span class="n">${esc(c.note || "")}</span><b>${d.counts[c.key] || 0}</b></li>`).join("");
+  $("names").innerHTML = Object.values(d.districts).map(x => x.name).sort().map(n => `<option value="${esc(n)}">`).join("");
+  $("how").textContent = d.how;
+  $("limits").innerHTML = d.limits.concat(["District boundaries are the 260 districts of 2019. Newer districts are not yet shown."]).map(t => `<li>${esc(t)}</li>`).join("");
+  $("stamp").textContent = "Updated " + d.updated + " · Source: " + d.source + ".";
+  $("credits").innerHTML = d.credits.map(c => `<a href="${esc(c.url)}">${esc(c.text)}</a>. `).join("");
+  if (selected && d.districts[selected]) select(selected); else { selected = null; $("detail").innerHTML = EMPTY; }
+}
+
+function chart(ch, x) {
+  const W = 300, H = 140, n = x.v.length, bw = W / n, pad = n > 16 ? 1 : 3, every = Math.ceil(n / 6);
+  const labels = ch.x.map((t, i) => (n - 1 - i) % every ? "" : `<text x="${i * bw + bw / 2}" y="${H - 2}" text-anchor="middle">${esc(t)}</text>`).join("");
+  let bars, base;
+  if (ch.kind === "diverging") {
+    base = 70;
+    bars = x.v.map((v, i) => {
+      if (v == null) return `<rect x="${i * bw + pad}" y="${base - 2}" width="${bw - 2 * pad}" height="4" fill="#bdbdbd"><title>${esc(ch.x[i])}: not rated</title></rect>`;
+      const c = Math.max(-ch.cap, Math.min(ch.cap, v)), h = Math.max(2, Math.abs(c) / ch.cap * 48);
+      return `<rect x="${i * bw + pad}" y="${c >= 0 ? base - h : base}" width="${bw - 2 * pad}" height="${h}" rx="2" fill="${color[x.c[i]]}" stroke="rgba(0,0,0,.3)" stroke-width=".5"><title>${esc(ch.x[i])}: ${v > 0 ? "+" : ""}${v}${esc(ch.unit)} (${esc(label[x.c[i]])})</title></rect>`;
     }).join("");
-    const labels = h.map((p, i) => i % 2 ? "" : `<text x="${i * bw + bw / 2}" y="${H - 2}" text-anchor="middle">${MON[+p.m.slice(5) - 1]}</text>`).join("");
-    return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Rainfall as percent of normal, last ${h.length} three-month periods">
-      <line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--muted)" stroke-width="1"/>
-      <text x="0" y="9">wetter than normal</text><text x="0" y="${H - 14}">drier</text>${bars}${labels}</svg>`;
+  } else {
+    base = H - 16;
+    const max = Math.max(...x.v, 1e-9);
+    bars = x.v.map((v, i) => {
+      const h = Math.max(v > 0 ? 1.5 : 0, v / max * (base - 14));
+      return `<rect x="${i * bw + pad}" y="${base - h}" width="${bw - 2 * pad}" height="${h}" rx="1.5" fill="var(--accent)"><title>${esc(ch.x[i])}: ${v.toLocaleString()} ${esc(ch.unit)}</title></rect>`;
+    }).join("") + `<text x="0" y="9">max ${Math.round(max).toLocaleString()} ${esc(ch.unit)}</text>`;
   }
+  return `<p class="sub" style="margin-bottom:2px">${esc(ch.caption)}</p>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(ch.caption)}">
+    <line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--muted)" stroke-width="1"/>
+    ${ch.top ? `<text x="0" y="9">${esc(ch.top)}</text>` : ""}${ch.bottom ? `<text x="0" y="${H - 17}">${esc(ch.bottom)}</text>` : ""}${bars}${labels}</svg>`;
+}
 
-  function select(id) {
-    const x = D[id]; if (!x) return;
-    if (selected) layer.resetStyle(layers[selected]);
-    selected = id;
-    layers[id].setStyle({ weight: 3, color: "#111" }).bringToFront();
-    document.getElementById("search").value = x.name;
-    const rated = x.category !== "dry_season";
-    const n = d.baseline[1] - d.baseline[0] + 1, drier = Math.round(x.percentile / 100 * n);
-    document.getElementById("detail").innerHTML = `
-      <h2>${esc(x.name)}</h2>
-      <div><span class="big">${rated && x.pct_normal != null ? x.pct_normal + "%" : "–"}</span>
-        <span class="pill" style="background:var(--${x.category})${["very_dry","very_wet"].includes(x.category) ? ";color:#fff" : ""}">${NAME[x.category]}</span></div>
-      <p class="sub">${rated ? "of normal rainfall, " + ym(d.period.from) + " to " + ym(d.period.to) : "Normal rainfall is too low in these months to rate."}</p>
-      <dl><dt>Rainfall, last ${d.period.months} months</dt><dd>${x.rain_mm} mm</dd>
-          <dt>Normal (${d.baseline.join("–")})</dt><dd>${x.normal_mm} mm</dd>
-          ${rated ? `<dt>Baseline years that were drier</dt><dd>about ${drier} of ${n}</dd>` : ""}</dl>
-      <p class="sub" style="margin-bottom:2px">Past 12 months (each bar is a three-month total)</p>${chart(x.history)}`;
-  }
-}).catch(e => { document.getElementById("period").textContent = "Could not load the data files: " + e.message; });
+function select(id) {
+  const x = D.districts[id]; if (!x) return;
+  if (selected && shapes[selected]) shapes[selected].setStyle({ weight: 0.6, color: "#55605c" });
+  selected = id;
+  shapes[id].setStyle({ weight: 3, color: "#111" }).bringToFront();
+  $("search").value = x.name;
+  $("detail").innerHTML = `
+    <h2>${esc(x.name)}</h2>
+    <div><span class="big">${esc(x.big)}</span>
+      <span class="pill" style="background:${color[x.cat]};color:${ink(color[x.cat])}">${esc(label[x.cat])}</span></div>
+    <p class="sub">${esc(x.big_note)}</p>
+    <dl>${x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
+    ${chart(D.chart, x)}`;
+}
 </script>
 </body>
 </html>

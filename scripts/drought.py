@@ -37,6 +37,9 @@ from rasterio.io import MemoryFile
 from rasterio.windows import from_bounds
 from rasterio.windows import transform as window_transform
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import MON, WETNESS, write_layer, ym_text  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DISTRICTS = ROOT / "data" / "districts.geojson"
 OUT = ROOT / "data" / "drought.json"
@@ -283,8 +286,54 @@ def main():
         "counts": counts,
         "districts": districts,
     }
-    OUT.write_text(json.dumps(out, separators=(",", ":")))
-    print(f"Wrote {OUT.relative_to(ROOT)}: {len(districts)} districts, {counts}")
+    write_layer("drought", render(out))
+
+
+def render(raw):
+    """Turn the numbers into what the website shows."""
+    n = raw["baseline"][1] - raw["baseline"][0] + 1
+    period = f"{ym_text(raw['period']['from'])} to {ym_text(raw['period']['to'])}"
+    notes = ["driest 10% of years", "driest 30% of years", "middle 40% of years",
+             "wettest 30% of years", "wettest 10% of years"]
+    cats = [dict(c, note=t) for c, t in zip(WETNESS, notes)]
+    cats.append({"key": "dry_season", "label": "Dry season", "note": "not rated", "color": "#bdbdbd"})
+    names = {c["key"]: c["label"] for c in cats}
+    districts, x = {}, None
+    for sid, d in raw["districts"].items():
+        rated = d["category"] != "dry_season" and d["pct_normal"] is not None
+        rows = [[f"Rainfall, last {raw['period']['months']} months", f"{d['rain_mm']} mm"],
+                [f"Normal ({raw['baseline'][0]}–{raw['baseline'][1]})", f"{d['normal_mm']} mm"]]
+        if rated:
+            rows.append(["Baseline years that were drier", f"about {round(d['percentile'] / 100 * n)} of {n}"])
+        x = [MON[int(h["m"][5:]) - 1] for h in d["history"]]
+        districts[sid] = {
+            "name": d["name"], "cat": d["category"],
+            "big": f"{d['pct_normal']}%" if rated else "–",
+            "big_note": f"of normal rainfall, {period}" if rated else "Normal rainfall is too low in these months to rate.",
+            "tip": f"{names[d['category']]}" + (f" · {d['pct_normal']}% of normal" if rated else ""),
+            "rows": rows,
+            "v": [None if h["cat"] == "dry_season" or h["pct"] is None else h["pct"] - 100 for h in d["history"]],
+            "c": [h["cat"] for h in d["history"]],
+        }
+    return {
+        "label": "Drought", "title": "Rainfall compared with normal", "subtitle": period,
+        "source": raw["source"], "demo": raw["demo"], "categories": cats,
+        "how": (f"Each district shows its rainfall over the latest {raw['period']['months']} months, compared with the same "
+                f"months in every year from {raw['baseline'][0]} to {raw['baseline'][1]}. A district is \"very dry\" when this "
+                "year is among the driest 10% of those years, \"dry\" when among the driest 30%, and the same in reverse "
+                "for \"wet\" and \"very wet\"."),
+        "limits": [
+            "This is a rainfall indicator. It does not measure crop damage, river levels or groundwater.",
+            "The rainfall estimate blends satellite and rain-gauge data on a grid of about 5 km. It suits district averages, not individual farms.",
+            f"When the normal rainfall for the period is under {raw['dry_season_mm']} mm, the district is shown as \"dry season\" and not rated, because small differences would look like large percentages.",
+            "The map has not been checked against ground reports. Treat it as a guide, not an official drought declaration.",
+        ],
+        "credits": [{"text": "Rainfall: CHIRPS, Climate Hazards Center, UC Santa Barbara", "url": "https://www.chc.ucsb.edu/data/chirps"}],
+        "chart": {"kind": "diverging", "cap": 100, "unit": "% vs normal", "x": x,
+                  "caption": "Past 12 months (each bar is a three-month total)",
+                  "top": "wetter than normal", "bottom": "drier"},
+        "districts": districts,
+    }
 
 
 if __name__ == "__main__":

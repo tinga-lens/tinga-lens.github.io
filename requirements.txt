@@ -2,3 +2,5 @@ numpy
 rasterio
 geopandas
 requests
+h5py
+earthaccess
