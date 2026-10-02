@@ -4,6 +4,11 @@
    "key": "drought",
    "label": "Drought",
    "file": "data/drought.json"
+  },
+  {
+   "key": "forest",
+   "label": "Forest loss",
+   "file": "data/forest.json"
   }
  ],
  "planned": [
