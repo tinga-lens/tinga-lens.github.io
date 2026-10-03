@@ -1,36 +1,33 @@
 <!doctype html>
-<html lang="en" data-root="../" data-page="Flood">
+<html lang="en" data-root="../" data-page="Flood" data-layers="flood">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flood | Tinga Lens</title>
-<meta name="description" content="Satellite-observed flooding and landscapes susceptible to inundation across Ghana.">
+<meta name="description" content="Flooding seen by radar satellites in Ghana, by district.">
+<link rel="stylesheet" href="../vendor/leaflet.css">
 <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
-<main class="wrap narrow prose">
+<main class="wrap">
   <h1>Flood</h1>
-  <p class="lead">Satellite-observed flooding and landscapes susceptible to inundation across Ghana.</p>
-  <div class="card"><span class="badge dev">In development</span>
+  <p class="lead">Flooding seen by radar satellites, district by district. This page shows a past event, not a live flood map.</p>
+  <div class="card" id="wait" hidden><span class="badge dev">In development</span>
     <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
-  
-  <h2>What is planned</h2>
-  <p>The module will keep two things separate:</p>
-  <ul>
-    <li><strong>Observed flooding</strong> <span class="badge observed">Observed</span>: areas that radar satellites (Sentinel-1) saw under water after heavy rain, with permanent water shown separately.</li>
-    <li><strong>Flood susceptibility</strong> <span class="badge model">Modeled risk</span>: an estimate of which land is prone to flooding, trained on past observed floods and using elevation, slope, distance to rivers, rainfall, soils and land cover.</li>
-  </ul>
-  <h2>Order of work</h2>
-  <ol>
-    <li>Map observed flooding for a set of known flood events and check it against reports.</li>
-    <li>Publish observed flooding by district.</li>
-    <li>Train and test a susceptibility model on those observations, and publish it only after the test results are documented.</li>
-  </ol>
-  <h2>Planned data sources</h2>
-  <p>Sentinel-1 radar (Copernicus), Copernicus elevation model, CHIRPS rainfall, public land-cover and soil datasets. All are publicly available.</p>
-  <p><a class="btn solid" href="about.html#updates">Get updates when this is published</a></p>
+  <div id="app"></div>
+  <section class="notes prose">
+    <h2>About this module</h2>
+    <p><strong>Observed flooding</strong> <span class="badge observed">Observed</span> shows land that Sentinel-1 radar satellites saw under water during a named flood event, from the Copernicus Global Flood Monitoring service. Water that is normally there is not counted. Flooding under trees and between buildings is mostly invisible to radar, so the figures are a lower bound. <a href="methods.html#m-flood">Read the methods</a>.</p>
+    <p><strong>Flood susceptibility</strong> <span class="badge dev">In development</span> will estimate which land is prone to flooding. Nothing is published for it yet.</p>
+    <p>For flood warnings, follow the Ghana Meteorological Agency, the Ghana Hydrological Authority and NADMO.</p></section>
 </main>
+<script src="../vendor/leaflet.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/site.js"></script>
+<script>
+  // show the map only once real data has been published
+  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js"; document.body.append(s); })
+    .catch(() => { document.getElementById("wait").hidden = false; });
+</script>
 </body>
 </html>

@@ -7,7 +7,7 @@
       <span>${status.map(badge).join(" ")}</span><span class="go">Explore ${esc(kicker.toLowerCase())} →</span></a>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
-  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban"].map(load)).then(([dr, so, fi, fr, ve, fo, ur]) => {
+  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl]) => {
     const out = [];
 
     // Drought: rainfall and soil moisture, districts drier than normal
@@ -42,7 +42,11 @@
     // planned modules: no numbers until there is real data
     const soon = (k, title, href, text) => `<a class="card mod" href="${ROOT + href}"><span class="k">${k}</span><h3>${title}</h3>
       <div class="sub" style="margin:0">${text}</div><span><span class="badge dev">In development</span></span><span class="go">See the plan →</span></a>`;
-    out.push(soon("Flood", "Flooding and susceptibility", "pages/flood.html", "Satellite-observed flooding and flood-prone landscapes. No data is published yet."));
+    if (fl) {
+      const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
+      out.push(card("Flood", "Observed flooding", "pages/flood.html", line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts. Past event: ${fl.subtitle}`)
+        + `<div class="sub" style="margin:0">Not a live flood map.</div>`, ["observed"]));
+    } else out.push(soon("Flood", "Flooding and susceptibility", "pages/flood.html", "Satellite-observed flooding and flood-prone landscapes. No data is published yet."));
     if (ur) {
       const xs = ur.chart.x, sum = j => Object.values(ur.districts).reduce((a, x) => a + (x.v[j] || 0), 0), a0 = sum(0), a1 = sum(xs.length - 1);
       out.push(card("Urban", "Urban growth", "pages/urban.html", line(Math.round(a1).toLocaleString() + " km²", `built-up area across Ghana in ${xs[xs.length - 1]}, up ${Math.round((a1 / a0 - 1) * 100)}% since ${xs[0]}`)
