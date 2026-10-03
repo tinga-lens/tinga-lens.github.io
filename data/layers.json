@@ -31,6 +31,11 @@
    "file": "data/forest.json"
   },
   {
+   "key": "flood",
+   "label": "Observed flooding",
+   "file": "data/flood.json"
+  },
+  {
    "key": "urban",
    "label": "Urban growth",
    "file": "data/urban.json"
