@@ -58,11 +58,11 @@ CATS = [
     {"key": "s4", "label": "400 to 1,000", "note": "", "color": "#31a354", "max": 1000},
     {"key": "s5", "label": "Over 1,000", "note": "", "color": "#006d2c", "max": 1e12},
 ]
-COLS = ["gbifID", "datasetKey", "kingdom", "class", "species", "speciesKey", "decimalLatitude", "decimalLongitude",
+COLS = ["gbifID", "datasetKey", "kingdom", "phylum", "class", "species", "speciesKey", "decimalLatitude", "decimalLongitude",
         "coordinateUncertaintyInMeters", "year", "basisOfRecord", "occurrenceStatus"]
 
 
-def group_of(kingdom, cls):
+def group_of(kingdom, phylum, cls):
     if kingdom == "Plantae":
         return "Plants"
     if kingdom == "Fungi":
@@ -75,7 +75,7 @@ def group_of(kingdom, cls):
         return "Reptiles"
     if cls == "Amphibia":
         return "Amphibians"
-    if cls in FISH:
+    if cls in FISH or (phylum == "Chordata" and not isinstance(cls, str)):   # GBIF gives bony fish no class
         return "Fish"
     if cls == "Insecta":
         return "Insects"
@@ -158,7 +158,7 @@ def read_records(path):
 
 # ---------- Red List category and English name for each species ----------
 def lookups(s, keys):
-    cache_file = CACHE / "gbif_species.json"
+    cache_file = CACHE / "gbif_species_v2.json"
     known = json.loads(cache_file.read_text()) if cache_file.exists() else {}
     todo = [k for k in keys if k not in known]
     print(f"Species details: {len(known)} known, {len(todo)} to look up", flush=True)
@@ -173,8 +173,13 @@ def lookups(s, keys):
                 out["iucn"] = ""
             r = s.get(f"{API}/species/{k}/vernacularNames", params={"limit": 100}, timeout=30)
             if r.status_code == 200:
-                names = [v.get("vernacularName", "") for v in r.json().get("results", []) if v.get("language") == "eng"]
-                out["common"] = next((n.strip() for n in names if n and len(n) < 60), "")
+                names = [v.get("vernacularName", "").strip() for v in r.json().get("results", []) if v.get("language") == "eng"]
+                names = [n for n in names if 2 < len(n) < 60 and not n.isupper() and not any(ch.isdigit() for ch in n)]   # drop codes such as "AGPA"
+                tally = {}
+                for n in names:
+                    tally[n.lower()] = tally.get(n.lower(), 0) + 1
+                best = max(tally, key=lambda k: (tally[k], -len(k))) if tally else ""      # the name most sources agree on
+                out["common"] = best[:1].upper() + best[1:]
         except Exception:
             pass
         return k, out
@@ -217,7 +222,7 @@ def main():
     df["lon"] = pd.to_numeric(df["decimalLongitude"], errors="coerce").round(4)
     df = df[df["lat"].notna() & df["lon"].notna()]
     df["year"] = pd.to_numeric(df["year"], errors="coerce")
-    df.loc[(df["year"] < 1700) | (df["year"] > dt.date.today().year), "year"] = np.nan
+    df.loc[(df["year"] < 1800) | (df["year"] > dt.date.today().year), "year"] = np.nan
 
     # put each record in a district (records at sea or outside Ghana drop out here)
     gdf = load_districts()
@@ -231,7 +236,7 @@ def main():
     if used < 1000:
         sys.exit("Too few usable records; not publishing.")
 
-    df["group"] = [group_of(k, c) for k, c in zip(df["kingdom"], df["class"])]
+    df["group"] = [group_of(k, p, c) for k, p, c in zip(df["kingdom"], df["phylum"], df["class"])]
     df["place"] = df["lat"].astype(str) + "," + df["lon"].astype(str)
 
     # ---- species table ----
