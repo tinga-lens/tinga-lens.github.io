@@ -63,23 +63,27 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
 const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
 const map = L.map("map", { zoomSnap: 0.25, attributionControl: false });
-const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 14, opacity: 0.35 }).addTo(map);
-// satellite picture: Sentinel-2 cloudless 2016 by EOX (CC BY 4.0), a cloud-free mosaic at 10 m
-const sat = L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg", { maxZoom: 14 });
+const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17, maxNativeZoom: 17, opacity: 0.35 }).addTo(map);
+// satellite picture: Esri World Imagery (detailed enough to see streets and fields), with place names on top
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+const sat = L.layerGroup([
+  L.tileLayer(ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 17, maxNativeZoom: 17 }),
+  L.tileLayer(ESRI + "Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", { maxZoom: 17, maxNativeZoom: 17, pane: "shadowPane" }),
+]);
 let SAT = false, FILL = 1;             // FILL: how solid the district colours are
 const view = L.control({ position: "topright" });
 view.onAdd = () => {
   const box = L.DomUtil.create("div", "mapctl");
   box.innerHTML = `<div class="seg" style="margin:0"><button type="button" id="bm-map" aria-pressed="true">Map</button><button type="button" id="bm-sat" aria-pressed="false">Satellite</button></div>
-    <label id="fill-wrap" hidden>Colours <input type="range" id="fill" min="0" max="100" value="55" aria-label="How solid the district colours are"></label>
-    <div class="satnote" id="sat-note" hidden>Sentinel-2 cloudless 2016, <a href="https://s2maps.eu">s2maps.eu</a> by EOX (contains modified Copernicus Sentinel data)</div>`;
+    <label id="fill-wrap" hidden>Colours <input type="range" id="fill" min="0" max="100" value="25" aria-label="How solid the district colours are"></label>
+    <div class="satnote" id="sat-note" hidden>Imagery and place names: Esri, Maxar, Earthstar Geographics and the GIS User Community. Zoom in to see towns and forest.</div>`;
   L.DomEvent.disableClickPropagation(box); L.DomEvent.disableScrollPropagation(box);
   return box;
 };
 view.addTo(map);
 function basemap(on) {
   SAT = on;
-  if (on) { map.removeLayer(street); sat.addTo(map).bringToBack(); } else { map.removeLayer(sat); street.addTo(map).bringToBack(); }
+  if (on) { map.removeLayer(street); sat.addTo(map); } else { map.removeLayer(sat); street.addTo(map); }
   $("bm-map").setAttribute("aria-pressed", !on); $("bm-sat").setAttribute("aria-pressed", on);
   $("fill-wrap").hidden = $("sat-note").hidden = !on;
   FILL = on ? $("fill").value / 100 : 1;
