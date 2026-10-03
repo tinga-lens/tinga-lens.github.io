@@ -39,6 +39,9 @@ jobs:
           EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
           EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+          GBIF_USER: ${{ secrets.GBIF_USER }}
+          GBIF_PWD: ${{ secrets.GBIF_PWD }}
+          GBIF_EMAIL: ${{ secrets.GBIF_EMAIL }}
           FOREST: ${{ inputs.forest }}
         run: python scripts/update.py
       - name: Keep downloads for next time
