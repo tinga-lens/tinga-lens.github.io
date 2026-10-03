@@ -39,6 +39,11 @@
    "key": "urban",
    "label": "Urban growth",
    "file": "data/urban.json"
+  },
+  {
+   "key": "biodiversity",
+   "label": "Recorded species",
+   "file": "data/biodiversity.json"
   }
  ],
  "planned": [
