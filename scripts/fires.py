@@ -57,16 +57,17 @@ CATS = [
 
 
 def get(s, url):
-    for attempt in range(1, 5):
+    for attempt in range(1, 4):
         try:
-            r = s.get(url, timeout=120)
+            r = s.get(url, timeout=60)
             if r.status_code == 200:
                 return r.text
             msg = f"HTTP {r.status_code}"
         except Exception as e:
             msg = type(e).__name__
         print(f"  request failed ({msg}), attempt {attempt}", flush=True)
-        time.sleep(30 * attempt)       # also covers the FIRMS limit of 5000 requests per 10 minutes
+        if attempt < 3:
+            time.sleep(10 * attempt)
     return None
 
 
@@ -158,6 +159,7 @@ def load_real(gdf, today):
     ndays = (last_day - START).days + 1
     counts = np.zeros((ndays, len(gdf)), "int32")
     final_through = START - dt.timedelta(days=1)       # everything up to here is final and never re-read
+    cached_through = None                              # last day covered by the previous run
     if CACHE_FILE.exists():
         z = np.load(CACHE_FILE, allow_pickle=False)
         old = z["counts"]
@@ -165,6 +167,7 @@ def load_real(gdf, today):
             n = min(len(old), ndays)
             counts[:n] = old[:n]
             final_through = dt.date.fromisoformat(str(z["final_through"]))
+            cached_through = START + dt.timedelta(days=len(old) - 1)
 
     def save():
         CACHE.mkdir(exist_ok=True)
@@ -173,7 +176,7 @@ def load_real(gdf, today):
     d = final_through + dt.timedelta(days=1)
     total_chunks = max(0, ((last_day - d).days + CHUNK) // CHUNK)
     print(f"Reading {d} to {last_day}: about {total_chunks} request(s)")
-    done, failed, stalled = 0, 0, False
+    done, failed, stalled, in_a_row, first_gap = 0, 0, False, 0, None
     recent, first_recent = [], last_day - dt.timedelta(days=POINT_DAYS - 1)
     while d <= last_day:
         days = min(CHUNK, (last_day - d).days + 1)
@@ -193,8 +196,14 @@ def load_real(gdf, today):
                 df = pd.concat([a, b], ignore_index=True)
         if df is None:
             failed += 1
+            in_a_row += 1
             stalled = True                               # do not mark later days as final past a gap
+            first_gap = first_gap or d
+            if in_a_row >= 3:                            # FIRMS is not answering: stop asking, keep what we have
+                print("  FIRMS is not responding; stopping requests for this run.", flush=True)
+                break
         else:
+            in_a_row = 0
             counts[i0:i0 + days] = count_by_district(df, gdf, d, days)
             if end >= first_recent and not df.empty:
                 recent.append(df)
@@ -205,12 +214,21 @@ def load_real(gdf, today):
             save()
             print(f"  {done} requests done (up to {end})", flush=True)
         d = end + dt.timedelta(days=1)
-    save()
-    write_points(recent, gdf, first_recent, last_day)
-    if failed:
-        print(f"{failed} request(s) failed; those days will be read again next run.")
-    if failed > total_chunks / 2 and total_chunks > 4:
-        sys.exit("Most FIRMS requests failed; not publishing.")
+    if first_gap is None:
+        save()
+        write_points(recent, gdf, first_recent, last_day)
+    else:
+        # some days could not be read: publish only up to the last day that is complete
+        good = first_gap - dt.timedelta(days=1)
+        if cached_through is not None and cached_through > good:
+            good = min(cached_through, last_day)       # the previous run's data for those days is still valid
+        if good < START + dt.timedelta(days=400):
+            sys.exit("FIRMS could not be read and there is no earlier record to fall back on.")
+        last_day = good
+        counts = counts[:(last_day - START).days + 1]
+        save()
+        print(f"{failed} request(s) failed. Publishing fire data up to {last_day}; the missing days will be read next run. "
+              "The detection points were left as they were.")
     return counts, last_day, f"NASA FIRMS {SENSOR.replace('_', ' ')}"
 
 
