@@ -10,31 +10,31 @@
 <body>
 <main class="wrap narrow prose">
   <h1>About Tinga Lens</h1>
-  <p class="lead">An independent environmental monitoring initiative focused on Ghana.</p>
-  <p>Tinga Lens uses publicly available satellite observations, climate records and geospatial analysis to make environmental information easier to access and interpret. It monitors drought, fire, vegetation and forest change at national and district scales. Flooding and urban exposure are in development.</p>
-  <p>The platform is designed to support environmental awareness, research and evidence-informed decision-making. "Tinga" means land in Gurune, a language of Ghana's Upper East Region.</p>
+  <p class="lead">Independent maps of Ghana's land, water and weather, district by district.</p>
+  <p>Satellites record a great deal about Ghana every day, but most of it sits in files that are hard to open and harder to read. Tinga Lens takes those public records and turns them into plain maps and figures for each district: how dry it is, where fires are burning, how green the land is, how much forest has gone and how fast towns are growing.</p>
+  <p>It is meant for people who need to know what is happening on the land and do not have a remote sensing team: farmers' groups, district officers, journalists, students and researchers. "Tinga" means land in Gurune, a language of the Upper East Region.</p>
 
   <h2>What it is not</h2>
-  <p>Tinga Lens does not replace official warnings or emergency information. For those, consult the relevant Ghanaian authorities, such as the Ghana Meteorological Agency and the National Disaster Management Organisation.</p>
+  <p>Tinga Lens is not a warning service. For forecasts, warnings and emergencies, go to the Ghana Meteorological Agency and the National Disaster Management Organisation.</p>
 
   <h2>Independence</h2>
   <p id="founder">Tinga Lens is an independent project. It is not affiliated with any university, company or government agency.</p>
-  <p>The platform uses only publicly available datasets and processing code written for this project. It contains no university research code, unpublished models or restricted data.</p>
+  <p>Everything here comes from public datasets and from code written for this project. No university research code, unpublished models or restricted data are used.</p>
 
   <div id="contact-block" hidden>
     <h2>Get in touch</h2>
-    <p>If you work in agriculture, insurance, forestry, water or disaster response in Ghana, or you have seen something on the ground that agrees or disagrees with a map, please write.</p>
+    <p>If a map agrees or disagrees with what you have seen on the ground, please write and say so. That is how the maps get better. Messages from people working in farming, forestry, water, insurance or disaster response in Ghana are especially welcome.</p>
     <p id="contact"></p>
   </div>
 
   <div id="signup-block" hidden>
     <h2 id="updates">Get updates</h2>
-    <p>Leave your email to receive a short note when something notable shows up on the maps or a new module is published.</p>
+    <p>Leave your email and you will get a short note when the maps show something unusual or a new map is added.</p>
     <p><a class="btn solid" id="signup" href="#">Sign up for updates</a></p>
   </div>
 
   <h2>Using the data</h2>
-  <p>You are welcome to use the figures with a credit to Tinga Lens and to the original data source named on each product. See <a href="methods.html">Data &amp; methods</a> for sources, limits and versions.</p>
+  <p>You may use the figures. Please credit Tinga Lens and the original data source named on each map. See <a href="methods.html">Data &amp; methods</a> for sources, limits and versions.</p>
 </main>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const parts = [];
     if (s.contact_email) parts.push(`Email: <a href="mailto:${esc(s.contact_email)}">${esc(s.contact_email)}</a>`);
     if (s.linkedin_url) parts.push(`<a href="${esc(s.linkedin_url)}">LinkedIn</a>`);
-    if (parts.length) { $("contact").innerHTML = parts.join(" · "); $("contact-block").hidden = false; }
+    if (parts.length) { $("contact").innerHTML = parts.join(", "); $("contact-block").hidden = false; }
     if (s.signup_url) { $("signup").href = s.signup_url; $("signup-block").hidden = false; }
   }).catch(() => {});
 });

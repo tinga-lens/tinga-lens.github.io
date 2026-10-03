@@ -2,9 +2,8 @@
 (function () {
   const load = k => getJSON(`data/${k}.json`).catch(() => null);
   const n = o => Object.values(o).reduce((a, b) => a + b, 0);
-  const card = (kicker, title, href, body, status) => `<a class="card mod" href="${ROOT + href}">
-      <span class="k">${esc(kicker)}</span><h3>${esc(title)}</h3>${body}
-      <span>${status.map(badge).join(" ")}</span><span class="go">Explore ${esc(kicker.toLowerCase())} →</span></a>`;
+  const card = (kicker, title, href, body, status) => `<div class="stat">
+      <h3><a href="${ROOT + href}">${esc(kicker)}</a></h3>${body}</div>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
   Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl]) => {
@@ -40,8 +39,8 @@
     out.push(card("Vegetation", "Vegetation and forest change", "pages/vegetation.html", body || line("–", "No data yet"), ["condition", "observed"]));
 
     // planned modules: no numbers until there is real data
-    const soon = (k, title, href, text) => `<a class="card mod" href="${ROOT + href}"><span class="k">${k}</span><h3>${title}</h3>
-      <div class="sub" style="margin:0">${text}</div><span><span class="badge dev">In development</span></span><span class="go">See the plan →</span></a>`;
+    const soon = (k, title, href, text) => `<div class="stat"><h3><a href="${ROOT + href}">${k}</a></h3>
+      <div class="sub" style="margin:0">Not published yet.</div></div>`;
     if (fl) {
       const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
       out.push(card("Flood", "Observed flooding", "pages/flood.html", line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts. Past event: ${fl.subtitle}`)

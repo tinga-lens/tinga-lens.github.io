@@ -432,9 +432,9 @@ function render(key, d) {
   });
   const total = Object.keys(d.districts).length;
   const prod = TL.products[key];
-  $("status").innerHTML = prod ? `${badge(prod.status)} <span class="sub">${esc(prod.name)} · version ${esc(prod.version)}</span>` : "";
+  $("status").innerHTML = prod ? `${badge(prod.status)} <span class="sub">${esc(prod.name)}, version ${esc(prod.version)}</span>` : "";
   $("title").textContent = d.title;
-  $("subtitle").textContent = d.subtitle + " · " + total + " districts";
+  $("subtitle").textContent = d.subtitle + ". " + total + " districts";
   $("bar").innerHTML = d.categories.map(c => {
     const n = d.counts[c.key] || 0;
     return n ? `<div title="${esc(c.label)}: ${n} districts" style="width:${n / total * 100}%;background:${c.color}"></div>` : "";

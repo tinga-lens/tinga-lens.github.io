@@ -19,26 +19,21 @@
 <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-<section class="hero"><div class="wrap">
-  <h1>See Ghana's environment changing.</h1>
-  <p>Satellite and climate observations turned into locally relevant environmental information for every district in Ghana.</p>
-  <a class="btn solid big" href="#map-section">Explore the map</a>
-  <a class="btn big" href="#conditions">View current conditions</a>
-  <a class="btn big" id="signup" href="#" hidden>Get updates</a>
-</div></section>
 <main class="wrap">
-  <h2 id="conditions">Current conditions</h2>
-  <div class="cards" id="cards"><div class="card"><p class="sub" style="margin:0">Loading…</p></div></div>
-  <h2>Three kinds of information</h2>
-  <p class="lead">Every map on Tinga Lens says which of these it is.</p>
-  <div class="three">
-    <div class="card"><span class="badge observed">Observed</span><p class="sub" style="margin:8px 0 0">What a satellite recorded, such as a fire detection or tree cover loss.</p></div>
-    <div class="card"><span class="badge condition">Environmental condition</span><p class="sub" style="margin:8px 0 0">An observation compared with what is normal for that place and time of year.</p></div>
-    <div class="card"><span class="badge model">Modeled risk</span><p class="sub" style="margin:8px 0 0">A statistical estimate made by Tinga Lens. It is tested, but it is not an observation.</p></div>
-  </div>
-  <h2 id="map-section">National map</h2>
-  <p class="lead">Choose a layer, then click a district. Use the Year and Month boxes to look back.</p>
+  <h1>Environmental conditions across Ghana</h1>
+  <p class="lead">Rainfall, soil moisture, fires, vegetation, forest loss and built-up area for each of the 260 districts, worked out from public satellite records. Pick a layer and click a district.</p>
   <div id="app"></div>
+
+  <h2 id="conditions">Latest figures</h2>
+  <div class="stats" id="cards"><p class="sub">Loading…</p></div>
+
+  <h2>What the labels mean</h2>
+  <dl class="key">
+    <dt><span class="badge observed">Observed</span></dt><dd>Something a satellite recorded directly, such as a fire or lost tree cover.</dd>
+    <dt><span class="badge condition">Environmental condition</span></dt><dd>A measurement set against what is usual for that district at that time of year.</dd>
+    <dt><span class="badge model">Modeled risk</span></dt><dd>Our own estimate from a statistical model. We test it and publish the results, but it is not a measurement.</dd>
+  </dl>
+  <p><a class="btn" id="signup" href="#" hidden>Get updates by email</a></p>
 </main>
 <script src="vendor/leaflet.js"></script>
 <script src="js/config.js"></script>

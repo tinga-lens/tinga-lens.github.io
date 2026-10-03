@@ -38,9 +38,9 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
   foot.innerHTML = `<div class="wrap">
     <p id="foot-layer"></p>
     <p class="disclaimer"><strong>Important:</strong> ${esc(TL.disclaimer)}</p>
-    <p>Tinga Lens is an independent project. It uses only publicly available datasets and its own processing code.
+    <p>Tinga Lens is independent and uses only public datasets and its own code.
       Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0). Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
-      <a href="${ROOT}pages/methods.html">Data and methods</a> · <a href="${ROOT}pages/about.html">About and contact</a> · <a href="${TL.repo}">Code</a></p>
+      <a href="${ROOT}pages/methods.html">Data and methods</a>, <a href="${ROOT}pages/about.html">About and contact</a>, <a href="${TL.repo}">Code</a></p>
   </div>`;
   document.body.append(foot);
 })();
