@@ -11,10 +11,18 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
 
 (function () {
   const here = document.documentElement.dataset.page || "";
+  // browser tab icon
+  [["icon", "image/svg+xml", "assets/logo/favicon.svg"], ["alternate icon", "image/png", "assets/logo/favicon-32.png"], ["apple-touch-icon", "", "assets/logo/apple-touch-icon.png"]].forEach(([rel, type, href]) => {
+    if (document.querySelector(`link[rel="${rel}"]`)) return;
+    const l = document.createElement("link"); l.rel = rel; if (type) l.type = type; l.href = ROOT + href; document.head.append(l);
+  });
   const head = document.createElement("header");
   head.className = "site-head";
   head.innerHTML = `<div class="wrap">
-    <a class="brand" href="${ROOT || "./"}">Tinga <span>Lens</span></a>
+    <a class="brand" href="${ROOT || "./"}"><svg viewBox="0 0 120 120" width="30" height="30" aria-hidden="true">
+      <path d="M60 8 A52 52 0 1 1 8 60" fill="none" stroke="#F3F5F4" stroke-width="10" stroke-linecap="round"/>
+      <path d="M60 30 A30 30 0 1 1 30 60" fill="none" stroke="#74C69D" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="11" fill="#C9A98D"/><circle cx="23" cy="23" r="7" fill="#6CB8D8"/></svg><span>Tinga <em>Lens</em></span></a>
     <button class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">☰</button>
     <nav class="site-nav" id="site-nav" aria-label="Main">${TL.nav.map(([label, href]) =>
       `<a href="${ROOT + href || "./"}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</nav>

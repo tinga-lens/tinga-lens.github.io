@@ -22,8 +22,11 @@ h2{font-size:1.2rem;margin:26px 0 8px}
 /* ---------- header and navigation ---------- */
 .site-head{background:var(--head);color:var(--head-ink)}
 .site-head .wrap{display:flex;align-items:center;gap:8px 22px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
-.brand{font-size:1.3rem;font-weight:750;letter-spacing:.01em;color:var(--head-ink);text-decoration:none;white-space:nowrap}
-.brand span{color:#74c69d}
+@font-face{font-family:"Sora";font-weight:700;font-style:normal;font-display:swap;src:url("../assets/fonts/sora-latin-700-normal.woff2") format("woff2")}
+.brand{display:inline-flex;align-items:center;gap:9px;font-family:"Sora",system-ui,sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:-.01em;color:var(--head-ink);text-decoration:none;white-space:nowrap}
+.brand svg{flex:none}
+.hero h1{font-family:"Sora",system-ui,sans-serif;font-weight:700}
+.brand em{font-style:normal;color:#74c69d}
 .site-nav{display:flex;flex-wrap:wrap;gap:2px 4px;margin-left:auto}
 .site-nav a{color:var(--head-muted);text-decoration:none;font-size:.92rem;padding:6px 10px;border-radius:8px}
 .site-nav a:hover{color:var(--head-ink);background:rgba(255,255,255,.08)}
