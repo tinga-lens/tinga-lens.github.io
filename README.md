@@ -8,6 +8,7 @@ Open, satellite-based environmental monitoring for Ghana, by district.
 | Soil moisture (root zone vs normal) | NASA SMAP Level-4 | monthly | `scripts/smap.py` |
 | Vegetation (greenness vs normal) | NASA VIIRS NDVI | monthly | `scripts/vegetation.py` |
 | Fires (detections vs normal) | NASA FIRMS | weekly | `scripts/fires.py` |
+| Fire risk (experimental chance of fire, next 5 days) | Model on SMAP, FIRMS, CHIRPS, VIIRS | weekly | `scripts/fire_risk.py` |
 | Forest loss (tree cover loss rate) | Global Forest Change | yearly | `scripts/forest.py` |
 
 ## How it fits together
@@ -44,6 +45,7 @@ The first run of a new layer downloads its full record and can take one to three
 - **Soil moisture:** average root-zone (0-100 cm) moisture for the latest complete month, ranked against the same month in every earlier year since 2015. Each month is sampled on 6 days at 10:30 UTC.
 - **Vegetation:** average NDVI of good-quality 1 km pixels for the latest month, ranked against the same month in every earlier year since 2012. Not rated when under 30% of a district's pixels are usable.
 - **Fires:** VIIRS fire detections over the last 30 days, compared with the average for the same dates in earlier years since 2012. Low-confidence detections are dropped.
+- **Fire risk (experimental):** logistic regression for the chance of at least one fire detection in a district in the five days after each sampled day. Predictors are the district's usual fire frequency for those dates and departures from normal in surface and root-zone soil moisture, drying rate, and lagged rainfall and greenness. Every model is tested on fire years left out of training; `data/firerisk_report.json` holds the scores, coefficients and the test of whether root-zone moisture adds skill.
 - **Forest loss:** average yearly tree cover loss over the last 3 years, as a percentage of tree cover in 2000 (30 m pixels with at least 30% canopy). Not rated where tree cover in 2000 was under 5% of the district.
 
 Settings are at the top of each script.
