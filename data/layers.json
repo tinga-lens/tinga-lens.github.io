@@ -29,6 +29,11 @@
    "key": "forest",
    "label": "Forest loss",
    "file": "data/forest.json"
+  },
+  {
+   "key": "urban",
+   "label": "Urban growth",
+   "file": "data/urban.json"
   }
  ],
  "planned": [
