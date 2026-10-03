@@ -392,127 +392,214 @@
    "years": 13
   }
  },
+ "model_used": "M1",
+ "by_month": [
+  {
+   "month": "Jan",
+   "n": 16698,
+   "observed": 0.6474428075218589,
+   "predicted": 0.6328007145672937,
+   "auc": 0.8961088961901209,
+   "auc_season_only": 0.887037840605413,
+   "brier": 0.12558356950657232
+  },
+  {
+   "month": "Feb",
+   "n": 16698,
+   "observed": 0.7211642112827884,
+   "predicted": 0.7060582419571911,
+   "auc": 0.896756228986063,
+   "auc_season_only": 0.8872636351235738,
+   "brier": 0.11173409008421438
+  },
+  {
+   "month": "Mar",
+   "n": 16698,
+   "observed": 0.6666067792550006,
+   "predicted": 0.6556999430875355,
+   "auc": 0.8516976822732144,
+   "auc_season_only": 0.8502219925202219,
+   "brier": 0.13457703894288656
+  },
+  {
+   "month": "Apr",
+   "n": 17963,
+   "observed": 0.5087123531704059,
+   "predicted": 0.5032672600751614,
+   "auc": 0.8427367832362075,
+   "auc_season_only": 0.838811370133868,
+   "brier": 0.1616292019053442
+  },
+  {
+   "month": "May",
+   "n": 18216,
+   "observed": 0.21805006587615283,
+   "predicted": 0.22183673702525578,
+   "auc": 0.7980858638947781,
+   "auc_season_only": 0.7961469103579026,
+   "brier": 0.1353948916611132
+  },
+  {
+   "month": "Jun",
+   "n": 18216,
+   "observed": 0.045344751866491,
+   "predicted": 0.05753196884262252,
+   "auc": 0.7629703901521426,
+   "auc_season_only": 0.7342554792699041,
+   "brier": 0.04063920571289626
+  },
+  {
+   "month": "Jul",
+   "n": 18216,
+   "observed": 0.051108915239350024,
+   "predicted": 0.06058161532619533,
+   "auc": 0.8045406710710411,
+   "auc_season_only": 0.792054012049836,
+   "brier": 0.04337569836646423
+  },
+  {
+   "month": "Aug",
+   "n": 18216,
+   "observed": 0.10820158102766798,
+   "predicted": 0.11980791251824145,
+   "auc": 0.8400348294343075,
+   "auc_season_only": 0.8274632213260326,
+   "brier": 0.07742447124533176
+  },
+  {
+   "month": "Sep",
+   "n": 18216,
+   "observed": 0.09804567413263066,
+   "predicted": 0.10183324814591137,
+   "auc": 0.8190221299223895,
+   "auc_season_only": 0.7909185972727626,
+   "brier": 0.07348392260414362
+  },
+  {
+   "month": "Oct",
+   "n": 16698,
+   "observed": 0.12486525332375134,
+   "predicted": 0.13492166060219268,
+   "auc": 0.8726201875699194,
+   "auc_season_only": 0.85814531294283,
+   "brier": 0.06984958074463815
+  },
+  {
+   "month": "Nov",
+   "n": 16698,
+   "observed": 0.348065636603186,
+   "predicted": 0.3446612908821348,
+   "auc": 0.9363689087646623,
+   "auc_season_only": 0.93508166787399,
+   "brier": 0.08180896704397228
+  },
+  {
+   "month": "Dec",
+   "n": 16698,
+   "observed": 0.48766319319679,
+   "predicted": 0.48184500741143993,
+   "auc": 0.9227112988297365,
+   "auc_season_only": 0.9149970719904215,
+   "brier": 0.10598457767930347
+  }
+ ],
  "full_model_coefficients": [
   {
    "predictor": "season",
    "name": "Usual fire frequency for these dates",
-   "coefficient_per_sd": 2.706074892513812,
-   "odds_ratio_per_sd": 14.970399615745318
+   "coefficient_per_sd": 2.6996958664605786,
+   "odds_ratio_per_sd": 14.875206987494781
   },
   {
    "predictor": "sm_surf",
    "name": "Surface soil moisture",
-   "coefficient_per_sd": -0.4349605283808751,
-   "odds_ratio_per_sd": 0.6472902161666751
+   "coefficient_per_sd": -0.43373161846929065,
+   "odds_ratio_per_sd": 0.6480861665044519
   },
   {
    "predictor": "d_surf",
    "name": "Surface drying over 5 days",
-   "coefficient_per_sd": -0.09150279982261902,
-   "odds_ratio_per_sd": 0.9125587611457737
-  },
-  {
-   "predictor": "sm_root",
-   "name": "Root-zone soil moisture",
-   "coefficient_per_sd": 0.03314134063307589,
-   "odds_ratio_per_sd": 1.0336966322530339
-  },
-  {
-   "predictor": "d_root",
-   "name": "Root-zone drying over 5 days",
-   "coefficient_per_sd": 0.038171575883834595,
-   "odds_ratio_per_sd": 1.0389094693979524
-  },
-  {
-   "predictor": "rain3",
-   "name": "Rainfall, 3 months (lagged)",
-   "coefficient_per_sd": -0.1087642711203699,
-   "odds_ratio_per_sd": 0.8969418276716452
-  },
-  {
-   "predictor": "ndvi",
-   "name": "Greenness (lagged)",
-   "coefficient_per_sd": 0.008464467134696814,
-   "odds_ratio_per_sd": 1.0085003920267854
+   "coefficient_per_sd": -0.07254087469182934,
+   "odds_ratio_per_sd": 0.9300277312864413
   }
  ],
  "reliability_full_model": [
   {
    "predicted_from": 0,
    "predicted_to": 0.05,
-   "mean_predicted": 0.019148938797679402,
-   "observed": 0.024782287154564802,
-   "n": 66257
+   "mean_predicted": 0.019253783033344442,
+   "observed": 0.024439053972104306,
+   "n": 65960
   },
   {
    "predicted_from": 0.05,
    "predicted_to": 0.1,
-   "mean_predicted": 0.0722846738973767,
-   "observed": 0.07174595409889528,
-   "n": 24531
+   "mean_predicted": 0.07222642299215384,
+   "observed": 0.07109023926156836,
+   "n": 24701
   },
   {
    "predicted_from": 0.1,
    "predicted_to": 0.2,
-   "mean_predicted": 0.14386521489551582,
-   "observed": 0.13613131103262,
-   "n": 24065
+   "mean_predicted": 0.14381557656218413,
+   "observed": 0.1353151597384976,
+   "n": 24321
   },
   {
    "predicted_from": 0.2,
    "predicted_to": 0.3,
-   "mean_predicted": 0.2464797715607601,
-   "observed": 0.24013734658094682,
-   "n": 13688
+   "mean_predicted": 0.24652964207705513,
+   "observed": 0.2391368173810922,
+   "n": 13624
   },
   {
    "predicted_from": 0.3,
    "predicted_to": 0.4,
-   "mean_predicted": 0.34768134614293944,
-   "observed": 0.3307381193124368,
-   "n": 9890
+   "mean_predicted": 0.3475507737022572,
+   "observed": 0.33481781376518216,
+   "n": 9880
   },
   {
    "predicted_from": 0.4,
    "predicted_to": 0.5,
-   "mean_predicted": 0.4488324791835465,
-   "observed": 0.438073114072625,
-   "n": 8179
+   "mean_predicted": 0.4483786673928498,
+   "observed": 0.43813559322033896,
+   "n": 8260
   },
   {
    "predicted_from": 0.5,
    "predicted_to": 0.6,
-   "mean_predicted": 0.5495977006198655,
-   "observed": 0.5456933499239597,
-   "n": 7233
+   "mean_predicted": 0.5491603352880854,
+   "observed": 0.545240077713017,
+   "n": 7206
   },
   {
    "predicted_from": 0.6,
    "predicted_to": 0.7,
-   "mean_predicted": 0.6505363750744508,
-   "observed": 0.6492024202420242,
-   "n": 7272
+   "mean_predicted": 0.6502970288804722,
+   "observed": 0.6580931861028818,
+   "n": 7426
   },
   {
    "predicted_from": 0.7,
    "predicted_to": 0.8,
-   "mean_predicted": 0.7523119075703967,
-   "observed": 0.7485091743119267,
-   "n": 8720
+   "mean_predicted": 0.7523317429118658,
+   "observed": 0.7506277105683634,
+   "n": 8762
   },
   {
    "predicted_from": 0.8,
    "predicted_to": 0.9,
-   "mean_predicted": 0.8533581438169311,
-   "observed": 0.8498095711210465,
-   "n": 12078
+   "mean_predicted": 0.8533721733051711,
+   "observed": 0.852994856479177,
+   "n": 12054
   },
   {
    "predicted_from": 0.9,
    "predicted_to": 1.0,
-   "mean_predicted": 0.9585275743512051,
-   "observed": 0.965297605974083,
-   "n": 27318
+   "mean_predicted": 0.9585554036090348,
+   "observed": 0.9664163923512225,
+   "n": 27037
   }
  ],
  "notes": [
