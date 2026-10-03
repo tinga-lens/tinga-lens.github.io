@@ -6,6 +6,7 @@ Tinga Lens - run every layer that is due.
   soil       : every run, if a NASA Earthdata login is available
   vegetation : every run, if a NASA Earthdata login is available
   fires      : every run, if a FIRMS map key is available
+  fire risk  : every run, after soil moisture and fires (it reads what they saved)
   forest     : only when asked (FOREST=true) or when it has never been built,
                because the source changes once a year and the download is large
 
@@ -29,6 +30,8 @@ if os.environ.get("FIRMS_MAP_KEY"):
     jobs.append(("fires", "fires.py"))
 else:
     print("Skipping fires: no FIRMS_MAP_KEY set.")
+if earthdata and os.environ.get("FIRMS_MAP_KEY"):
+    jobs.append(("fire risk", "fire_risk.py"))      # needs the soil moisture and fires records; downloads nothing
 if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").exists():
     jobs.append(("forest", "forest.py"))
 else:

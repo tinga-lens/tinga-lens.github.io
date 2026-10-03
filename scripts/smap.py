@@ -22,6 +22,7 @@ Run:
 """
 import argparse
 import datetime as dt
+import json
 import sys
 from pathlib import Path
 
@@ -29,7 +30,7 @@ import geopandas as gpd
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import BBOX, CACHE, MON, WETNESS, load_districts, wetness_category, write_layer, ym_text  # noqa: E402
+from common import BBOX, CACHE, DATA, MON, WETNESS, load_districts, wetness_category, write_layer, ym_text  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 SHORT_NAME = "SPL4SMGP"
@@ -281,13 +282,47 @@ def main():
             "c": ["normal" if h is None else wetness_category(h[3][i]) for h in hist],
         }
 
+    # full monthly record for every district, so the website can show any past month or year
+    def series(x):
+        return {row.shapeID: [None if np.isnan(v) else round(float(v), 4) for v in x[:, i]] for i, row in gdf.iterrows()}
+
+    (DATA / "soil_history.json").write_text(json.dumps({
+        "months": [f"{yy}-{mm:02d}" for (yy, mm) in months],
+        "min_years": MIN_REF_YEARS,
+        "days_file": "data/soil_days.json",
+        "sample_days": SAMPLE_DAYS,
+        "note": (f"Pick a month, or one of the days sampled in it. The satellite product is read every five days "
+                 f"(on the {', '.join(str(d) for d in SAMPLE_DAYS)} of each month), so these stand in for weeks."),
+        "series": [
+            {"key": "root", "label": "Root zone (0–100 cm)", "short": "Root zone", "noun": "root-zone soil moisture", "unit": "m³/m³"},
+            {"key": "surface", "label": "Surface (0–5 cm)", "short": "Surface", "noun": "surface soil moisture", "unit": "m³/m³"},
+        ],
+        "values": {"root": series(root), "surface": series(surf)},
+    }, separators=(",", ":"), ensure_ascii=False))
+    print(f"Wrote data/soil_history.json: {len(months)} months")
+
+    # every sampled day (one every five days), including the month still in progress
+    day_keys = sorted(have)
+
+    def day_series(which):
+        x = np.array([[np.mean(have[k][which].ravel()[c]) for c in cells] for k in day_keys])
+        return {row.shapeID: [None if np.isnan(v) else round(float(v), 3) for v in x[:, i]] for i, row in gdf.iterrows()}
+
+    (DATA / "soil_days.json").write_text(json.dumps({
+        "days": [f"{k[:4]}-{k[4:6]}-{k[6:]}" for k in day_keys],
+        "values": {"root": day_series(0), "surface": day_series(1)},
+    }, separators=(",", ":")))
+    print(f"Wrote data/soil_days.json: {len(day_keys)} sampled days")
+
     write_layer("soil", {
+        "history": "data/soil_history.json",
         "label": "Soil moisture", "title": "Root-zone soil moisture compared with normal",
         "subtitle": f"{ym_text(label)}, against {MON[m - 1]} in {n} earlier years",
         "source": source, "demo": bool(args.demo), "categories": cats,
-        "how": (f"Each district shows the average moisture in the top metre of soil for {ym_text(label)}, compared with "
-                f"{MON[m - 1]} in each earlier year since 2015. \"Very dry\" means this year ranks in the driest 10% of "
-                "those years, \"dry\" in the driest 30%, and the same in reverse for \"wet\" and \"very wet\"."),
+        "how": ("Each district shows the average moisture in the top metre of soil for the month shown, compared with the "
+                "same month in every other year since 2015. \"Very dry\" means that month ranks in the driest 10% of "
+                "those years, \"dry\" in the driest 30%, and the same in reverse for \"wet\" and \"very wet\". "
+                "Use the Year and Month boxes to look at any month since April 2015."),
         "limits": [
             "The values come from NASA's SMAP Level-4 product, which blends satellite observations into a land model. It is an estimate, not a direct measurement at depth.",
             f"The SMAP record starts in 2015, so \"normal\" rests on only {n} earlier years. Rankings are coarser than for rainfall.",
