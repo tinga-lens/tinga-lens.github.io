@@ -1,25 +1,40 @@
 // Tinga Lens - district profiles: every product for one district on one page.
 (function () {
   const keys = Object.keys(TL.products);
-  let layers = {}, geo = null, map = null, shapes = {}, current = null;
+  let layers = {}, geo = null, map = null, shapes = {}, current = null, REG = {}, all = null;
 
   Promise.all([getJSON("data/districts.geojson"), ...keys.map(k => getJSON(`data/${k}.json`).catch(() => null))]).then(([g, ...ls]) => {
     geo = g;
     keys.forEach((k, i) => { if (ls[i]) layers[k] = ls[i]; });
     const names = g.features.map(f => f.properties.shapeName).sort();
-    $("names").innerHTML = names.map(n => `<option value="${esc(n)}">`).join("");
-    $("pick").innerHTML = `<option value="">Choose a district…</option>` + names.map(n => `<option>${esc(n)}</option>`).join("");
+    const idOf = Object.fromEntries(g.features.map(f => [f.properties.shapeName, f.properties.shapeID]));
+    const fill = () => {                                  // the district list follows the chosen region
+      const r = $("region").value, list = names.filter(n => !r || REG[idOf[n]] === r);
+      $("pick").innerHTML = `<option value="">Choose a district…</option>` + list.map(n => `<option>${esc(n)}</option>`).join("");
+      if (current && list.includes(current.name)) $("pick").value = current.name;
+    };
+    fill();
+    getJSON("data/regions.json").then(r => {
+      REG = r;
+      $("region").innerHTML += [...new Set(Object.values(r))].sort().map(n => `<option>${esc(n)}</option>`).join("");
+      if (current) { $("region").value = REG[current.id] || ""; fill(); }
+    }).catch(() => { $("region").hidden = true; document.querySelector('label[for="region"]').hidden = true; });
+    $("region").addEventListener("change", () => {
+      fill();
+      const r = $("region").value; let b = null;
+      Object.entries(shapes).forEach(([n, l]) => { if (!r || REG[idOf[n]] === r) b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); });
+      if (b && !(current && REG[current.id] === r)) map.fitBounds(b, { padding: [6, 6] });
+    });
 
     map = L.map("mini", { zoomSnap: 0.25, attributionControl: false, scrollWheelZoom: false });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, opacity: 0.45 }).addTo(map);
-    const all = L.geoJSON(g, {
+    all = L.geoJSON(g, {
       style: { fillColor: "#9fb0ad", fillOpacity: 0.25, color: "#55605c", weight: 0.5 },
       onEachFeature: (f, l) => { shapes[f.properties.shapeName] = l; l.bindTooltip(f.properties.shapeName, { sticky: true }); l.on("click", () => show(f.properties.shapeName)); },
     }).addTo(map);
     map.fitBounds(all.getBounds(), { padding: [6, 6] });
 
     const go = v => { const hit = names.find(n => n.toLowerCase() === v.trim().toLowerCase()); if (hit) show(hit); };
-    $("search").addEventListener("change", e => go(e.target.value));
     $("pick").addEventListener("change", e => go(e.target.value));
     $("download").addEventListener("click", download);
     window.addEventListener("hashchange", () => go(decodeURIComponent(location.hash.slice(1))));
@@ -33,7 +48,8 @@
     if (!f) return;
     current = { name, id: f.properties.shapeID };
     history.replaceState(null, "", "#" + encodeURIComponent(name));
-    $("search").value = name; $("pick").value = name;
+    if (REG[current.id] && $("region").value !== REG[current.id]) { $("region").value = REG[current.id]; $("region").dispatchEvent(new Event("change")); }
+    $("pick").value = name;
     Object.values(shapes).forEach(l => l.setStyle({ fillColor: "#9fb0ad", fillOpacity: 0.25, color: "#55605c", weight: 0.5 }));
     shapes[name].setStyle({ fillColor: "#2D6A4F", fillOpacity: 0.7, color: "#111", weight: 2 }).bringToFront();
     map.fitBounds(shapes[name].getBounds().pad(2.2));
