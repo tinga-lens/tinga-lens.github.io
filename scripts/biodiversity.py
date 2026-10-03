@@ -38,7 +38,7 @@ from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 API = os.environ.get("TINGA_GBIF_API", "https://api.gbif.org/v1")
-INCLUDE_NONCOMMERCIAL = False           # True adds records under CC BY-NC: more mammals, but the layer may then not be used commercially
+INCLUDE_NONCOMMERCIAL = True            # True adds records under CC BY-NC: more mammals, but the layer may then not be used commercially
 LICENSES = ["CC0_1_0", "CC_BY_4_0"] + (["CC_BY_NC_4_0"] if INCLUDE_NONCOMMERCIAL else [])
 MAX_UNCERTAINTY_M = 25000               # records whose position is vaguer than this are left out
 SKIP_BASIS = {"FOSSIL_SPECIMEN", "LIVING_SPECIMEN"}   # fossils, and zoo or garden specimens
