@@ -12,6 +12,9 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
         <p class="sub" id="subtitle"></p>
         <div id="time" hidden>
           <div class="ctl">
+            <label>Region <select id="region"><option value="">All of Ghana</option></select></label>
+          </div>
+          <div class="ctl">
             <label>Year <select id="yr"></select></label>
             <label id="mo-wrap">Month <select id="mo"></select></label>
             <label id="dy-wrap" hidden>Day <select id="dy"></select></label>
@@ -87,7 +90,7 @@ function basemap(on) {
   $("bm-map").setAttribute("aria-pressed", !on); $("bm-sat").setAttribute("aria-pressed", on);
   $("fill-wrap").hidden = $("sat-note").hidden = !on;
   FILL = on ? $("fill").value / 100 : 1;
-  if (geoLayer) geoLayer.setStyle({ fillOpacity: 0.9 * FILL, color: on ? "#ffffff" : "#55605c" });
+  if (FULL) render(FULL.key, FULL);
 }
 $("bm-map").addEventListener("click", () => basemap(false));
 $("bm-sat").addEventListener("click", () => basemap(true));
@@ -100,6 +103,14 @@ let BASE = null, REC = null, DAYS = null, VIEW = "", recCache = {}, daysCache = 
 let POINTS = null, pointDays = 0;            // individual fire detections (last few days), if published
 const pts = L.layerGroup().addTo(map), canvas = L.canvas({ padding: 0.5 });
 let MODE = "estimate";                       // fire risk map: "estimate" or "happened"
+let REGION = "", REGIONS = {}, FULL = null;  // chosen region, district -> region, and the whole-country view being shown
+const inRegion = id => !REGION || REGIONS[id] === REGION;
+function regionBounds() {
+  if (!REGION) return geoLayer.getBounds();
+  let b = null;
+  Object.entries(shapes).forEach(([id, l]) => { if (inRegion(id)) b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); });
+  return b || geoLayer.getBounds();
+}
 
 Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).then(([geo, man]) => {
   geoLayer = L.geoJSON(geo, {
@@ -111,6 +122,15 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
     },
   }).addTo(map);
   map.fitBounds(geoLayer.getBounds(), { padding: [8, 8] });
+  getJSON("data/regions.json").then(r => {
+    REGIONS = r;
+    $("region").innerHTML += [...new Set(Object.values(r))].sort().map(n => `<option>${esc(n)}</option>`).join("");
+  }).catch(() => { $("region").closest(".ctl").hidden = true; });
+  $("region").addEventListener("change", e => {
+    REGION = e.target.value; selected = null;
+    map.fitBounds(regionBounds(), { padding: [12, 12] });
+    if (FULL) render(FULL.key, FULL);
+  });
   map.setMaxBounds(geoLayer.getBounds().pad(0.6));
   map.setMinZoom(map.getZoom() - 0.5);
 
@@ -452,8 +472,17 @@ function render(key, d) {
   $("demo").style.display = d.demo ? "block" : "none";
   color = Object.fromEntries(d.categories.map(c => [c.key, c.color]));
   label = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
+  FULL = d;
+  if (REGION) {                         // keep only the chosen region; the legend, ranking and downloads follow
+    const districts = Object.fromEntries(Object.entries(d.districts).filter(([id]) => inRegion(id))), counts = {};
+    Object.values(districts).forEach(x => counts[x.cat] = (counts[x.cat] || 0) + 1);
+    d = { ...d, districts, counts, marks: d.marks && d.marks.filter(inRegion), region: REGION };
+    D = d;
+  }
   geoLayer.eachLayer(l => {
     const x = d.districts[l.feature.properties.shapeID];
+    if (!x && REGION) return l.setStyle({ fillColor: "#999", fillOpacity: 0.08, color: SAT ? "#ffffff" : "#55605c", weight: 0.3 });
+    l.setStyle({ fillOpacity: 0.9 * FILL });
     l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: 0.6 });
   });
   dots.clearLayers();
@@ -464,7 +493,7 @@ function render(key, d) {
   const prod = TL.products[key];
   $("status").innerHTML = prod ? `${badge(prod.status)} <span class="sub">${esc(prod.name)}, version ${esc(prod.version)}</span>` : "";
   $("title").textContent = d.title;
-  $("subtitle").textContent = d.subtitle + ". " + total + " districts";
+  $("subtitle").textContent = d.subtitle + ". " + total + " districts" + (REGION ? ` in ${REGION} Region` : "");
   $("bar").innerHTML = d.categories.map(c => {
     const n = d.counts[c.key] || 0;
     return n ? `<div title="${esc(c.label)}: ${n} districts" style="width:${n / total * 100}%;background:${c.color}"></div>` : "";
@@ -512,7 +541,9 @@ function saveCSV(lines, name) {
 // The map as a picture. It is drawn fresh here (not copied from the screen), with the Tinga Lens
 // name printed across it, so the name is part of the picture itself.
 function downloadImage() {
-  const W = 1600, H = 1900, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const W = 1600, rb = regionBounds(), aspect = (rb.getNorth() - rb.getSouth()) / ((rb.getEast() - rb.getWest()) * Math.cos((rb.getNorth() + rb.getSouth()) / 2 * Math.PI / 180));
+  const H = Math.round(260 + Math.max(Math.min(1060 * aspect, 1390), 80 + D.categories.length * 68) + 250);   // tall for Ghana, shorter for a wide region
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d"), SERIF = '"Source Serif 4", Georgia, serif', SANS = '"Source Sans 3", Arial, sans-serif';
   g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
   const wrap = (text, x, y, maxW, lh) => {            // returns the y after the last line
@@ -525,16 +556,17 @@ function downloadImage() {
   };
   g.fillStyle = "#1B2B24"; g.textBaseline = "top";
   g.font = `600 54px ${SERIF}`; let y = wrap(D.title, 70, 60, W - 140, 62);
-  g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(D.subtitle, 70, y + 6, W - 140, 38);
+  g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(D.subtitle + (REGION ? `. ${REGION} Region` : ""), 70, y + 6, W - 140, 38);
 
   // map area
   const top = y + 24, bottom = H - 250, left = 70, right = W - 470;
-  const b = geoLayer.getBounds(), k = Math.cos((b.getNorth() + b.getSouth()) / 2 * Math.PI / 180);
+  const b = regionBounds(), k = Math.cos((b.getNorth() + b.getSouth()) / 2 * Math.PI / 180);
   const s = Math.min((right - left) / ((b.getEast() - b.getWest()) * k), (bottom - top) / (b.getNorth() - b.getSouth()));
   const ox = left + ((right - left) - (b.getEast() - b.getWest()) * k * s) / 2;
   const X = lon => ox + (lon - b.getWest()) * k * s, Y = lat => top + (b.getNorth() - lat) * s;
   geoLayer.eachLayer(l => {
     const f = l.feature, x = D.districts[f.properties.shapeID];
+    if (!x && REGION) return;
     const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
     g.beginPath();
     polys.forEach(p => p.forEach(ring => { ring.forEach(([lon, lat], i) => i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat))); g.closePath(); }));
@@ -578,7 +610,7 @@ function downloadImage() {
   c.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `tinga-lens-${BASE.key}${VIEW ? "-" + VIEW : ""}.png`;
+    a.download = `tinga-lens-${BASE.key}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}${VIEW ? "-" + VIEW : ""}.png`;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }, "image/png");
@@ -593,7 +625,7 @@ function download() {                  // the map as shown
     lines.push([x.name, label[x.cat], x.big, x.big_note].concat(cols.map(c => m[c] ?? "")).map(q).join(","));
   });
   lines.push("", credit());
-  saveCSV(lines, `tinga-lens-${D.key}-${REC && VIEW ? VIEW : D.updated}.csv`);
+  saveCSV(lines, `tinga-lens-${D.key}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}-${REC && VIEW ? VIEW : D.updated}.csv`);
 }
 
 function downloadAll() {               // every district and every period on record
