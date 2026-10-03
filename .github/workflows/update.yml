@@ -9,6 +9,10 @@ on:
         description: "Rebuild forest loss (large download, needed once a year)"
         type: boolean
         default: false
+      biodiversity:
+        description: "Rebuild biodiversity now (otherwise once a month)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -43,6 +47,7 @@ jobs:
           GBIF_PWD: ${{ secrets.GBIF_PWD }}
           GBIF_EMAIL: ${{ secrets.GBIF_EMAIL }}
           FOREST: ${{ inputs.forest }}
+          BIODIVERSITY: ${{ inputs.biodiversity }}
         run: python scripts/update.py
       - name: Keep downloads for next time
         uses: actions/cache/save@v4
