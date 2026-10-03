@@ -21,6 +21,11 @@
    "file": "data/fires.json"
   },
   {
+   "key": "firerisk",
+   "label": "Fire risk",
+   "file": "data/firerisk.json"
+  },
+  {
    "key": "forest",
    "label": "Forest loss",
    "file": "data/forest.json"
