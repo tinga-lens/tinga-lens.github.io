@@ -40,6 +40,8 @@ CHUNK = 5                        # days per request (FIRMS allows at most 5)
 QUIET = 3                        # under this many detections now and normally, a district is "quiet"
 MIN_REF_YEARS = 5
 SAVE_EVERY = 50                  # save progress after this many requests
+POINT_DAYS = 7                   # individual detections are published for this many recent days
+POINT_LIMIT = 15000              # most detections published (the strongest are kept if there are more)
 API = os.environ.get("TINGA_FIRMS_BASE", "https://firms.modaps.eosdis.nasa.gov/api")
 # --------------------------------------------------------------------------
 CACHE_FILE = CACHE / "fires.npz"
@@ -114,6 +116,33 @@ def count_by_district(df, gdf, day0, ndays):
     return out
 
 
+def write_points(frames, gdf, first, last):
+    """Publish each recent detection (place, time, strength) for the map."""
+    cols = ["lat", "lon", "date", "time", "confidence", "frp", "daynight", "district"]
+    rows, capped = [], False
+    if frames:
+        df = pd.concat(frames, ignore_index=True)
+        df = df[(df["acq_date"] >= first.isoformat()) & (df["acq_date"] <= last.isoformat())]
+        if len(df):
+            pts = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["longitude"], df["latitude"]), crs=gdf.crs)
+            hit = gpd.sjoin(pts, gdf[["shapeName", "geometry"]], predicate="within")      # keeps detections inside Ghana only
+            if len(hit) > POINT_LIMIT and "frp" in hit:
+                hit, capped = hit.sort_values("frp", ascending=False).head(POINT_LIMIT), True
+            for _, r in hit.sort_values("acq_date").iterrows():
+                t = r.get("acq_time", "")
+                t = f"{int(t):04d}" if str(t).strip() not in ("", "nan") else ""
+                frp = r.get("frp", "")
+                rows.append([round(float(r["latitude"]), 4), round(float(r["longitude"]), 4), r["acq_date"],
+                             f"{t[:2]}:{t[2:]}" if t else "", str(r.get("confidence", "")),
+                             "" if pd.isna(frp) or frp == "" else round(float(frp), 1),
+                             "" if pd.isna(r.get("daynight", "")) else str(r.get("daynight", "")), r["shapeName"]])
+    (DATA / "fire_points.json").write_text(json.dumps({
+        "through": last.isoformat(), "days": POINT_DAYS, "capped": capped, "fields": cols, "points": rows,
+        "source": f"NASA FIRMS {SENSOR.replace('_', ' ')}, low-confidence detections removed",
+    }, separators=(",", ":")))
+    print(f"Wrote data/fire_points.json: {len(rows)} detections, {first} to {last}")
+
+
 def load_real(gdf, today):
     import requests
     key = os.environ.get("FIRMS_MAP_KEY", "").strip()
@@ -145,6 +174,7 @@ def load_real(gdf, today):
     total_chunks = max(0, ((last_day - d).days + CHUNK) // CHUNK)
     print(f"Reading {d} to {last_day}: about {total_chunks} request(s)")
     done, failed, stalled = 0, 0, False
+    recent, first_recent = [], last_day - dt.timedelta(days=POINT_DAYS - 1)
     while d <= last_day:
         days = min(CHUNK, (last_day - d).days + 1)
         end = d + dt.timedelta(days=days - 1)
@@ -166,6 +196,8 @@ def load_real(gdf, today):
             stalled = True                               # do not mark later days as final past a gap
         else:
             counts[i0:i0 + days] = count_by_district(df, gdf, d, days)
+            if end >= first_recent and not df.empty:
+                recent.append(df)
             if end <= sp_last and not stalled:
                 final_through = end
         done += 1
@@ -174,6 +206,7 @@ def load_real(gdf, today):
             print(f"  {done} requests done (up to {end})", flush=True)
         d = end + dt.timedelta(days=1)
     save()
+    write_points(recent, gdf, first_recent, last_day)
     if failed:
         print(f"{failed} request(s) failed; those days will be read again next run.")
     if failed > total_chunks / 2 and total_chunks > 4:

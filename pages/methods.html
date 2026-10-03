@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Data & Methods">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data and methods | Tinga Lens</title>
+<meta name="description" content="Sources, methods, limits, versions and validation for every Tinga Lens product.">
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<main class="wrap prose">
+  <h1>Data &amp; methods</h1>
+  <p class="lead">Where every number comes from, how it is calculated, what it cannot tell you, and how it has been tested.</p>
+  <div class="three">
+    <div class="card"><span class="badge observed">Observed</span><p class="sub" style="margin:8px 0 0">What a satellite recorded, such as a fire detection or tree cover loss.</p></div>
+    <div class="card"><span class="badge condition">Environmental condition</span><p class="sub" style="margin:8px 0 0">An observation compared with what is normal for that place and time of year.</p></div>
+    <div class="card"><span class="badge model">Modeled risk</span><p class="sub" style="margin:8px 0 0">A statistical estimate made by Tinga Lens. It is tested, but it is not an observation.</p></div>
+  </div>
+  <h2>Products</h2>
+  <div class="card scroll"><table class="t">
+    <thead><tr><th>Product</th><th>Module</th><th>Kind</th><th>Primary source</th><th>Resolution</th><th>Updates</th><th>Baseline</th><th>Version</th><th>Last updated</th></tr></thead>
+    <tbody id="products"><tr><td colspan="9">Loading…</td></tr></tbody>
+  </table></div>
+  <p class="sub">Results are averaged over Ghana's 260 districts (2019 boundaries from geoBoundaries, CC BY 4.0).</p>
+
+  <h2 id="methods">Method for each product</h2>
+  <div id="sections"></div>
+
+  <h2 id="validation">Validation</h2>
+  <div id="validation-body"><div id="validation"><p class="sub">Loading…</p></div></div>
+  <h3>Observed and condition products</h3>
+  <p>The rainfall, soil moisture, vegetation, fire detection and tree cover products come from published datasets that their producers have validated. Tinga Lens has not yet carried out its own systematic comparison against ground measurements in Ghana. Until it does, treat the maps as guides. Reports from the ground that agree or disagree with a map are welcome: see the <a href="about.html">About page</a>.</p>
+
+  <h2 id="versions">Versions and metadata</h2>
+  <p>Each product has a version number, shown on its map and in every download. A method never changes silently: changes are recorded in the <a href="https://github.com/tinga-lens/tinga-lens.github.io/blob/main/docs/changelog.md">changelog</a>.</p>
+  <p>Each product carries the same set of descriptive fields. For example:</p>
+  <div class="formula" id="meta">Loading…</div>
+
+  <h2 id="processing">How the data are processed</h2>
+  <p>Every Monday, programs in the public code repository download the newest data from each source, average it over each district, compare it with the record, and publish the results as small files that these pages read. The processing code is written for this project and uses only publicly available datasets.</p>
+  <p>Downloads are available as CSV from every map and district profile. Each file names its source, date and product version.</p>
+</main>
+<script src="../js/config.js"></script>
+<script src="../js/site.js"></script>
+<script src="../js/methods.js"></script>
+</body>
+</html>

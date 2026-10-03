@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="About">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About | Tinga Lens</title>
+<meta name="description" content="What Tinga Lens is, who runs it and how to get in touch.">
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<main class="wrap narrow prose">
+  <h1>About Tinga Lens</h1>
+  <p class="lead">An independent environmental monitoring initiative focused on Ghana.</p>
+  <p>Tinga Lens uses publicly available satellite observations, climate records and geospatial analysis to make environmental information easier to access and interpret. It monitors drought, fire, vegetation and forest change at national and district scales. Flooding and urban exposure are in development.</p>
+  <p>The platform is designed to support environmental awareness, research and evidence-informed decision-making. "Tinga" means land in Gurune, a language of Ghana's Upper East Region.</p>
+
+  <h2>What it is not</h2>
+  <p>Tinga Lens does not replace official warnings or emergency information. For those, consult the relevant Ghanaian authorities, such as the Ghana Meteorological Agency and the National Disaster Management Organisation.</p>
+
+  <h2>Independence</h2>
+  <p id="founder">Tinga Lens is an independent project. It is not affiliated with any university, company or government agency.</p>
+  <p>The platform uses only publicly available datasets and processing code written for this project. It contains no university research code, unpublished models or restricted data.</p>
+
+  <div id="contact-block" hidden>
+    <h2>Get in touch</h2>
+    <p>If you work in agriculture, insurance, forestry, water or disaster response in Ghana, or you have seen something on the ground that agrees or disagrees with a map, please write.</p>
+    <p id="contact"></p>
+  </div>
+
+  <div id="signup-block" hidden>
+    <h2 id="updates">Get updates</h2>
+    <p>Leave your email to receive a short note when something notable shows up on the maps or a new module is published.</p>
+    <p><a class="btn solid" id="signup" href="#">Sign up for updates</a></p>
+  </div>
+
+  <h2>Using the data</h2>
+  <p>You are welcome to use the figures with a credit to Tinga Lens and to the original data source named on each product. See <a href="methods.html">Data &amp; methods</a> for sources, limits and versions.</p>
+</main>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  getJSON("data/site.json").then(s => {
+    if (s.founder_name) {
+      const who = s.founder_url ? `<a href="${esc(s.founder_url)}">${esc(s.founder_name)}</a>` : esc(s.founder_name);
+      $("founder").innerHTML = `Tinga Lens was started by ${who}${s.founder_line ? ", " + esc(s.founder_line) : ""}. It is an independent project and is not affiliated with any university, company or government agency.`;
+    }
+    const parts = [];
+    if (s.contact_email) parts.push(`Email: <a href="mailto:${esc(s.contact_email)}">${esc(s.contact_email)}</a>`);
+    if (s.linkedin_url) parts.push(`<a href="${esc(s.linkedin_url)}">LinkedIn</a>`);
+    if (parts.length) { $("contact").innerHTML = parts.join(" · "); $("contact-block").hidden = false; }
+    if (s.signup_url) { $("signup").href = s.signup_url; $("signup-block").hidden = false; }
+  }).catch(() => {});
+});
+</script>
+<script src="../js/config.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>

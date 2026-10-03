@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Districts">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>District profiles | Tinga Lens</title>
+<meta name="description" content="Every Tinga Lens product for one district of Ghana on a single page.">
+<link rel="stylesheet" href="../vendor/leaflet.css">
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<main class="wrap">
+  <h1>District profiles</h1>
+  <p class="lead">Everything Tinga Lens publishes for one district, on one page.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <input type="search" id="search" list="names" placeholder="Search district…" aria-label="Search district">
+        <datalist id="names"></datalist>
+        <select class="big" id="pick" aria-label="Choose a district" style="margin:0"></select>
+      </div>
+      <div id="head" hidden style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:4px 0 0">
+        <h2 id="dname" style="margin:10px 0;font-size:1.5rem"></h2>
+        <button class="btn" id="download" type="button" style="margin-left:auto">Download this profile (CSV)</button>
+      </div>
+    </div>
+    <div id="mini" role="application" aria-label="Map showing the selected district"></div>
+  </div>
+  <div id="profile"><p class="sub" style="margin-top:14px">Search for a district, pick one from the list, or click one on the map.</p></div>
+</main>
+<script src="../vendor/leaflet.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/site.js"></script>
+<script src="../js/districts.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Flood">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flood | Tinga Lens</title>
+<meta name="description" content="Satellite-observed flooding and landscapes susceptible to inundation across Ghana.">
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<main class="wrap narrow prose">
+  <h1>Flood</h1>
+  <p class="lead">Satellite-observed flooding and landscapes susceptible to inundation across Ghana.</p>
+  <div class="card"><span class="badge dev">In development</span>
+    <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
+  
+  <h2>What is planned</h2>
+  <p>The module will keep two things separate:</p>
+  <ul>
+    <li><strong>Observed flooding</strong> <span class="badge observed">Observed</span>: areas that radar satellites (Sentinel-1) saw under water after heavy rain, with permanent water shown separately.</li>
+    <li><strong>Flood susceptibility</strong> <span class="badge model">Modeled risk</span>: an estimate of which land is prone to flooding, trained on past observed floods and using elevation, slope, distance to rivers, rainfall, soils and land cover.</li>
+  </ul>
+  <h2>Order of work</h2>
+  <ol>
+    <li>Map observed flooding for a set of known flood events and check it against reports.</li>
+    <li>Publish observed flooding by district.</li>
+    <li>Train and test a susceptibility model on those observations, and publish it only after the test results are documented.</li>
+  </ol>
+  <h2>Planned data sources</h2>
+  <p>Sentinel-1 radar (Copernicus), Copernicus elevation model, CHIRPS rainfall, public land-cover and soil datasets. All are publicly available.</p>
+  <p><a class="btn solid" href="about.html#updates">Get updates when this is published</a></p>
+</main>
+<script src="../js/config.js"></script>
+<script src="../js/site.js"></script>
+</body>
+</html>
