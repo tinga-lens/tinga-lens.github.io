@@ -6,7 +6,7 @@
 const TL = {
   name: "Tinga Lens",
   tagline: "See Ghana's environment changing.",
-  site: "https://tinga-lens.github.io",
+  site: "https://tingalens.org",
   repo: "https://github.com/tinga-lens/tinga-lens.github.io",
   nav: [
     ["Home", ""], ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
