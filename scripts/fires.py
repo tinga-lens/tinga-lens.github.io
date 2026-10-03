@@ -19,6 +19,7 @@ Run:
 import argparse
 import datetime as dt
 import io
+import json
 import os
 import sys
 import time
@@ -29,7 +30,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import BBOX, CACHE, MON, load_districts, write_layer  # noqa: E402
+from common import BBOX, CACHE, DATA, MON, load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 SENSOR = "VIIRS_SNPP"            # FIRMS source; "_SP" (final) and "_NRT" (recent) are added automatically
@@ -261,7 +262,23 @@ def main():
         }
     print(f"Fires through {last_day}: {int(cur.sum()):,} detections in the last {WINDOW} days (normal {normal.sum():,.0f}), {n} earlier years")
 
+    # every complete month on record, for looking back
+    all_months, (yy, mm) = [], (START.year, START.month + 1)          # first full month
+    while (yy, mm) < (last_day.year, last_day.month):
+        all_months.append((yy, mm))
+        yy, mm = (yy + 1, 1) if mm == 12 else (yy, mm + 1)
+    per_month = np.array([counts[(dt.date(a, b, 1) - START).days:(dt.date(a + (b == 12), b % 12 + 1, 1) - START).days].sum(axis=0)
+                          for (a, b) in all_months])
+    (DATA / "fires_history.json").write_text(json.dumps({
+        "kind": "count", "months": [f"{a}-{b:02d}" for (a, b) in all_months], "base_label": f"Last {WINDOW} days",
+        "breaks": [c["max"] for c in CATS[:4]], "quiet": QUIET, "min_years": MIN_REF_YEARS,
+        "note": "Pick a year and month to see the detections in that month, compared with the same month in other years.",
+        "counts": {row.shapeID: [int(v) for v in per_month[:, i]] for i, row in gdf.iterrows()},
+    }, separators=(",", ":")))
+    print(f"Wrote data/fires_history.json: {len(all_months)} months")
+
     write_layer("fires", {
+        "history": "data/fires_history.json",
         "label": "Fires", "title": "Fire activity compared with normal",
         "subtitle": f"{period}, against the same dates in {n} earlier years",
         "source": source, "demo": bool(args.demo),

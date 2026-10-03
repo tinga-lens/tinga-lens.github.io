@@ -286,7 +286,20 @@ def main():
         "counts": counts,
         "districts": districts,
     }
-    write_layer("drought", render(out))
+    payload = render(out)
+    labels = [label(months[t]) for t in range(WINDOW - 1, len(months))]
+    (ROOT / "data" / "drought_history.json").write_text(json.dumps({
+        "kind": "anomaly", "months": labels, "ref": list(BASELINE), "min_years": 5, "window": WINDOW,
+        "floor": {"below": DRY_SEASON_MM, "key": "dry_season", "text": "Normal rainfall is too low in these months to rate."},
+        "words": {"less": "drier"},
+        "note": f"Pick any month since {ym_text(labels[0])}. Each map covers the {WINDOW} months ending in the month chosen.",
+        "series": [{"key": "rain", "label": f"Rainfall, {WINDOW} months", "short": "Rainfall", "noun": "rainfall", "unit": "mm", "decimals": 0}],
+        "values": {"rain": {row.shapeID: [None if np.isnan(v) else round(float(v), 2) for v in roll[WINDOW - 1:, i]]
+                            for i, row in gdf.reset_index(drop=True).iterrows()}},
+    }, separators=(",", ":")))
+    print(f"Wrote data/drought_history.json: {len(labels)} months")
+    payload["history"] = "data/drought_history.json"
+    write_layer("drought", payload)
 
 
 def render(raw):

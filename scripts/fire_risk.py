@@ -305,7 +305,27 @@ def main():
 
     # reliability of the full model: do predicted chances match what happened?
     edges = [0, .05, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0001]
-    p3 = oof["M3"][tested]
+    final_now = min(MODELS, key=lambda m: (round(metrics[m]["brier"], 5), len(MODELS[m])))
+    p3 = oof[final_now][tested]
+
+    # month by month: is it still good when the calendar alone cannot help?
+    month_of = np.array([d.month for d in days])
+    by_month = []
+    for mm in range(1, 13):
+        rows = tested & (month_of == mm)[:, None]
+        if not rows.any():
+            continue
+        yy, pp, p0 = F[rows], oof[final_now][rows], oof["M0"][rows]
+        both = 0 < yy.mean() < 1
+        by_month.append({"month": MON[mm - 1], "n": int(rows.sum()), "observed": float(yy.mean()), "predicted": float(pp.mean()),
+                         "auc": float(roc_auc_score(yy, pp)) if both else None,
+                         "auc_season_only": float(roc_auc_score(yy, p0)) if both else None,
+                         "brier": float(np.mean((pp - yy) ** 2))})
+    print("\nMonth by month, on years left out of training:")
+    print(f"  {'month':<6} {'fires seen':>10} {'predicted':>10} {'AUC':>6} {'season only':>12}")
+    for b in by_month:
+        fmt = lambda v: f"{v:.3f}" if v is not None else "  -  "
+        print(f"  {b['month']:<6} {b['observed'] * 100:>9.1f}% {b['predicted'] * 100:>9.1f}% {fmt(b['auc']):>6} {fmt(b['auc_season_only']):>12}")
     reliability = []
     for a, b in zip(edges[:-1], edges[1:]):
         sel = (p3 >= a) & (p3 < b)
@@ -316,12 +336,14 @@ def main():
     # ---- final model on everything, then today's probabilities ----
     season, season_p, Xa = prepare(X, F, slot, fire_year, nslots, exclude=set())
     ready = usable & ~np.isnan(np.stack(list(Xa.values()))).any(axis=0)
-    cols = MODELS["M3"]
+    final = min(MODELS, key=lambda m: (round(metrics[m]["brier"], 5), len(MODELS[m])))   # best on held-out years; simpler wins ties
+    print(f"\nModel used for the map: {final} ({MODEL_TEXT[final]})")
+    cols = MODELS[final]
     model = fit(design(Xa, season, cols, ready), F[ready])
     coef = model[-1].coef_[0]
     coefficients = [{"predictor": c, "name": NAMES[c], "coefficient_per_sd": float(b), "odds_ratio_per_sd": float(np.exp(b))}
                     for c, b in zip(cols, coef)]
-    print("\nFull model, effect of one standard deviation (odds ratio):")
+    print("\nModel used, effect of one standard deviation (odds ratio):")
     for c in coefficients:
         print(f"  {c['name']:<40} {c['odds_ratio_per_sd']:.2f}")
 
@@ -356,7 +378,7 @@ def main():
             "c": [cat] * len(steps),
         }
 
-    best = metrics["M3"]
+    best = metrics[final]
     root_text = (f"Adding root-zone moisture to surface moisture changed the prediction error by {-r['brier_reduction_pct']:+.1f}% "
                  f"and gave a better score in {r['years_better']} of {r['years']} test years.")
     report = {
@@ -364,6 +386,7 @@ def main():
         "rows": int(usable.sum()), "fire_share": float(y_all.mean()), "fire_years_tested": years,
         "models": {m: {"predictors": MODELS[m], **metrics[m]} for m in MODELS},
         "auc_by_fire_year": by_year, "comparisons": comparisons,
+        "model_used": final, "by_month": by_month,
         "full_model_coefficients": coefficients, "reliability_full_model": reliability,
         "notes": ["Scores are from fire years left out of training (July to June).",
                   "Every predictor is a departure from its usual value for that district and time of year, computed without the row's own year.",
@@ -372,16 +395,42 @@ def main():
                   "No temperature, humidity or wind predictors yet."],
     }
     (DATA / "firerisk_report.json").write_text(json.dumps(report, indent=1))
+
+    # every sampled day: the estimate made WITHOUT that fire year in training, and what happened
+    every = np.array([model.predict_proba(np.column_stack([(season if c == "season" else Xn[c])[k] for c in cols]))[:, 1]
+                      for k in range(K)])
+    shown = np.where(np.isnan(oof[final]), every, oof[final])          # newest days have no test estimate yet
+    ids = list(gdf.shapeID)
+    (DATA / "firerisk_history.json").write_text(json.dumps({
+        "kind": "probability", "horizon": HORIZON, "breaks": [c["max"] for c in CATS[:-1]],
+        "days": [d.isoformat() for d in days],
+        "note": "Past estimates come from a model that was not shown that fire year, so they are a fair test.",
+        "p": {ids[i]: [int(round(v * 100)) for v in shown[:, i]] for i in range(nd)},
+        "u": {ids[i]: [int(round(v * 100)) for v in season_p[:, i]] for i in range(nd)},
+        "o": {ids[i]: [None if np.isnan(v) else int(v) for v in F[:, i]] for i in range(nd)},
+    }, separators=(",", ":")))
+    print("Wrote data/firerisk_history.json")
     print("Wrote data/firerisk_report.json")
 
     write_layer("firerisk", {
+        "history": "data/firerisk_history.json",
+        "tables": [{
+            "caption": "How the model did in each month, on fire years it was not trained on",
+            "head": ["Month", "Periods with a fire", "Average estimate", "Score (AUC)", "Season alone"],
+            "rows": [[b["month"], f"{b['observed'] * 100:.0f}%", f"{b['predicted'] * 100:.0f}%",
+                      "–" if b["auc"] is None else f"{b['auc']:.2f}",
+                      "–" if b["auc_season_only"] is None else f"{b['auc_season_only']:.2f}"] for b in by_month],
+            "note": ("AUC is 0.5 for guessing and 1 for a perfect ranking of districts. 'Season alone' uses only how often each "
+                     "district usually burns on those dates."),
+        }],
         "label": "Fire risk", "title": "Estimated chance of fire (experimental)",
         "subtitle": f"{period}", "source": "Tinga Lens model on NASA SMAP, FIRMS, VIIRS and CHIRPS data", "demo": False,
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
-        "how": (f"Each district shows the estimated chance that satellites record at least one fire in it during {period}. "
+        "how": (f"Each district shows the estimated chance that satellites record at least one fire in it during the {HORIZON} days shown. "
                 "The estimate comes from a statistical model (logistic regression) fitted to fires since 2015. It combines how "
                 "often the district burned on these dates in other years with how far surface and root-zone soil moisture, the "
-                "speed of drying, and lagged rainfall and greenness are from their usual values for the time of year."),
+                "speed of drying, and lagged rainfall and greenness are from their usual values for the time of year. "
+                "Use the Year, Month and Day boxes to see any past period and whether a fire was then detected."),
         "limits": [
             "This is an experimental model, not a fire warning. Do not use it for safety decisions.",
             f"Tested on years it was not trained on, the model scored AUC {best['auc']:.2f} (0.5 is chance, 1 is perfect) and "

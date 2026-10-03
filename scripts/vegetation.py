@@ -20,6 +20,7 @@ Run:
 """
 import argparse
 import datetime as dt
+import json
 import re
 import sys
 import time
@@ -30,7 +31,7 @@ from rasterio.features import rasterize
 from rasterio.transform import Affine
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import BBOX, CACHE, MON, WETNESS, load_districts, wetness_category, write_layer, ym_text  # noqa: E402
+from common import BBOX, CACHE, DATA, MON, WETNESS, load_districts, wetness_category, write_layer, ym_text  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 SHORT_NAME = "VNP13A3"
@@ -281,7 +282,19 @@ def main():
             "c": ["cloud" if np.isnan(h[3][i]) else wetness_category(h[3][i]) for h in hist],
         }
 
+    (DATA / "vegetation_history.json").write_text(json.dumps({
+        "kind": "anomaly", "months": [f"{yy}-{mm:02d}" for (yy, mm) in months], "min_years": MIN_REF_YEARS,
+        "unrated": {"key": "cloud", "text": "Too few cloud-free pixels, or too few other years, to rate this district."},
+        "words": {"less": "less green"},
+        "note": "Pick any month since 2012. Grey districts were too cloudy that month.",
+        "series": [{"key": "ndvi", "label": "Greenness (NDVI)", "short": "NDVI", "noun": "greenness", "unit": "", "decimals": 2}],
+        "values": {"ndvi": {row.shapeID: [None if np.isnan(v) else round(float(v), 4) for v in ndvi[:, i]]
+                            for i, row in gdf.iterrows()}},
+    }, separators=(",", ":")))
+    print(f"Wrote data/vegetation_history.json: {len(months)} months")
+
     write_layer("vegetation", {
+        "history": "data/vegetation_history.json",
         "label": "Vegetation", "title": "Vegetation greenness compared with normal",
         "subtitle": f"{ym_text(label)}, against {MON[m - 1]} in earlier years since 2012",
         "source": source, "demo": bool(args.demo), "categories": cats,

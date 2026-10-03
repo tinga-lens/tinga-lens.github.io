@@ -182,12 +182,15 @@ def main():
                 [f"Lost {first_recent}–{last}", f"{recent:,.0f} ha"],
                 [f"Lost 2001–{last}", f"{total:,.0f} ha ({(total / tc_ha[i] * 100 if tc_ha[i] else 0):.0f}%)"],
             ],
+            "tc": round(float(tc_ha[i]), 1),
             "v": [round(float(x), 1) for x in loss[i]],
             "c": [cat] * nyears,
         }
     print(f"Ghana totals: tree cover 2000 = {tc_ha.sum():,.0f} ha, loss 2001-{last} = {loss.sum():,.0f} ha")
 
     write_layer("forest", {
+        "yearly": {"base_label": f"Average, {first_recent}–{last}", "breaks": [c["max"] for c in CATS[:4]],
+                   "note": "Pick a year to map the tree cover lost in that year alone."},
         "label": "Forest loss", "title": "Tree cover loss", "source": source, "demo": bool(args.demo),
         "subtitle": f"Average yearly loss, {first_recent} to {last}, as a share of tree cover in 2000",
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
