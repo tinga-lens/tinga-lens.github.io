@@ -140,6 +140,9 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .profile .card{margin:0}
 #mini{height:260px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
 
+.cite{overflow-wrap:anywhere;margin:0 0 8px}
+.citebox{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:10px 14px;font-size:.95rem;overflow-wrap:anywhere}
+
 /* ---------- biodiversity ---------- */
 .bio-tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px;font-size:.9rem;color:var(--muted)}
 .bio-tools input[type=search]{width:auto;flex:1 1 240px;margin:0}

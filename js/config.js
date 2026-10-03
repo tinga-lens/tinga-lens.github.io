@@ -7,6 +7,7 @@ const TL = {
   name: "Tinga Lens",
   tagline: "See Ghana's environment changing.",
   site: "https://tingalens.org",
+  author: "Adekilae, F. A.",            // how the author appears in citations
   repo: "https://github.com/tinga-lens/tinga-lens.github.io",
   nav: [
     ["Home", ""], ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],

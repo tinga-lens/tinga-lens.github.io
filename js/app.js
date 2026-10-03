@@ -38,6 +38,9 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
           <button class="btn" id="download" type="button">Download this map (CSV)</button>
           <button class="btn" id="download-all" type="button" hidden>Download full record (CSV)</button>
         </div>
+        <p class="sub" style="margin:12px 0 4px"><strong>Cite this map</strong></p>
+        <p class="sub cite" id="cite"></p>
+        <button class="btn" id="cite-copy" type="button">Copy citation</button>
       </div>
       <div class="card">
         <input type="search" id="search" list="names" placeholder="Find a district…" aria-label="Find a district">
@@ -163,6 +166,12 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("rank").addEventListener("click", e => { const id = e.target.closest("li")?.dataset.id; if (id) focusOn(id); });
   $("download").addEventListener("click", download);
   $("download-img").addEventListener("click", downloadImage);
+  $("cite-copy").addEventListener("click", () => {
+    const done = () => { $("cite-copy").textContent = "Copied"; setTimeout(() => $("cite-copy").textContent = "Copy citation", 1500); };
+    (navigator.clipboard ? navigator.clipboard.writeText($("cite").textContent) : Promise.reject()).then(done).catch(() => {
+      const r = document.createRange(); r.selectNodeContents($("cite")); const s = getSelection(); s.removeAllRanges(); s.addRange(r);   // select it so it can be copied by hand
+    });
+  });
   $("download-all").addEventListener("click", downloadAll);
   $("points-ctl").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { pointDays = +b.dataset.days; drawPoints(); } });
   getJSON("data/fire_points.json").then(x => { POINTS = x; if (D) drawPoints(); }).catch(() => {});
@@ -508,6 +517,9 @@ function render(key, d) {
     <table class="mv" style="margin:0"><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
     <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     ${t.note ? `<p class="sub" style="max-width:75ch">${esc(t.note)}</p>` : ""}`).join("");
+  const today = new Date(), day = `${today.getDate()} ${["January","February","March","April","May","June","July","August","September","October","November","December"][today.getMonth()]} ${today.getFullYear()}`;
+  $("cite").textContent = `${TL.author} (${d.updated.slice(0, 4)}). ${d.title}: ${d.subtitle}${REGION ? ", " + REGION + " Region" : ""}. Tinga Lens`
+    + (prod ? `, product version ${prod.version}` : "") + `. ${TL.site}/${prod ? prod.page : ""}#${key}. Accessed ${day}. Source data: ${d.source}.`;
   $("foot-layer").innerHTML = `Map shown: updated ${esc(d.updated)}. Source: ${esc(d.source)}. `
     + d.credits.map(c => `<a href="${esc(c.url)}">${esc(c.text)}</a>. `).join("");
   drawPoints();

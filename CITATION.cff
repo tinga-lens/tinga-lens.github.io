@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Tinga Lens, please cite it as below, and also credit the original data provider named on each map."
+title: "Tinga Lens: Environmental monitoring for Ghana"
+type: software
+authors:
+  - family-names: Adekilae
+    given-names: Frank Anyoka
+url: "https://tingalens.org"
+repository-code: "https://github.com/tinga-lens/tinga-lens.github.io"
+abstract: "District-level environmental information for Ghana from public satellite, climate and biodiversity records: rainfall, soil moisture, vegetation, fires, fire probability, tree cover loss, observed flooding, built-up area and recorded species."
+keywords:
+  - Ghana
+  - remote sensing
+  - drought
+  - fire
+  - biodiversity
+date-released: 2026-10-03
