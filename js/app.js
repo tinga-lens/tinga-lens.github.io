@@ -31,6 +31,7 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
         <div class="bar" id="bar"></div>
         <ul class="legend" id="legend"></ul>
         <div class="btns">
+          <button class="btn" id="download-img" type="button">Download map image (PNG)</button>
           <button class="btn" id="download" type="button">Download this map (CSV)</button>
           <button class="btn" id="download-all" type="button" hidden>Download full record (CSV)</button>
         </div>
@@ -62,7 +63,31 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
 const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
 const map = L.map("map", { zoomSnap: 0.25, attributionControl: false });
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, opacity: 0.35 }).addTo(map);
+const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 14, opacity: 0.35 }).addTo(map);
+// satellite picture: Sentinel-2 cloudless 2016 by EOX (CC BY 4.0), a cloud-free mosaic at 10 m
+const sat = L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg", { maxZoom: 14 });
+let SAT = false, FILL = 1;             // FILL: how solid the district colours are
+const view = L.control({ position: "topright" });
+view.onAdd = () => {
+  const box = L.DomUtil.create("div", "mapctl");
+  box.innerHTML = `<div class="seg" style="margin:0"><button type="button" id="bm-map" aria-pressed="true">Map</button><button type="button" id="bm-sat" aria-pressed="false">Satellite</button></div>
+    <label id="fill-wrap" hidden>Colours <input type="range" id="fill" min="0" max="100" value="55" aria-label="How solid the district colours are"></label>
+    <div class="satnote" id="sat-note" hidden>Sentinel-2 cloudless 2016, <a href="https://s2maps.eu">s2maps.eu</a> by EOX (contains modified Copernicus Sentinel data)</div>`;
+  L.DomEvent.disableClickPropagation(box); L.DomEvent.disableScrollPropagation(box);
+  return box;
+};
+view.addTo(map);
+function basemap(on) {
+  SAT = on;
+  if (on) { map.removeLayer(street); sat.addTo(map).bringToBack(); } else { map.removeLayer(sat); street.addTo(map).bringToBack(); }
+  $("bm-map").setAttribute("aria-pressed", !on); $("bm-sat").setAttribute("aria-pressed", on);
+  $("fill-wrap").hidden = $("sat-note").hidden = !on;
+  FILL = on ? $("fill").value / 100 : 1;
+  if (geoLayer) geoLayer.setStyle({ fillOpacity: 0.9 * FILL, color: on ? "#ffffff" : "#55605c" });
+}
+$("bm-map").addEventListener("click", () => basemap(false));
+$("bm-sat").addEventListener("click", () => basemap(true));
+$("fill").addEventListener("input", () => basemap(true));
 const dots = L.layerGroup().addTo(map);      // dots on districts where a fire was detected
 
 let geoLayer, shapes = {}, selected = null, D = null, color = {}, label = {}, cache = {}, rankHigh = true;
@@ -113,6 +138,7 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("rk-lo").addEventListener("click", () => { rankHigh = false; ranking(); });
   $("rank").addEventListener("click", e => { const id = e.target.closest("li")?.dataset.id; if (id) focusOn(id); });
   $("download").addEventListener("click", download);
+  $("download-img").addEventListener("click", downloadImage);
   $("download-all").addEventListener("click", downloadAll);
   $("points-ctl").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { pointDays = +b.dataset.days; drawPoints(); } });
   getJSON("data/fire_points.json").then(x => { POINTS = x; if (D) drawPoints(); }).catch(() => {});
@@ -424,7 +450,7 @@ function render(key, d) {
   label = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
   geoLayer.eachLayer(l => {
     const x = d.districts[l.feature.properties.shapeID];
-    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: "#55605c", weight: 0.6 });
+    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: 0.6 });
   });
   dots.clearLayers();
   (d.marks || []).forEach(id => {
@@ -477,6 +503,81 @@ function saveCSV(lines, name) {
   a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// The map as a picture. It is drawn fresh here (not copied from the screen), with the Tinga Lens
+// name printed across it, so the name is part of the picture itself.
+function downloadImage() {
+  const W = 1600, H = 1900, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d"), SERIF = '"Source Serif 4", Georgia, serif', SANS = '"Source Sans 3", Arial, sans-serif';
+  g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+  const wrap = (text, x, y, maxW, lh) => {            // returns the y after the last line
+    let line = "";
+    for (const w of String(text).split(" ")) {
+      if (g.measureText(line + w).width > maxW && line) { g.fillText(line.trim(), x, y); y += lh; line = ""; }
+      line += w + " ";
+    }
+    g.fillText(line.trim(), x, y); return y + lh;
+  };
+  g.fillStyle = "#1B2B24"; g.textBaseline = "top";
+  g.font = `600 54px ${SERIF}`; let y = wrap(D.title, 70, 60, W - 140, 62);
+  g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(D.subtitle, 70, y + 6, W - 140, 38);
+
+  // map area
+  const top = y + 24, bottom = H - 250, left = 70, right = W - 470;
+  const b = geoLayer.getBounds(), k = Math.cos((b.getNorth() + b.getSouth()) / 2 * Math.PI / 180);
+  const s = Math.min((right - left) / ((b.getEast() - b.getWest()) * k), (bottom - top) / (b.getNorth() - b.getSouth()));
+  const ox = left + ((right - left) - (b.getEast() - b.getWest()) * k * s) / 2;
+  const X = lon => ox + (lon - b.getWest()) * k * s, Y = lat => top + (b.getNorth() - lat) * s;
+  geoLayer.eachLayer(l => {
+    const f = l.feature, x = D.districts[f.properties.shapeID];
+    const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+    g.beginPath();
+    polys.forEach(p => p.forEach(ring => { ring.forEach(([lon, lat], i) => i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat))); g.closePath(); }));
+    g.fillStyle = x ? color[x.cat] : "#999"; g.fill("evenodd");
+    g.strokeStyle = "#55605c"; g.lineWidth = 1; g.stroke();
+  });
+
+  // the name, repeated across the map so cropping does not remove it
+  g.save(); g.beginPath(); g.rect(left - 30, top - 10, right - left + 60, bottom - top + 20); g.clip();
+  g.translate(W / 2, H / 2); g.rotate(-Math.PI / 6);
+  g.font = `700 44px ${SANS}`; g.fillStyle = "rgba(27,43,36,0.13)"; g.textBaseline = "middle";
+  for (let yy = -H; yy < H; yy += 190) for (let xx = -W; xx < W; xx += 520) g.fillText("Tinga Lens", xx + ((yy / 190) % 2 ? 260 : 0), yy);
+  g.restore();
+
+  // legend
+  let ly = top + 10; const lx = W - 430;
+  g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `600 28px ${SANS}`; g.fillText("Districts", lx, ly); ly += 46;
+  D.categories.forEach(cat => {
+    g.fillStyle = cat.color; g.fillRect(lx, ly, 34, 34); g.strokeStyle = "#8a948e"; g.lineWidth = 1; g.strokeRect(lx + .5, ly + .5, 33, 33);
+    g.fillStyle = "#1B2B24"; g.font = `400 26px ${SANS}`; g.fillText(cat.label, lx + 48, ly + 2);
+    g.textAlign = "right"; g.font = `600 26px ${SANS}`; g.fillText(String(D.counts[cat.key] || 0), W - 70, ly + 2); g.textAlign = "left";
+    ly += 44;
+    if (cat.note) { g.fillStyle = "#56655C"; g.font = `400 21px ${SANS}`; g.fillText(cat.note, lx + 48, ly - 8); ly += 22; }
+  });
+
+  // footer: brand, source and terms
+  const fy = H - 215;
+  g.strokeStyle = "#D5DBCF"; g.lineWidth = 2; g.beginPath(); g.moveTo(70, fy); g.lineTo(W - 70, fy); g.stroke();
+  g.save(); g.translate(70, fy + 26); g.scale(0.6, 0.6); g.lineCap = "round"; g.lineWidth = 10;
+  g.strokeStyle = "#17252A"; g.beginPath(); g.arc(60, 60, 52, -Math.PI / 2, Math.PI, false); g.stroke();
+  g.strokeStyle = "#2D6A4F"; g.beginPath(); g.arc(60, 60, 30, -Math.PI / 2, Math.PI, false); g.stroke();
+  g.fillStyle = "#A98467"; g.beginPath(); g.arc(60, 60, 11, 0, 7); g.fill();
+  g.fillStyle = "#277DA1"; g.beginPath(); g.arc(23, 23, 7, 0, 7); g.fill(); g.restore();
+  g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `700 40px ${SANS}`; g.fillText("Tinga Lens", 160, fy + 30);
+  g.font = `400 24px ${SANS}`; g.fillStyle = "#56655C"; g.fillText(TL.site.replace("https://", ""), 160, fy + 76);
+  g.font = `400 23px ${SANS}`;
+  const version = (TL.products[BASE.key] || {}).version || "-";
+  let ty = wrap(`Source: ${BASE.source}. Updated ${BASE.updated}. Product version ${version}. Boundaries: geoBoundaries (CC BY 4.0).`, 470, fy + 28, W - 540, 30);
+  wrap("© Tinga Lens. You may share this image unchanged with credit. To use it without the Tinga Lens name, or in a product or publication, ask first: see the About page.", 470, ty + 4, W - 540, 30);
+
+  c.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `tinga-lens-${BASE.key}${VIEW ? "-" + VIEW : ""}.png`;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, "image/png");
 }
 
 function download() {                  // the map as shown
