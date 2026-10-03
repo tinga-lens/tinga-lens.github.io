@@ -7,6 +7,7 @@ Tinga Lens - run every layer that is due.
   vegetation : every run, if a NASA Earthdata login is available
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
+  biodiversity: once a month, if a GBIF login is available
   flood      : only when it has never been built (or FLOOD=true); it maps a past event
   urban      : only when it has never been built (or URBAN=true); the source changes with each new release
   forest     : only when asked (FOREST=true) or when it has never been built,
@@ -44,6 +45,17 @@ if os.environ.get("URBAN", "").lower() == "true" or not (DATA / "urban.json").ex
 
 if os.environ.get("FLOOD", "").lower() == "true" or not (DATA / "flood.json").exists():
     jobs.append(("observed flooding", "flood.py"))  # one-off: a past flood event
+
+if os.environ.get("GBIF_USER") and os.environ.get("GBIF_PWD"):
+    import datetime, json
+    f = DATA / "biodiversity.json"
+    this_month = f.exists() and json.loads(f.read_text()).get("updated", "")[:7] == datetime.date.today().isoformat()[:7]
+    if os.environ.get("BIODIVERSITY", "").lower() == "true" or not this_month:
+        jobs.append(("biodiversity", "biodiversity.py"))    # once a month
+    else:
+        print("Skipping biodiversity: already built this month.")
+else:
+    print("Skipping biodiversity: no GBIF_USER / GBIF_PWD set.")
 
 failed = []
 for name, script in jobs:

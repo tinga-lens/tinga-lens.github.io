@@ -11,7 +11,8 @@ const TL = {
   nav: [
     ["Home", ""], ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
     ["Vegetation & Forest", "pages/vegetation.html"], ["Flood", "pages/flood.html"],
-    ["Urban Exposure", "pages/urban.html"], ["Districts", "pages/districts.html"],
+    ["Urban Exposure", "pages/urban.html"], ["Biodiversity", "pages/biodiversity.html"],
+    ["Districts", "pages/districts.html"],
     ["Data & Methods", "pages/methods.html"], ["About", "pages/about.html"],
   ],
   status: {
@@ -45,6 +46,9 @@ const TL = {
     urban: { name: "Built-up area growth", tab: "Urban growth", module: "Urban Exposure", page: "pages/urban.html", status: "observed", version: "1.0",
              source: "Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC", type: "Derived from satellite images",
              resolution: "1 km, summed by district", updates: "With each new release", baseline: "Built-up area in 2000" },
+    biodiversity: { name: "Recorded species", tab: "Recorded species", module: "Biodiversity", page: "pages/biodiversity.html", status: "observed", version: "0.1",
+                    source: "GBIF occurrence records (CC0 and CC BY), with IUCN Red List categories", type: "Field observations and museum specimens",
+                    resolution: "Individual records, counted by district", updates: "Monthly", baseline: "All years on record" },
   },
   // modules that are planned but have no data yet; the site shows no numbers for them
   planned: {

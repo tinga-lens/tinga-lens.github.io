@@ -6,7 +6,7 @@
       <h3><a href="${ROOT + href}">${esc(kicker)}</a></h3>${body}</div>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
-  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl]) => {
+  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi]) => {
     const out = [];
 
     // Drought: rainfall and soil moisture, districts drier than normal
@@ -51,6 +51,9 @@
       out.push(card("Urban", "Urban growth", "pages/urban.html", line(Math.round(a1).toLocaleString() + " km²", `built-up area across Ghana in ${xs[xs.length - 1]}, up ${Math.round((a1 / a0 - 1) * 100)}% since ${xs[0]}`)
         + `<div class="sub" style="margin:0">Exposure to flooding is not published yet.</div>`, ["observed"]));
     } else out.push(soon("Urban", "Urban exposure", "pages/urban.html", "Where people and new development meet environmental hazards. No data is published yet."));
+    if (bi && bi.coverage) out.push(card("Biodiversity", "Recorded species", "pages/biodiversity.html",
+      line(bi.coverage.species.toLocaleString(), `species recorded in Ghana, from ${bi.coverage.records.toLocaleString()} records`)
+      + (bi.coverage.has_iucn ? `<div class="sub" style="margin:0">${bi.coverage.threatened} of them globally threatened</div>` : ""), ["observed"]));
     $("cards").innerHTML = out.join("");
   });
 

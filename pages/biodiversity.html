@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Biodiversity" data-layers="biodiversity">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biodiversity | Tinga Lens</title>
+<meta name="description" content="Species recorded in each district of Ghana, from public biodiversity records.">
+<link rel="stylesheet" href="../vendor/leaflet.css">
+<link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+<main class="wrap">
+  <h1>Biodiversity</h1>
+  <p class="lead">Which species have been recorded in each district, and where in Ghana a species has been recorded.</p>
+  <div class="card" id="wait" hidden><span class="badge dev">In development</span>
+    <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
+  <div id="app"></div>
+
+  <div id="bio" hidden>
+    <h2 id="district-species">Species recorded in a district</h2>
+    <p class="sub" id="bd-hint">Click a district on the map to list the species recorded there.</p>
+    <div id="bd" hidden>
+      <div class="bio-tools">
+        <input type="search" id="bd-q" placeholder="Search this district by scientific or common name" aria-label="Search species in this district">
+        <label>Group <select id="bd-group"></select></label>
+        <label id="bd-thr-wrap"><input type="checkbox" id="bd-thr"> Threatened only</label>
+      </div>
+      <p class="sub" id="bd-count"></p>
+      <div class="scroll"><table class="sp"><thead><tr><th>Species</th><th>Group</th><th>Red List</th><th class="num">Records</th><th class="num">Places</th><th class="num">First</th><th class="num">Latest</th></tr></thead><tbody id="bd-rows"></tbody></table></div>
+      <p><button class="btn" id="bd-more" type="button" hidden>Show more</button> <button class="btn" id="bd-csv" type="button">Download this list (CSV)</button></p>
+    </div>
+
+    <h2 id="explorer">Species explorer</h2>
+    <p class="sub">Search for a species to see every district where it has been recorded.</p>
+    <div class="bio-tools">
+      <input type="search" id="sx-q" placeholder="Search Ghana's recorded species, for example shea or Vitellaria" aria-label="Search species">
+      <button class="btn" id="sx-thr" type="button">List threatened species</button>
+    </div>
+    <ul class="hits" id="sx-hits" hidden></ul>
+    <div id="sx" hidden>
+      <h3 id="sx-name" style="margin:14px 0 2px;font-size:1.3rem"></h3>
+      <p class="sub" id="sx-sub"></p>
+      <div class="facts" id="sx-facts"></div>
+      <div class="sp-grid">
+        <div><div id="sp-map"></div><p class="sub" id="sx-legend" style="margin-top:6px"></p></div>
+        <div class="scroll" style="max-height:470px;overflow-y:auto"><table class="sp"><thead><tr><th>District</th><th>Region</th><th class="num">Records</th><th class="num">Latest</th></tr></thead><tbody id="sx-rows"></tbody></table></div>
+      </div>
+      <p class="sub" id="sx-links"></p>
+    </div>
+
+    <h2 id="coverage">Data coverage</h2>
+    <div class="facts" id="cov"></div>
+    <p class="note">The number of species recorded depends on how much surveying has been done. A district with few records has been visited less; it does not have less wildlife. No record of a species does not mean the species is absent.</p>
+    <p class="sub" id="cov-cite"></p>
+  </div>
+
+  <section class="notes prose">
+    <h2>About this module</h2>
+    <p><strong>Recorded species</strong> <span class="badge observed">Observed</span> are counted from GBIF, the international database where museums, researchers and citizen-science projects publish their records. Tinga Lens places each record in a district and counts the different species. <a href="methods.html#m-biodiversity">Read the methods</a>.</p>
+    <p><strong>Threatened species</strong> are those the IUCN Red List rates Critically Endangered, Endangered or Vulnerable worldwide. Tinga Lens does not assign these categories. To protect them, this site shows district counts only and does not map individual record locations.</p>
+    <p><strong>Habitat suitability</strong> <span class="badge dev">In development</span> would be a model estimate of where a species could live. Nothing is published for it yet.</p></section>
+</main>
+<script src="../vendor/leaflet.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/site.js"></script>
+<script>
+  // show the map and lists only once real data has been published
+  fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
+    const a = document.createElement("script"); a.src = "../js/app.js";
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js"; document.body.append(b); };
+    document.body.append(a); })
+    .catch(() => { document.getElementById("wait").hidden = false; });
+</script>
+</body>
+</html>

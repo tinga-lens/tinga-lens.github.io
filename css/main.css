@@ -140,6 +140,33 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .profile .card{margin:0}
 #mini{height:260px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
 
+/* ---------- biodiversity ---------- */
+.bio-tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px;font-size:.9rem;color:var(--muted)}
+.bio-tools input[type=search]{width:auto;flex:1 1 240px;margin:0}
+.bio-tools select{font:inherit;padding:6px;border-radius:5px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+table.sp{border-collapse:collapse;width:100%;font-size:.92rem}
+table.sp th{color:var(--muted);font-weight:600;font-size:.82rem;text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+table.sp td{padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.sp td.num,table.sp th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.sp tbody tr{cursor:pointer}
+table.sp tbody tr:hover{background:var(--card)}
+table.sp i{font-style:italic}
+table.sp small{display:block;color:var(--muted)}
+.rl{display:inline-block;font-size:.76rem;font-weight:600;padding:0 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.rl.CR{color:#b3261e}.rl.EN{color:#c25a12}.rl.VU{color:#8a6a00}.rl.NT{color:var(--muted)}
+ul.hits{list-style:none;margin:0 0 12px;padding:0;border:1px solid var(--line);border-radius:5px;background:var(--card);max-width:560px}
+ul.hits li{padding:7px 12px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:10px;justify-content:space-between}
+ul.hits li:last-child{border-bottom:0}
+ul.hits li:hover{background:var(--bg)}
+.sp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.sp-grid{grid-template-columns:1fr}}
+#sp-map{height:420px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 24px;margin:8px 0 14px}
+.facts div{padding:6px 0;border-top:1px solid var(--line)}
+.facts b{display:block;font-size:1.3rem;font-weight:600;font-variant-numeric:tabular-nums}
+.facts span{color:var(--muted);font-size:.86rem}
+.note{border-left:3px solid var(--earth);padding:2px 0 2px 12px;color:var(--muted);max-width:70ch}
+
 /* ---------- footer ---------- */
 .site-foot{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);padding:16px 0 34px;margin-top:30px}
 .site-foot p{margin:0 0 8px;max-width:95ch}

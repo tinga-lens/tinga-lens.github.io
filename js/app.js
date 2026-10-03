@@ -686,6 +686,7 @@ function select(id) {
   if (selected && shapes[selected]) shapes[selected].setStyle({ weight: 0.6, color: "#55605c" });
   selected = id;
   shapes[id].setStyle({ weight: 3, color: "#111" }).bringToFront();
+  document.dispatchEvent(new CustomEvent("tl:district", { detail: { id, name: x.name, layer: BASE.key } }));
   $("search").value = x.name;
   const t = x.table;
   $("detail").innerHTML = `
