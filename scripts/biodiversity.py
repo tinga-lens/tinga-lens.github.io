@@ -38,7 +38,8 @@ from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 API = os.environ.get("TINGA_GBIF_API", "https://api.gbif.org/v1")
-LICENSES = ["CC0_1_0", "CC_BY_4_0"]     # records under a non-commercial licence (CC BY-NC) are left out
+INCLUDE_NONCOMMERCIAL = False           # True adds records under CC BY-NC: more mammals, but the layer may then not be used commercially
+LICENSES = ["CC0_1_0", "CC_BY_4_0"] + (["CC_BY_NC_4_0"] if INCLUDE_NONCOMMERCIAL else [])
 MAX_UNCERTAINTY_M = 25000               # records whose position is vaguer than this are left out
 SKIP_BASIS = {"FOSSIL_SPECIMEN", "LIVING_SPECIMEN"}   # fossils, and zoo or garden specimens
 WAIT_MINUTES = 180                      # how long to wait for GBIF to prepare the download
@@ -87,8 +88,8 @@ def request_download(s, auth, email):
     """Ask GBIF to prepare the Ghana records. Returns the download key."""
     keyfile = CACHE / "gbif_download.txt"
     if keyfile.exists():                               # a request from an earlier run that may still be usable
-        key, day = keyfile.read_text().split()
-        if day[:7] == dt.date.today().isoformat()[:7]:
+        key, day, *lic = keyfile.read_text().split()
+        if day[:7] == dt.date.today().isoformat()[:7] and (lic or ["2"])[0] == str(len(LICENSES)):   # same month, same licence choice
             print(f"Using this month's GBIF download {key}")
             return key
     body = {"creator": auth[0], "notificationAddresses": [email] if email else [], "sendNotification": False, "format": "SIMPLE_CSV",
@@ -105,7 +106,7 @@ def request_download(s, auth, email):
         sys.exit(f"GBIF refused the download request: HTTP {r.status_code} {r.text[:300]}")
     key = r.text.strip().strip('"')
     CACHE.mkdir(exist_ok=True)
-    keyfile.write_text(f"{key} {dt.date.today().isoformat()}")
+    keyfile.write_text(f"{key} {dt.date.today().isoformat()} {len(LICENSES)}")
     print(f"GBIF is preparing download {key}", flush=True)
     return key
 
@@ -319,7 +320,7 @@ def main():
     doi = meta.get("doi", "")
     coverage = {"records": used, "records_in_download": total, "species": int(len(sp)), "datasets": int(df["datasetKey"].nunique()),
                 "first": int(years.min()), "last": int(years.max()), "districts_with_records": int(len(per)),
-                "threatened": int(len(threatened)), "has_iucn": have_iucn, "download_key": key, "doi": doi,
+                "threatened": int(len(threatened)), "has_iucn": have_iucn, "noncommercial": INCLUDE_NONCOMMERCIAL, "download_key": key, "doi": doi,
                 "by_group": {g: int(n) for g, n in sp["group"].value_counts().reindex(GROUPS, fill_value=0).items()}}
     cite = f"GBIF.org ({dt.date.today():%d %B %Y}) GBIF Occurrence Download" + (f" https://doi.org/{doi}" if doi else "")
     print(f"{len(sp):,} species, {used:,} records, {coverage['datasets']} datasets, {len(per)} districts with records")
@@ -337,7 +338,9 @@ def main():
             "No record does not mean a species is absent. Compare districts only with the number of records in mind.",
             "Records come from many sources and years, including old museum specimens. A species recorded decades ago may no longer be present.",
             "Some records are misidentified or misplaced. Records flagged by GBIF for position problems, fossils, captive animals and positions vaguer than 25 km are left out.",
-            "Records published under a non-commercial licence are left out, which removes a large share of citizen-science observations.",
+            ("This layer includes records published under a non-commercial licence (CC BY-NC). It may not be used for commercial purposes."
+             if INCLUDE_NONCOMMERCIAL else
+             "Records published under a non-commercial licence are left out, which removes a large share of citizen-science observations, including many mammal sightings."),
             "Red List categories are the global ones from the IUCN Red List, as supplied by GBIF. They are not national assessments.",
         ],
         "credits": [{"text": cite, "url": f"https://doi.org/{doi}" if doi else "https://www.gbif.org"},

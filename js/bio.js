@@ -20,6 +20,14 @@
     $("cov").innerHTML = [[c.records, "occurrence records used"], [c.species, "recorded species"], [c.datasets, "contributing datasets"],
       [c.districts_with_records + " of 260", "districts with records"], [`${c.first}–${c.last}`, "years covered"], [c.records_in_download - c.records, "records left out"]]
       .map(([v, t]) => `<div><b>${typeof v === "number" ? v.toLocaleString() : esc(v)}</b><span>${t}</span></div>`).join("");
+    // records by group, counted from the species file, so the imbalance between groups is plain to see
+    const g = GROUPS.map(() => [0, 0]);
+    SP.forEach(s => { g[s[F.group]][0]++; g[s[F.group]][1] += s[F.records]; });
+    const all = g.reduce((a, x) => a + x[1], 0), share = i => g[i][1] / all * 100;
+    $("cov-groups").innerHTML = GROUPS.map((name, i) => [name, ...g[i]]).filter(r => r[1]).sort((a, b) => b[2] - a[2]).map(([name, ns, nr]) =>
+      `<tr style="cursor:default"><td>${esc(name)}</td><td class="num">${ns.toLocaleString()}</td><td class="num">${nr.toLocaleString()}</td><td class="num">${(nr / all * 100).toFixed(1)}%</td><td class="num">${(nr / ns).toFixed(0)}</td></tr>`).join("");
+    const bi = GROUPS.indexOf("Birds"), mi = GROUPS.indexOf("Mammals");
+    $("cov-gap").textContent = `Birds make up ${share(bi).toFixed(0)}% of the records, because birdwatchers log sightings in very large numbers. Mammals make up ${share(mi).toFixed(1)}%, and most of those are bats and rodents from museum collections. Large mammals such as elephant, buffalo, lion and leopard are almost absent, because survey results for them are rarely published to GBIF and many sightings carry a ${c.noncommercial ? "licence that was" : "non-commercial licence that is"} ${c.noncommercial ? "included here" : "left out here"}. Their absence from these lists does not mean they are absent from Ghana.`;
     $("cov-cite").innerHTML = `Records are left out when they name no species, have a vague or flagged position, are fossils or captive animals, or fall outside the district boundaries. Records under a non-commercial licence are not requested. Cite as: ${esc(layer.source)}.`
       + (c.doi ? ` <a href="https://doi.org/${esc(c.doi)}">Open the GBIF download</a>, which lists every contributing dataset.` : "");
     if (location.hash.startsWith("#species=")) openSpecies(SP.findIndex(s => String(s[F.key]) === location.hash.slice(9)));
