@@ -39,11 +39,13 @@ const TL = {
     forest: { name: "Tree cover loss", tab: "Forest change", module: "Vegetation & Forest", page: "pages/vegetation.html", status: "observed", version: "1.1",
               source: "Global Forest Change (Hansen/UMD/Google/USGS/NASA), Landsat", type: "Derived from satellite images",
               resolution: "30 m, summed by district", updates: "Yearly", baseline: "Tree cover in 2000" },
+    urban: { name: "Built-up area growth", tab: "Urban growth", module: "Urban Exposure", page: "pages/urban.html", status: "observed", version: "1.0",
+             source: "Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC", type: "Derived from satellite images",
+             resolution: "1 km, summed by district", updates: "With each new release", baseline: "Built-up area in 2000" },
   },
   // modules that are planned but have no data yet; the site shows no numbers for them
   planned: {
     flood: { name: "Flood", page: "pages/flood.html" },
-    urban: { name: "Urban Exposure", page: "pages/urban.html" },
   },
   disclaimer: "Tinga Lens provides research and environmental information derived from satellite, climate and geospatial datasets. Products may contain measurement, model and classification uncertainties. Tinga Lens should not be used as the sole source for emergency response, evacuation, disaster management or other safety-critical decisions. Consult the relevant Ghanaian authorities for official warnings and emergency information.",
 };

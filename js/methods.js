@@ -8,6 +8,7 @@
     vegetation: "NDVI = (near-infrared − red) ÷ (near-infrared + red)\npercent of normal = district NDVI ÷ average for the same month in other years × 100\nrank = share of other years that were less green",
     fires: "percent of normal = detections in the last 30 days ÷ average for the same dates in earlier years × 100\nQuiet: fewer than 3 detections both now and normally",
     firerisk: "P(fire) = 1 ÷ (1 + exp(−z))\nz = b0 + b1·season + b2·surface moisture anomaly + b3·surface drying anomaly (+ further terms if they improve the test score)\nfire = at least one detection in the district in the next 5 days\nseason = how often the district had a fire on those dates in other years (as log-odds)",
+    urban: "growth = (built-up area in 2020 ÷ built-up area in 2000 − 1) × 100\nbuilt-up area = ground covered by buildings, summed over the district from 1 km cells",
     forest: "loss rate = average tree cover lost per year over the last 3 years ÷ tree cover in 2000 × 100\ntree cover = 30 m pixels with at least 30% canopy taller than 5 m",
   };
   const pct = v => (v * 100).toFixed(1) + "%";

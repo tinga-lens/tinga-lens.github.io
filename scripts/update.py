@@ -7,6 +7,7 @@ Tinga Lens - run every layer that is due.
   vegetation : every run, if a NASA Earthdata login is available
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
+  urban      : only when it has never been built (or URBAN=true); the source changes with each new release
   forest     : only when asked (FOREST=true) or when it has never been built,
                because the source changes once a year and the download is large
 
@@ -36,6 +37,9 @@ if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").
     jobs.append(("forest", "forest.py"))
 else:
     print("Skipping forest loss: already built (tick 'forest' when running by hand to rebuild).")
+
+if os.environ.get("URBAN", "").lower() == "true" or not (DATA / "urban.json").exists():
+    jobs.append(("urban growth", "urban.py"))       # one-off: the source changes only with a new release
 
 failed = []
 for name, script in jobs:
