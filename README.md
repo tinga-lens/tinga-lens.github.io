@@ -72,3 +72,10 @@ This repository contains no university research code, unpublished models, restri
 
 Tinga Lens is a research and environmental information platform. It does not replace official government warnings
 or emergency management information.
+## Copyright
+
+© 2026 Frank Anyoka Adekilae. All rights reserved.
+
+The code and text in this repository may be read for reference. Copying, reuse or
+redistribution requires written permission. The datasets Tinga Lens draws on belong
+to their original providers and are covered by their own licences, listed above.
