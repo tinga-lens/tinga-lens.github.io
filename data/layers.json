@@ -36,6 +36,16 @@
    "file": "data/flood.json"
   },
   {
+   "key": "pressure",
+   "label": "Human pressure",
+   "file": "data/pressure.json"
+  },
+  {
+   "key": "pressurechange",
+   "label": "Pressure change",
+   "file": "data/pressurechange.json"
+  },
+  {
    "key": "urban",
    "label": "Urban growth",
    "file": "data/urban.json"
