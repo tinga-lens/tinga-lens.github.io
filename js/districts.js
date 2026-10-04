@@ -58,11 +58,20 @@
 
     const modules = [...new Set(Object.values(TL.products).map(p => p.module))];
     // "At a glance": one plain sentence per product, built only from the published figures
+    // "94%" of normal reads more easily as "6% below normal"
+    const rel = x => { const p = Math.round(parseFloat(x.big)) - 100; return !isFinite(p) ? x.big + " of normal" : p === 0 ? "equal to normal" : `${Math.abs(p)}% ${p > 0 ? "above" : "below"} normal`; };
+    // where this period ranks among the comparison years, taken from the published "… that were drier" row
+    const rank = (x, more, less) => {
+      const r = x.rows.find(q => /years that were (drier|less green)/i.test(q[0])); if (!r) return "";
+      const m = /(about )?(\d+) of (\d+)/.exec(r[1]); if (!m) return "";
+      const k = +m[2], n = +m[3], kind = /^Baseline/.test(r[0]) ? "baseline" : "earlier";
+      return k * 2 >= n ? `; ${more} than ${m[1] || ""}${k} of ${n} ${kind} years` : `; ${less} than ${m[1] || ""}${n - k} of ${n} ${kind} years`;
+    };
     const say = {
-      drought: (x, lab, when) => `Rainfall over ${when} was ${lab} (${x.big} of normal).`,
-      soil: (x, lab, when) => `Soil moisture in ${when} was ${lab} (${x.big} of normal).`,
-      vegetation: (x, lab, when) => `Vegetation in ${when} was ${lab} (${x.big} of normal greenness).`,
-      fires: (x, lab, when) => `${x.big} fire detections, ${when}; ${lab} for these dates.`,
+      drought: (x, lab, when) => `Rainfall over ${when} was ${lab} (${rel(x)}${rank(x, "wetter", "drier")}).`,
+      soil: (x, lab, when) => `Soil moisture in ${when} was ${lab} (${rel(x)}${rank(x, "wetter", "drier")}).`,
+      vegetation: (x, lab, when) => `Vegetation in ${when} was ${lab} (greenness ${rel(x)}${rank(x, "greener", "less green")}).`,
+      fires: (x, lab, when) => `${x.big} fire detection${x.big === "1" ? "" : "s"}, ${when}; ${lab} for these dates.`,
       firerisk: (x, lab, when) => `Estimated chance of fire, ${when}: ${x.big} (${lab}). This is a model estimate.`,
       forest: x => `Tree cover: ${x.big} ${x.big_note}.`,
       flood: x => `Flooding, 2023 lower Volta event: ${x.big} ${x.big_note.split(",")[0]}.`,
@@ -84,9 +93,9 @@
         if (!e) return `<div class="card"><div>${badge(p.status)}</div><h2>${esc(p.name)}</h2><p class="sub">No data for this district yet.</p></div>`;
         const c = e.d.categories.find(q => q.key === e.x.cat) || { color: "#bdbdbd", label: "" };
         return `<div class="card"><div>${badge(p.status)}</div><h2 style="margin-top:6px">${esc(p.name)}</h2>
-          <div><span class="big">${esc(e.x.big)}</span><span class="pill" style="background:${c.color};color:${ink(c.color)}">${esc(c.label)}</span></div>
-          <p class="sub">${esc(e.x.big_note)}</p>
-          <dl>${e.x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
+          <div><span class="big">${esc(TL.relBig(e.x.big, e.x.big_note)[0])}</span><span class="pill" style="background:${c.color};color:${ink(c.color)}">${esc(c.label)}</span></div>
+          <p class="sub">${esc(TL.relBig(e.x.big, e.x.big_note)[1])}</p>
+          <dl>${e.x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(TL.rel(r[1]))}</dd>`).join("")}</dl>
           <p class="sub" style="margin:0">Updated ${esc(e.d.updated)} · version ${esc(p.version)} · <a href="${ROOT + p.page}#${k}">Open on the map</a></p></div>`;
       }).join("");
       return `<h2>${esc(m)}</h2><div class="profile">${cards}</div>`;

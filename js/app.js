@@ -226,7 +226,7 @@ function focusOn(id) { select(id); map.fitBounds(shapes[id].getBounds().pad(1.5)
 
 function tip(p) {
   const x = D && D.districts[p.shapeID];
-  return esc(p.shapeName) + (x ? "<br><b>" + esc(x.tip) + "</b>" : "");
+  return esc(p.shapeName) + (x ? "<br><b>" + esc(TL.rel(x.tip)) + "</b>" : "");
 }
 
 // =====================================================================
@@ -547,7 +547,7 @@ function ranking() {
   const rows = Object.entries(D.districts).map(([id, x]) => ({ id, x, v: num(x.big) })).filter(r => r.v !== null);
   rows.sort((a, b) => (rankHigh ? b.v - a.v : a.v - b.v) || a.x.name.localeCompare(b.x.name));
   $("rank").innerHTML = rows.slice(0, 10).map((r, i) =>
-    `<li data-id="${esc(r.id)}"><span class="i">${i + 1}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}</span><b>${esc(r.x.big)}</b></li>`).join("")
+    `<li data-id="${esc(r.id)}"><span class="i">${i + 1}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}</span><b>${esc(TL.relBig(r.x.big, r.x.big_note)[0])}</b></li>`).join("")
     || '<li style="cursor:default;color:var(--muted)">No rated districts on this map.</li>';
 }
 
@@ -717,10 +717,10 @@ function select(id) {
   const t = x.table;
   $("detail").innerHTML = `
     <h2>${esc(x.name)}</h2>
-    <div><span class="big">${esc(x.big)}</span>
+    <div><span class="big">${esc(TL.relBig(x.big, x.big_note)[0])}</span>
       <span class="pill" style="background:${color[x.cat]};color:${ink(color[x.cat])}">${esc(label[x.cat])}</span></div>
-    <p class="sub">${esc(x.big_note)}</p>
-    <dl>${x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
+    <p class="sub">${esc(TL.relBig(x.big, x.big_note)[1])}</p>
+    <dl>${x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(TL.rel(r[1]))}</dd>`).join("")}</dl>
     ${chart(D.chart, x)}
     ${t ? `<table class="mv"><caption>${esc(t.caption)}</caption><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
       <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;

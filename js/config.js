@@ -63,3 +63,12 @@ const TL = {
   },
   disclaimer: "Tinga Lens provides research and environmental information derived from satellite, climate and geospatial datasets. Products may contain measurement, model and classification uncertainties. Tinga Lens should not be used as the sole source for emergency response, evacuation, disaster management or other safety-critical decisions. Consult the relevant Ghanaian authorities for official warnings and emergency information.",
 };
+
+// "94% of normal" is easier to read as "6% below normal". Used wherever a figure is shown.
+TL.rel = t => String(t ?? "").replace(/(\d+)% of normal/g, (m, n) => { const p = +n - 100; return p === 0 ? "equal to normal" : `${Math.abs(p)}% ${p > 0 ? "above" : "below"} normal`; });
+TL.relBig = (big, note) => {
+  const m = /^(\d+)%$/.exec(big || "");
+  if (!m || !/^of normal/.test(note || "")) return [big, TL.rel(note)];
+  const p = +m[1] - 100, rest = note.replace(/^of /, "");
+  return p === 0 ? ["Normal", rest.replace(/^normal /, "")] : [`${Math.abs(p)}% ${p > 0 ? "above" : "below"}`, rest];
+};
