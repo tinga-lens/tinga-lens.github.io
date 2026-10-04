@@ -30,7 +30,7 @@ from common import CACHE, load_districts, write_layer  # noqa: E402
 from ee_check import ee_login  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 1                               # raise this to make the weekly update rebuild the layer
+BUILD = 2                               # raise this to make the weekly update rebuild the layer
 HAZARD = "JRC/CEMS_GLOFAS/FloodHazard/v2_1"
 POPULATION = "JRC/GHSL/P2023A/GHS_POP/2020"
 BUILT = "JRC/GHSL/P2023A/GHS_BUILT_S/2020"
@@ -80,6 +80,7 @@ def ask(shape):
     try:        # people and buildings, counted on the population grid so that no one is counted twice
         pop = ee.Image(POPULATION).select("population_count")
         built = ee.Image(BUILT).select("built_surface")
+        pop, built = pop.updateMask(pop.gte(0)), built.updateMask(built.gte(0))     # drops no-data cells over water
         b2 = ee.Image.cat([pop.rename("pop"), pop.updateMask(zone[MAIN]).rename("pop_in"),
                            built.rename("built"), built.updateMask(zone[MAIN]).rename("built_in")])
         ex = retry(lambda: b2.reduceRegion(reducer=ee.Reducer.sum(), geometry=geom, crs=pop.projection(),
@@ -150,7 +151,7 @@ def main():
         if exposure:
             tot["pop"] += r["pop_in"]
             detail += [
-                ["People living inside the 1-in-100-year zone (2020)", people(r["pop_in"]) + (f", {r['pop_in'] / r['pop'] * 100:.0f}% of the district" if r["pop"] > 0 else "")],
+                ["People living inside the 1-in-100-year zone (2020)", people(r["pop_in"]) + (f", {r['pop_in'] / r['pop'] * 100:.0f}% of the district" if r["pop"] > 0 and r["pop_in"] >= 100 else "")],
                 ["Built-up area inside the zone (2020)", f"{r['built_in'] / 1e6:,.2f} km²"],
             ]
         districts[sid] = {
@@ -178,6 +179,7 @@ def main():
             "Only larger rivers are modelled. Small streams, blocked drains and street flooding in towns are not included, so city flooding such as Accra's does not appear.",
             "Flooding from the sea is not included.",
             "The source documentation does not say that flood defences or dam operations are represented. Do not assume the Akosombo, Kpong, Bui or Bagre dams are taken into account.",
+            "Below the Akosombo dam the model puts most of the Volta delta under water even in a 1-in-10-year flood (Ada East, Anloga, South Tongu, Keta). Since the dam was built the river there has been controlled, and flooding on that scale has been rare; 2023 was the exception. Read those figures as what the river could do without the dam's control.",
             "The model works on a 90 m grid with global elevation data. It can be wrong for a single village or field.",
             "People and built-up area come from the Global Human Settlement Layer for 2020, which spreads census counts over mapped buildings. They are estimates, rounded here." if exposure else "People and buildings inside the zone are not reported yet.",
             "This is hazard and exposure, not risk: it says nothing about how well people can cope with a flood.",

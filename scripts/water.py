@@ -29,7 +29,7 @@ from ee_check import ee_login  # noqa: E402
 from floodhazard import retry  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 1                               # raise this to make the weekly update rebuild the layer
+BUILD = 2                               # raise this to make the weekly update rebuild the layer
 SOURCE = "JRC/GSW1_4/GlobalSurfaceWater"
 PERIOD = (1984, 2021)
 SCALE_M = 30
@@ -142,7 +142,7 @@ def main():
             "Clear Landsat images of Ghana are scarce before about 2000, so the \"first year\" differs from place to place and is often later than 1984.",
             f"The record ends in {last}. Changes since then are not shown.",
             "Water narrower than about 30 m, and water under trees or floating plants, is missed.",
-            "Lake Volta's level rises and falls from year to year, so gains and losses along its shore partly reflect which years happened to be compared.",
+            "Lake Volta was unusually low in the mid-1980s after the drought of 1983, when this record begins. Much of the water \"gained\" along its shore is the lake returning to its usual level, not new water.",
             "The figure is surface area. It says nothing about depth, volume or water quality.",
         ],
         "credits": [{"text": "Surface water: Pekel et al. (2016), JRC Global Surface Water v1.4, European Commission Joint Research Centre and Google",

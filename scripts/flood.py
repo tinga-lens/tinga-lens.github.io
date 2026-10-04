@@ -34,7 +34,7 @@ from common import load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 STAC = os.environ.get("TINGA_GFM_STAC", "https://stac.eodc.eu/api/v1")
-BUILD = 2    # raise this to make the weekly update rebuild the events
+BUILD = 3    # raise this to make the weekly update rebuild the events
 # Each event becomes its own map. bbox = west, south, east, north. "notes" adds a line to a district's panel.
 EVENTS = [
     {"layer": "flood", "key": "volta2023", "label": "Flood 2023: lower Volta",
@@ -54,7 +54,10 @@ EVENTS = [
     {"layer": "flood2020", "key": "north2020", "label": "Flood 2020: northern Ghana",
      "name": "Flooding seen in northern Ghana during the 2020 rains and the Bagre dam spillage",
      "start": "2020-08-10", "end": "2020-10-15", "bbox": (-1.6, 9.2, 0.6, 11.2),
-     "checked": "This event has not yet been compared with official reports.", "notes": {}},
+     "checked": ("Compared with news reports on 4 October 2026. Reports of 5 to 9 September 2020 describe deaths and submerged farmland in the North East Region "
+                 "(West Mamprusi, East Mamprusi, Mamprugu Moagduri, Bunkpurugu) and flooding at the White Volta in Bawku West. The map shows its largest "
+                 "flooded areas in West Mamprusi and neighbouring districts, peaking on 8 to 13 September. No official list of affected districts or flooded area was found."),
+     "notes": {}},
 ]
 MIN_KM2 = 0.1          # less flooded area than this is shown as "none detected"
 # --------------------------------------------------------------------------

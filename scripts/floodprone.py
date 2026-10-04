@@ -39,8 +39,12 @@ from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 from ee_check import ee_login  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 2                               # raise this to make the weekly update rebuild the layer
-FIRST_YEAR = 2016                       # earliest year considered; thinly imaged early years are dropped (see choose_years)
+BUILD = 2                               # raise this to make the weekly update rebuild the layer.
+# NOTE: one rebuild uses roughly a third of the free monthly Earth Engine allowance (150 EECU-hours).
+# The start year below changed to 2018 after the published build; it takes effect at the next rebuild
+# ("Rebuild flood-prone land" box). Do that when the monthly allowance has room.
+FIRST_YEAR = 2018                       # earliest year used. In 2016 and 2017 the same method finds a quarter of the flooding of
+                                        # later years although 2017 has as many images as 2022 to 2024, so those years are left out.
 THIN_YEAR = 0.6                         # a year with fewer images than this share of the usual number is "thin"
 SHORE_WATER_PCT = 75                    # water this often or more is permanent water
 SHORE_CELL_M = 3000                     # the lake-shore zone is worked out on cells this wide
@@ -278,7 +282,7 @@ def publish(results, v, counts):
                 f"and clearly darker than it normally is. Each district shows the area flooded in at least 2 of the {n} years. "
                 f"Rivers, lakes, lagoons and other land that is under water {OCCURRENCE_PCT}% of the time or more are not counted. "
                 f"Land along Lake Volta and other large reservoirs, where the water rises and falls with the lake, is reported separately and is not in the main figure. "
-                + (f"The record starts in {first} because the satellite took too few images of Ghana before then. " if first > FIRST_YEAR else "") +
+                +
                 f"Click a district to see the flooded area in each year."),
         "limits": [
             "This is Tinga Lens's own reading of the radar images. It has been compared with one mapped flood (lower Volta, 2023) but not checked on the ground.",
@@ -287,6 +291,8 @@ def publish(results, v, counts):
             "Land within about 3 to 6 km of Lake Volta and other large reservoirs is set apart as lake shore, using a coarse grid. Some river flooding close to the lake is put there by mistake, and narrow arms of the lake can be missed.",
             "Irrigated rice fields, salt pans, coastal lagoon edges and seasonal wetlands hold water on purpose or every year, and can be counted as flooded.",
             f"Only {season} is read, because dry bare soil in the dry season looks like water to radar. Flooding outside those months is not counted.",
+            f"The record starts in {first}. In 2016 and 2017 the same method finds far less flooding, probably because the satellite images were processed differently then, so those years are left out.",
+            "The satellite took about half as many images of Ghana in 2022, 2023 and 2024 as in other years, so short floods in those years are more likely to have been missed.",
             "The figure is land area. It says nothing about how deep the water was or how many people were affected, and it is not a forecast.",
         ],
         "credits": [{"text": "Radar images: Copernicus Sentinel-1, processed in Google Earth Engine", "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S1_GRD"},
