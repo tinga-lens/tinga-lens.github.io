@@ -36,9 +36,24 @@
    "file": "data/floodprone.json"
   },
   {
+   "key": "floodhazard",
+   "label": "River flood hazard",
+   "file": "data/floodhazard.json"
+  },
+  {
+   "key": "water",
+   "label": "Surface water change",
+   "file": "data/water.json"
+  },
+  {
    "key": "flood",
-   "label": "Observed flooding",
+   "label": "Flood 2023: lower Volta",
    "file": "data/flood.json"
+  },
+  {
+   "key": "flood2020",
+   "label": "Flood 2020: northern Ghana",
+   "file": "data/flood2020.json"
   },
   {
    "key": "pressure",
