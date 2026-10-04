@@ -43,7 +43,7 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
         <button class="btn" id="cite-copy" type="button">Copy citation</button>
       </div>
       <div class="card">
-        <input type="search" id="search" list="names" placeholder="Find a district…" aria-label="Find a district">
+        <input type="search" id="search" name="tl-district" autocomplete="off" autocorrect="off" spellcheck="false" list="names" placeholder="Find a district…" aria-label="Find a district">
         <datalist id="names"></datalist>
         <div id="detail"></div>
       </div>

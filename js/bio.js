@@ -5,7 +5,7 @@
   const THREAT = ["CR", "EN", "VU"];
   let SP = null, GROUPS = [], PAIRS = null, REG = {}, NAMES = {}, geo = null;
   let cur = null, shown = 50, smap = null, slayer = null;     // district list state, explorer map
-  let REGION = "", curSpecies = null;                         // region chosen on the map above; species open in the explorer
+  let REGION = "", curSpecies = null, curRows = [];                         // region chosen on the map above; species open in the explorer
   const HINT = "Click a district on the map to list the species recorded there.";
   const F = { key: 0, name: 1, common: 2, group: 3, iucn: 4, records: 5, districts: 6, first: 7, last: 8 };
   const rl = c => c && c !== "LC" && RL[c] ? `<span class="rl ${c}" title="IUCN Red List: ${RL[c]}">${RL[c]}</span>` : (c === "LC" ? "Least Concern" : "–");
@@ -112,6 +112,18 @@
   $("sx-hits").addEventListener("click", e => { const li = e.target.closest("li[data-s]"); if (li) openSpecies(+li.dataset.s); });
   $("sx-rows").addEventListener("click", e => { const tr = e.target.closest("tr[data-id]"); if (tr && window.focusOn) { focusOn(tr.dataset.id); $("map").scrollIntoView({ behavior: "smooth", block: "center" }); } });
 
+  $("sx-csv").addEventListener("click", () => {            // one species: a row for every district where it was recorded
+    if (curSpecies == null) return;
+    const s = SP[curSpecies], q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+    const lines = [["Scientific name", "Common name", "Group", "IUCN Red List (global)", "District", "Region", "Records", "Latest year", "GBIF species key"].map(q).join(",")];
+    curRows.forEach(r => lines.push([s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", NAMES[r.id] || "", REG[r.id] || "", r.n, r.last, s[F.key]].map(q).join(",")));
+    lines.push("", q((REGION ? `${REGION} Region only. ` : "All of Ghana. ") + "Districts not listed have no record; that does not mean the species is absent. " + $("cov-cite").textContent + " Tinga Lens, " + TL.site));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = `tinga-lens-${s[F.name].toLowerCase().replace(/[^a-z0-9]+/g, "-")}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}-by-district.csv`;
+    document.body.append(a); a.click(); a.remove();
+  });
+
   function openSpecies(i, scroll) {
     if (i == null || i < 0 || !SP[i]) return;
     const s = SP[i]; curSpecies = i;
@@ -121,6 +133,7 @@
       PAIRS = p; geo = g;
       const every = (p.species[i] || []).map(([d, n, last]) => ({ id: p.districts[d], n, last })).sort((a, b) => b.n - a.n);
       const rows = REGION ? every.filter(r => REG[r.id] === REGION) : every, here = rows.reduce((a, r) => a + r.n, 0);
+      curRows = rows;
       $("sx-name").innerHTML = `<i>${esc(s[F.name])}</i>` + (s[F.common] ? ` <span style="font-weight:400;color:var(--muted)">${esc(s[F.common])}</span>` : "");
       $("sx-sub").innerHTML = `${esc(GROUPS[s[F.group]])}. IUCN Red List (global): ${s[F.iucn] ? rl(s[F.iucn]) : "not assessed or not supplied"}`;
       $("sx-facts").innerHTML = (REGION ? [[here.toLocaleString(), `records in ${REGION} Region`], [rows.length, `districts with records in ${REGION} Region`]] : [])
