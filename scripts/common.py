@@ -32,7 +32,7 @@ MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "No
 
 # order of the tabs on the website; layers without a data file are left out
 ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("vegetation", "Vegetation"),
-         ("fires", "Fires"), ("firerisk", "Fire risk"), ("forest", "Forest loss"), ("flood", "Observed flooding"), ("urban", "Urban growth"), ("biodiversity", "Recorded species")]
+         ("fires", "Fires"), ("firerisk", "Fire risk"), ("forest", "Forest loss"), ("flood", "Observed flooding"), ("pressure", "Human pressure"), ("pressurechange", "Pressure change"), ("urban", "Urban growth"), ("biodiversity", "Recorded species")]
 PLANNED = ["Mining"]
 
 BOUNDARY_CREDIT = {"text": "Boundaries: geoBoundaries (CC BY 4.0; source USAID Ghana HPNO and Ghana Statistical Service)",

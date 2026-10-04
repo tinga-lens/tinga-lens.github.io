@@ -1,32 +1,10 @@
 <!doctype html>
-<html lang="en" data-root="../" data-page="Urban Exposure" data-layers="urban">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Urban Exposure | Tinga Lens</title>
-<meta name="description" content="How built-up area has grown in every district of Ghana since 2000.">
-<link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261004d">
+<title>Human Pressure | Tinga Lens</title>
+<link rel="canonical" href="https://tingalens.org/pages/pressure.html">
+<meta http-equiv="refresh" content="0; url=pressure.html#urban">
 </head>
-<body>
-<main class="wrap">
-  <h1>Urban Exposure</h1>
-  <p class="lead">How towns and cities are growing across Ghana, and, later, where that growth meets flood-prone land.</p>
-  <div class="card" id="wait" hidden><span class="badge dev">In development</span>
-    <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
-  <div id="app"></div>
-  <section class="notes prose">
-    <h2>About this module</h2>
-    <p><strong>Built-up area and urban growth</strong> <span class="badge observed">Observed</span> shows the ground covered by buildings in each district at five dates from 2000 to 2020, from the Global Human Settlement Layer. <a href="methods.html#m-urban">Read the methods</a>.</p>
-    <p><strong>Exposure</strong> <span class="badge dev">In development</span> will show how much new development and how many people are on flood-prone land. It depends on the flood module, so no exposure figures are published yet.</p></section>
-</main>
-<script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261004d"></script>
-<script src="../js/site.js?v=20261004d"></script>
-<script>
-  // show the map only once real data has been published
-  fetch("../data/urban.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004d"; document.body.append(s); })
-    .catch(() => { document.getElementById("wait").hidden = false; });
-</script>
-</body>
+<body><p>This page has moved to <a href="pressure.html#urban">Human Pressure</a>.</p></body>
 </html>

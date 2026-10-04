@@ -8,6 +8,7 @@ Tinga Lens - run every layer that is due.
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
   biodiversity: once a month, if a GBIF login is available
+  pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
   flood      : only when it has never been built (or FLOOD=true); it maps a past event
   urban      : only when it has never been built (or URBAN=true); the source changes with each new release
   forest     : only when asked (FOREST=true) or when it has never been built,
@@ -56,6 +57,9 @@ if os.environ.get("GBIF_USER") and os.environ.get("GBIF_PWD"):
         print("Skipping biodiversity: already built this month.")
 else:
     print("Skipping biodiversity: no GBIF_USER / GBIF_PWD set.")
+
+if os.environ.get("PRESSURE", "").lower() == "true" or not (DATA / "pressure.json").exists():
+    jobs.append(("human pressure", "pressure.py"))  # one-off: a fixed published dataset
 
 failed = []
 for name, script in jobs:
