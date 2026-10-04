@@ -1,11 +1,13 @@
 # Tinga Lens
 
+**Live site: https://tingalens.org**
+
 **See Ghana's environment changing.**
 
 Tinga Lens is an independent environmental monitoring platform for Ghana. It uses publicly available Earth observation,
 climate and geospatial datasets, and processing code written for this project, to publish information for each of Ghana's districts.
 
-Platform: https://tinga-lens.github.io/
+Platform: https://tingalens.org
 
 ## Modules
 
