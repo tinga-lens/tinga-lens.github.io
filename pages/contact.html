@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Contact us">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact us | Tinga Lens</title>
+<meta name="description" content="How to reach Tinga Lens with a question, a correction or a report from the ground.">
+<link rel="canonical" href="https://tingalens.org/pages/contact.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tinga Lens">
+<meta property="og:title" content="Contact us | Tinga Lens">
+<meta property="og:description" content="How to reach Tinga Lens with a question, a correction or a report from the ground.">
+<meta property="og:url" content="https://tingalens.org/pages/contact.html">
+<meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../css/main.css?v=20261004j">
+</head>
+<body>
+<main class="wrap narrow prose">
+  <h1>Contact us</h1>
+  <p class="lead">Questions, corrections and reports from the ground are welcome.</p>
+
+  <h2>Write to us</h2>
+  <p id="contact">Contact details are loading.</p>
+  <p>Messages are read by the person who runs Tinga Lens. Replies usually take a few days.</p>
+
+  <h2>What helps most</h2>
+  <ul>
+    <li><strong>A map looks wrong, or right.</strong> Tell us the district, the map and the date, and what you saw on the ground. A photo helps.</li>
+    <li><strong>You work in farming, forestry, water, insurance or disaster response in Ghana.</strong> Tell us which figures you use and what is missing.</li>
+    <li><strong>You want to use the data.</strong> You may, with credit. See <a href="about.html#cite">how to cite</a> and <a href="methods.html">Data &amp; methods</a>.</li>
+    <li><strong>You found a fault on the site.</strong> Say which page and what happened.</li>
+  </ul>
+
+  <h2>In an emergency</h2>
+  <p>Tinga Lens is not a warning or emergency service and cannot respond to emergencies. For forecasts and warnings, contact the Ghana Meteorological Agency. For disasters, contact the National Disaster Management Organisation (NADMO).</p>
+
+  <div id="signup-block" hidden>
+    <h2>Get updates</h2>
+    <p>Leave your email and you will get a short note when the maps show something unusual or a new map is added.</p>
+    <p><a class="btn solid" id="signup" href="#">Sign up for updates</a></p>
+  </div>
+</main>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  getJSON("data/site.json").then(s => {
+    const parts = [];
+    if (s.contact_email) parts.push(`Email: <a href="mailto:${esc(s.contact_email)}?subject=Tinga%20Lens">${esc(s.contact_email)}</a>`);
+    if (s.linkedin_url) parts.push(`LinkedIn: <a href="${esc(s.linkedin_url)}">${esc(s.founder_name || "Tinga Lens")}</a>`);
+    $("contact").innerHTML = parts.length ? parts.join("<br>") : "Contact details are not published yet.";
+    if (s.signup_url) { $("signup").href = s.signup_url; $("signup-block").hidden = false; }
+  }).catch(() => { $("contact").textContent = "Contact details could not be loaded. Please try again later."; });
+});
+</script>
+<script src="../js/config.js?v=20261004j"></script>
+<script src="../js/site.js?v=20261004j"></script>
+</body>
+</html>

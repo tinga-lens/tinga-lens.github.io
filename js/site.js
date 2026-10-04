@@ -28,6 +28,13 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
       `<a href="${ROOT + href || "./"}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</nav>
   </div>`;
   document.body.prepend(head);
+  if (TL.topics.some(([label]) => label === here)) {       // on a map page: a row of the other topics
+    const row = document.createElement("nav");
+    row.className = "topic-nav"; row.setAttribute("aria-label", "Topics");
+    row.innerHTML = `<div class="wrap"><span>Maps</span>${TL.topics.map(([label, href]) =>
+      `<a href="${ROOT + href}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</div>`;
+    head.after(row);
+  }
   $("menu-btn").addEventListener("click", () => {
     const open = $("site-nav").classList.toggle("open");
     $("menu-btn").setAttribute("aria-expanded", open);
@@ -40,7 +47,7 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
     <p class="disclaimer"><strong>Important:</strong> ${esc(TL.disclaimer)}</p>
     <p>Tinga Lens is independent and uses only public datasets and its own code.
       Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0). Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
-      <a href="${ROOT}pages/methods.html">Data and methods</a>, <a href="${ROOT}pages/about.html">About and contact</a>, <a href="${TL.repo}">Code</a></p>
+      <a href="${ROOT}pages/methods.html">Data and methods</a>, <a href="${ROOT}pages/about.html">About</a>, <a href="${ROOT}pages/contact.html">Contact us</a>, <a href="${TL.repo}">Code</a></p>
   </div>`;
   document.body.append(foot);
 })();

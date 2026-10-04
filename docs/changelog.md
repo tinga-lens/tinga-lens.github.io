@@ -4,6 +4,8 @@ Every change to a method or product is recorded here. Product versions are shown
 
 ## 2026-10-04
 
+- Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by Tinga Lens in Google Earth Engine. This is the first product that uses Earth Engine; every other product still runs from plain downloads.
+- The percentage-of-normal figures on maps and district pages now read as "6% below normal" in place of "94% of normal".
 - Human modification 1.0 and Change in human modification 1.0: district averages of the Global Human Modification v3 index, 1990 to 2020, ranked among Ghana's districts. A new product type, "Published index", marks indices created by other research groups.
 - The Urban Exposure module became Human Pressure and now also holds built-up area growth.
 - Biodiversity: the species list and the species explorer follow the chosen region; one species can be downloaded by district.

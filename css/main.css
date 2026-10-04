@@ -35,6 +35,12 @@ h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.4rem;font-weight:600;l
 .site-nav a{color:var(--head-muted);text-decoration:none;font-size:.95rem;padding:6px 10px;border-radius:5px}
 .site-nav a:hover{color:var(--head-ink);background:rgba(255,255,255,.08)}
 .site-nav a[aria-current=page]{color:var(--head-ink);background:rgba(255,255,255,.14);font-weight:600}
+.topic-nav{background:var(--card,#fff);border-bottom:1px solid var(--line,#d9dfd6)}
+.topic-nav .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;padding-top:6px;padding-bottom:6px}
+.topic-nav span{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:8px}
+.topic-nav a{color:var(--ink);text-decoration:none;font-size:.93rem;padding:5px 10px;border-radius:5px}
+.topic-nav a:hover{background:rgba(0,0,0,.05)}
+.topic-nav a[aria-current=page]{background:var(--accent);color:var(--card);font-weight:600}
 .menu-btn{display:none;margin-left:auto;font:inherit;font-size:1.3rem;line-height:1;padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:transparent;color:var(--head-ink);cursor:pointer}
 @media (max-width:900px){
   .menu-btn{display:block}

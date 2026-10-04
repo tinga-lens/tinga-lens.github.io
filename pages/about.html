@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>About | Tinga Lens</title>
-<meta name="description" content="What Tinga Lens is, who runs it and how to get in touch.">
+<meta name="description" content="What Tinga Lens is, who runs it and how to cite it.">
 <link rel="canonical" href="https://tingalens.org/pages/about.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Tinga Lens">
@@ -13,7 +13,7 @@
 <meta property="og:url" content="https://tingalens.org/pages/about.html">
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../css/main.css?v=20261004h">
+<link rel="stylesheet" href="../css/main.css?v=20261004j">
 </head>
 <body>
 <main class="wrap narrow prose">
@@ -29,11 +29,8 @@
   <p id="founder">Tinga Lens is an independent project. It is not affiliated with any university, company or government agency.</p>
   <p>Everything here comes from public datasets and from code written for this project. No university research code, unpublished models or restricted data are used.</p>
 
-  <div id="contact-block" hidden>
-    <h2>Get in touch</h2>
-    <p>If a map agrees or disagrees with what you have seen on the ground, please write and say so. That is how the maps get better. Messages from people working in farming, forestry, water, insurance or disaster response in Ghana are especially welcome.</p>
-    <p id="contact"></p>
-  </div>
+  <h2>Get in touch</h2>
+  <p>Questions, corrections and reports from the ground are welcome. See <a href="contact.html">Contact us</a>.</p>
 
   <div id="signup-block" hidden>
     <h2 id="updates">Get updates</h2>
@@ -57,15 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const who = s.founder_url ? `<a href="${esc(s.founder_url)}">${esc(s.founder_name)}</a>` : esc(s.founder_name);
       $("founder").innerHTML = `Tinga Lens was started by ${who}${s.founder_line ? ", " + esc(s.founder_line) : ""}. It is an independent project and is not affiliated with any university, company or government agency.`;
     }
-    const parts = [];
-    if (s.contact_email) parts.push(`Email: <a href="mailto:${esc(s.contact_email)}">${esc(s.contact_email)}</a>`);
-    if (s.linkedin_url) parts.push(`<a href="${esc(s.linkedin_url)}">LinkedIn</a>`);
-    if (parts.length) { $("contact").innerHTML = parts.join(", "); $("contact-block").hidden = false; }
     if (s.signup_url) { $("signup").href = s.signup_url; $("signup-block").hidden = false; }
   }).catch(() => {});
 });
 </script>
-<script src="../js/config.js?v=20261004h"></script>
-<script src="../js/site.js?v=20261004h"></script>
+<script src="../js/config.js?v=20261004j"></script>
+<script src="../js/site.js?v=20261004j"></script>
 </body>
 </html>

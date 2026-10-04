@@ -19,11 +19,9 @@ flood as mapped by Copernicus GFM.
 For each district it reports the land area flooded in at least 1, 2, 3 and 5 of the years,
 and the flooded area in each year.
 
-This first version is a TRIAL. It runs a short list of districts, prints the results
-and saves them in cache/. It does not publish anything on the site.
-
 Run:
-  FLOODPRONE=pilot python scripts/floodprone.py
+  python scripts/floodprone.py                    every district, then publish data/floodprone.json
+  FLOODPRONE=pilot python scripts/floodprone.py   compare the settings on a few districts; publishes nothing
 """
 import datetime as dt
 import hashlib
@@ -37,7 +35,7 @@ from pathlib import Path
 from shapely.geometry import box, mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import CACHE, DATA, load_districts  # noqa: E402
+from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 from ee_check import ee_login  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
@@ -61,6 +59,16 @@ VARIANTS = {
     "E": {"months": (6, 10), "water": -18.0, "drop": 3.0, "hits": 2, "vh": -25.0},
     "F": {"months": (6, 10), "water": -20.0, "drop": 4.0, "hits": 3, "vh": -26.0},
 }
+CHOSEN = "E"     # the setting used for the published map; see docs/validation.md for why
+MIN_KM2 = 0.1    # less than this is shown as "none detected"
+CATS = [
+    {"key": "p0", "label": "None detected", "note": "", "color": "#f1eee6", "max": MIN_KM2},
+    {"key": "p1", "label": "Under 1 km²", "note": "", "color": "#c6dbef", "max": 1},
+    {"key": "p2", "label": "1 to 5 km²", "note": "", "color": "#6baed6", "max": 5},
+    {"key": "p3", "label": "5 to 20 km²", "note": "", "color": "#2171b5", "max": 20},
+    {"key": "p4", "label": "Over 20 km²", "note": "", "color": "#08306b", "max": 1e12},
+    {"key": "out", "label": "Not assessed", "note": "no usable radar images", "color": "#bdbdbd"},
+]
 EVENT = ("2023-09-15", "2023-11-16")    # the lower Volta flood already on the site, for comparison
 PILOT = ["North Tongu", "Central Tongu", "South Tongu", "Ada East", "Ada West", "Asuogyaman", "Keta Municipal",
          "Talensi", "Bawku West", "Builsa South", "Central Gonja", "Kwahu Afram Plains North", "Accra Metropolis"]
@@ -183,13 +191,98 @@ def gfm_event():
         return {}
 
 
+MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+
+def publish(results, v):
+    """results: {shapeID: (name, numbers)} for every district -> data/floodprone.json"""
+    n, first, last = len(YEARS), YEARS[0], YEARS[-1]
+    season = f"{MONTHS[v['months'][0]]} to {MONTHS[v['months'][1]]}"
+    districts, total = {}, 0.0
+    for sid, (name, r) in results.items():
+        if not r.get("images") or not r.get("counted"):
+            districts[sid] = {"name": name, "cat": "out", "big": "–", "big_note": "No usable radar images for this district.",
+                              "tip": "Not assessed", "rows": [], "v": [0] * n, "c": ["out"] * n}
+            continue
+        km2 = r["in2"]
+        total += km2
+        cat = next(c["key"] for c in CATS if km2 < c.get("max", -1))
+        ys = [r[f"y{y}"] for y in YEARS]
+        top = max(range(n), key=lambda k: ys[k])
+        show = lambda x: f"{x:,.1f} km²" if x >= MIN_KM2 else "None detected"
+        districts[sid] = {
+            "name": name, "cat": cat,
+            "big": f"{km2:,.1f} km²" if km2 >= MIN_KM2 else "None",
+            "big_note": f"of land seen flooded in at least 2 of the {n} years {first} to {last}",
+            "tip": f"{km2:,.1f} km² flooded in 2 or more years" if km2 >= MIN_KM2 else "None detected",
+            "rows": [
+                ["Share of the district's land", f"{km2 / r['counted'] * 100:.1f}%"],
+                ["Flooded in at least 1 year", show(r["in1"])],
+                ["Flooded in at least 3 years", show(r["in3"])],
+                ["Flooded in at least 5 years", show(r["in5"])],
+                ["Largest flooded area in one year", f"{ys[top]:,.1f} km² ({YEARS[top]})" if ys[top] >= MIN_KM2 else "–"],
+                ["Radar images read", f"{int(r['images']):,}"],
+            ],
+            "v": [round(x, 2) for x in ys], "c": [cat] * n,
+        }
+    print(f"Flooded in at least 2 of {n} years: {total:,.0f} km2 across Ghana")
+    write_layer("floodprone", {
+        "label": "Flood-prone land", "title": "Flood-prone land", "source": "Sentinel-1 radar, processed by Tinga Lens", "demo": False,
+        "subtitle": f"Land seen under water in at least 2 of the {n} years {first} to {last}",
+        "settings": {"key": CHOSEN, **v, "years": [first, last], "scale_m": SCALE_M, "occurrence_pct": OCCURRENCE_PCT, "slope_deg": SLOPE_DEG},
+        "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
+        "how": (f"Tinga Lens read every Sentinel-1 radar image of Ghana taken from {season} in the years {first} to {last}. "
+                f"A piece of land about {SCALE_M} m across is counted as flooded in a year when at least {v['hits']} images that year show it as open water "
+                f"and clearly darker than it normally is. Each district shows the area flooded in at least 2 of the {n} years. "
+                f"Rivers, lakes, lagoons and other land that is under water {OCCURRENCE_PCT}% of the time or more are not counted. "
+                f"Click a district to see the flooded area in each year."),
+        "limits": [
+            "This is Tinga Lens's own reading of the radar images. It has been compared with one mapped flood (lower Volta, 2023) but not checked on the ground.",
+            "Radar cannot see water under trees or between buildings, so flooding in forests and towns is mostly missed. City street flooding, as in Accra, does not appear.",
+            f"A flood must be seen on at least {v['hits']} images in a year. Each place is imaged every few days, so floods lasting only a day or two are missed.",
+            "The edge of Lake Volta and other reservoirs is counted when the water rises over land that is usually dry. That is rising lake water, not river flooding.",
+            "Irrigated rice fields, salt pans and seasonal wetlands hold water on purpose or every year, and can be counted as flooded.",
+            f"Only {season} is read, because dry bare soil in the dry season looks like water to radar. Flooding outside those months is not counted.",
+            "The figure is land area. It says nothing about how deep the water was or how many people were affected, and it is not a forecast.",
+        ],
+        "credits": [{"text": "Radar images: Copernicus Sentinel-1, processed in Google Earth Engine", "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S1_GRD"},
+                    {"text": "Usual water: JRC Global Surface Water", "url": "https://global-surface-water.appspot.com/"},
+                    {"text": "Slope: NASA SRTM", "url": "https://www.earthdata.nasa.gov/data/instruments/srtm"}],
+        "chart": {"kind": "bars", "unit": "km²", "x": [str(y) for y in YEARS],
+                  "caption": "Land seen flooded in each year (square kilometres).", "top": "", "bottom": ""},
+        "districts": districts,
+    })
+
+
+def full():
+    """Every district with the chosen setting, then publish."""
+    v = VARIANTS[CHOSEN]
+    rows = list(load_districts().itertuples())
+    print(f"Flood-prone land: {len(rows)} districts, {FIRST_YEAR} to {LAST_YEAR}, setting {CHOSEN}", flush=True)
+    t0, results, failed = time.time(), {}, []
+    with ThreadPoolExecutor(WORKERS) as pool:
+        futures = {pool.submit(one, r, v): r for r in rows}
+        for k, (fut, r) in enumerate(futures.items(), 1):
+            try:
+                results[r.shapeID] = (r.shapeName, fut.result()[1])
+            except Exception as e:
+                failed.append(r.shapeName)
+                print(f"  FAILED {r.shapeName}: {type(e).__name__}: {str(e)[:300]}", flush=True)
+            if k % 20 == 0:
+                print(f"  {k} of {len(rows)} districts, {(time.time() - t0) / 60:.1f} min", flush=True)
+    if failed:
+        sys.exit(f"{len(failed)} districts failed ({', '.join(failed[:8])}). Finished districts are saved; run again to retry the rest. Nothing was published.")
+    publish(results, v)
+
+
 def main():
     global ee
-    if os.environ.get("FLOODPRONE", "pilot").lower() != "pilot":
-        sys.exit("Only the trial is available so far. Run with FLOODPRONE=pilot.")
+    mode = os.environ.get("FLOODPRONE", "true").lower()
     ee, project, email = ee_login()
     ee.data.setDeadline(330000)
     STORE.mkdir(parents=True, exist_ok=True)
+    if mode != "pilot":
+        return full()
     rows = [r for r in load_districts().itertuples() if r.shapeName in PILOT]
     gfm = gfm_event()
     print(f"Trial: {len(rows)} districts, {FIRST_YEAR} to {LAST_YEAR}, {SCALE_M} m, {len(VARIANTS)} settings", flush=True)

@@ -20,10 +20,11 @@ Tinga Lens publishes estimates derived from satellite, climate and model data. I
 - **Tree cover loss**: not the same as deforestation. It includes plantation harvests and counts cocoa, rubber and oil palm as tree cover. Regrowth is not subtracted.
 
 - **Observed flooding**: one past event only. Satellites pass every few days, and radar misses water under trees and between buildings, so the figures are a lower bound. Not a live flood map or a warning.
+- **Flood-prone land**: experimental and not checked on the ground. It is Tinga Lens's own reading of radar images for June to October. Lake and reservoir edges, irrigated rice, salt pans and seasonal wetlands can be counted as flooded; flooding in towns, under trees, or lasting only a day or two is missed. It shows where water has been seen repeatedly, not where it will flood next.
 - **Built-up area growth**: buildings only, in 1 km cells; the latest date is 2020. Percent growth is large where there was little to begin with.
 - **Human modification**: an index created by other researchers from many datasets, not a measurement. The source reports a typical error of about 0.18 for a single cell. Classes are fifths of Ghana's districts, not fixed levels.
 - **Recorded species**: reflects where recording has happened. Birds make up about three quarters of the records; large mammals are almost absent. No record does not mean a species is absent. Includes non-commercial records.
 
 ## Not yet published
 
-Flood susceptibility, exposure of people and development to flood-prone land, and habitat suitability are in development. The site shows no numbers for them.
+River flood hazard, exposure of people and development to flood-prone land, and habitat suitability are in development. The site shows no numbers for them.

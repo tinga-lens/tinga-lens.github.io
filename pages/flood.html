@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-root="../" data-page="Flood" data-layers="flood">
+<html lang="en" data-root="../" data-page="Flood" data-layers="floodprone,flood">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,27 +14,28 @@
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261004h">
+<link rel="stylesheet" href="../css/main.css?v=20261004j">
 </head>
 <body>
 <main class="wrap">
   <h1>Flood</h1>
-  <p class="lead">Flooding seen by radar satellites, district by district. This page shows a past event, not a live flood map.</p>
+  <p class="lead">Flooding seen by radar satellites, district by district: one past flood event, and the land that has flooded repeatedly since 2016. Neither is a live flood map.</p>
   <div class="card" id="wait" hidden><span class="badge dev">In development</span>
     <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
   <div id="app"></div>
   <section class="notes prose">
     <h2>About this module</h2>
     <p><strong>Observed flooding</strong> <span class="badge observed">Observed</span> shows land that Sentinel-1 radar satellites saw under water during a named flood event, from the Copernicus Global Flood Monitoring service. Water that is normally there is not counted. Flooding under trees and between buildings is mostly invisible to radar, so the figures are a lower bound. <a href="methods.html#m-flood">Read the methods</a>.</p>
-    <p><strong>Flood susceptibility</strong> <span class="badge dev">In development</span> will estimate which land is prone to flooding. Nothing is published for it yet.</p>
+    <p><strong>Flood-prone land</strong> <span class="badge observed">Observed</span> shows land that radar saw under water in at least two of the last ten years. Tinga Lens works this out from every Sentinel-1 image of Ghana for June to October. It is an experimental product: lake edges, rice fields and salt pans can be counted, and flooding in towns and under trees is missed. <a href="methods.html#m-floodprone">Read the methods</a>.</p>
+    <p><strong>River flood hazard</strong> and <strong>flood exposure</strong> <span class="badge dev">In development</span> will add modelled river flooding and the built-up land inside it. Nothing is published for them yet.</p>
     <p>For flood warnings, follow the Ghana Meteorological Agency, the Ghana Hydrological Authority and NADMO.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261004h"></script>
-<script src="../js/site.js?v=20261004h"></script>
+<script src="../js/config.js?v=20261004j"></script>
+<script src="../js/site.js?v=20261004j"></script>
 <script>
   // show the map only once real data has been published
-  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004h"; document.body.append(s); })
+  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004j"; document.body.append(s); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>
 </body>

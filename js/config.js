@@ -10,11 +10,14 @@ const TL = {
   author: "Adekilae, F. A.",            // how the author appears in citations
   repo: "https://github.com/tinga-lens/tinga-lens.github.io",
   nav: [
-    ["Home", ""], ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
+    ["Home", ""], ["Districts", "pages/districts.html"], ["Data & Methods", "pages/methods.html"],
+    ["About", "pages/about.html"], ["Contact us", "pages/contact.html"],
+  ],
+  // the map pages; shown as a second row on those pages so a reader can move between topics
+  topics: [
+    ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
     ["Vegetation & Forest", "pages/vegetation.html"], ["Flood", "pages/flood.html"],
     ["Human Pressure", "pages/pressure.html"], ["Biodiversity", "pages/biodiversity.html"],
-    ["Districts", "pages/districts.html"],
-    ["Data & Methods", "pages/methods.html"], ["About", "pages/about.html"],
   ],
   status: {
     observed: { label: "Observed", text: "What a satellite recorded." },
@@ -45,6 +48,9 @@ const TL = {
     flood: { name: "Observed flooding", tab: "Observed flooding", module: "Flood", page: "pages/flood.html", status: "observed", version: "0.1 (one event)",
              source: "Copernicus Global Flood Monitoring (GFM), Sentinel-1 radar", type: "Derived from satellite radar images",
              resolution: "20 m, summed by district", updates: "Per flood event", baseline: "Reference water map" },
+    floodprone: { name: "Flood-prone land", tab: "Flood-prone land", module: "Flood", page: "pages/flood.html", status: "observed", version: "0.1 (experimental)",
+                  source: "Copernicus Sentinel-1 radar, processed by Tinga Lens in Google Earth Engine", type: "Derived from satellite radar images",
+                  resolution: "40 m, summed by district", updates: "Yearly", baseline: "Each place's usual radar picture, 2019 to 2021" },
     pressure: { name: "Human modification of the land", tab: "Human modification", module: "Human Pressure", page: "pages/pressure.html", status: "index", version: "1.0",
                 source: "Global Human Modification v3, Theobald and others (2025), The Nature Conservancy", type: "Combined index from many datasets",
                 resolution: "300 m, averaged by district", updates: "With each new release", baseline: "Ranked among Ghana's districts" },

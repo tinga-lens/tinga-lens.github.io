@@ -9,6 +9,7 @@ Tinga Lens - run every layer that is due.
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
   biodiversity: once a month, if a GBIF login is available
   pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
+  flood-prone: only when it has never been built (or FLOODPRONE=true), if a Google Earth Engine key is available
   flood      : only when it has never been built (or FLOOD=true); it maps a past event
   urban      : only when it has never been built (or URBAN=true); the source changes with each new release
   forest     : only when asked (FOREST=true) or when it has never been built,
@@ -51,6 +52,9 @@ else:
 
 if os.environ.get("URBAN", "").lower() == "true" or not (DATA / "urban.json").exists():
     jobs.append(("urban growth", "urban.py"))       # one-off: the source changes only with a new release
+
+if os.environ.get("EE_SERVICE_ACCOUNT_KEY") and (os.environ.get("FLOODPRONE", "").lower() == "true" or not (DATA / "floodprone.json").exists()):
+    jobs.append(("flood-prone land", "floodprone.py"))   # about once a year: uses Google Earth Engine
 
 if os.environ.get("FLOOD", "").lower() == "true" or not (DATA / "flood.json").exists():
     jobs.append(("observed flooding", "flood.py"))  # one-off: a past flood event

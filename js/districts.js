@@ -75,6 +75,7 @@
       firerisk: (x, lab, when) => `Estimated chance of fire, ${when}: ${x.big} (${lab}). This is a model estimate.`,
       forest: x => `Tree cover: ${x.big} ${x.big_note}.`,
       flood: x => `Flooding, 2023 lower Volta event: ${x.big} ${x.big_note.split(",")[0]}.`,
+      floodprone: x => `Flood-prone land: ${x.big} ${x.big_note.replace(/^of land /, "")}.`,
       pressure: x => `Human modification of the land: ${x.big} on a scale from 0 to 1${(x.rows.find(r => r[0] === "Rank in Ghana") || [0, ""])[1] ? ", rank " + x.rows.find(r => r[0] === "Rank in Ghana")[1].split(" (")[0] + " in Ghana" : ""}.`,
       urban: x => `Built-up area grew ${x.big.replace("+", "")} between 2000 and 2020.`,
       biodiversity: x => `${x.big} species recorded, which reflects how much the district has been surveyed.`,
