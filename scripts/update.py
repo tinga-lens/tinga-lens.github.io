@@ -58,7 +58,13 @@ if os.environ.get("GBIF_USER") and os.environ.get("GBIF_PWD"):
 else:
     print("Skipping biodiversity: no GBIF_USER / GBIF_PWD set.")
 
-if os.environ.get("PRESSURE", "").lower() == "true" or not (DATA / "pressure.json").exists():
+def pressure_is_old():
+    import json, re
+    want = int(re.search(r"^BUILD = (\d+)", (HERE / "pressure.py").read_text(), re.M).group(1))
+    return json.loads((DATA / "pressure.json").read_text()).get("build", 1) < want
+
+
+if os.environ.get("PRESSURE", "").lower() == "true" or not (DATA / "pressure.json").exists() or pressure_is_old():
     jobs.append(("human pressure", "pressure.py"))  # one-off: a fixed published dataset
 
 failed = []

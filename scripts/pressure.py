@@ -111,11 +111,13 @@ def read(s, name, link, gdf, allow_download):
         return district_means(dest, gdf)
 
 
+BUILD = 2            # raise this number to make the weekly update rebuild the layer once
+
+
 def fifths(values, cats):
-    """Put each district in a fifth of the Ghana ranking; also return the share of districts below it."""
+    """Put each district in a fifth of the Ghana ranking; also return its rank (1 = highest value)."""
     order = np.argsort(np.argsort(values, kind="stable"), kind="stable")
-    below = order / max(len(values) - 1, 1) * 100
-    return [cats[min(int(o * 5 / len(values)), 4)][0] for o in order], below
+    return [cats[min(int(o * 5 / len(values)), 4)][0] for o in order], len(values) - order
 
 
 def main():
@@ -145,8 +147,9 @@ def main():
 
     y0, y1 = YEARS[0], YEARS[-1]
     now, change = series[:, -1], series[:, -1] - series[:, 0]
-    cat_now, below_now = fifths(now, LEVEL)
-    cat_chg, below_chg = fifths(change, CHANGE)
+    cat_now, rank_now = fifths(now, LEVEL)
+    cat_chg, rank_chg = fifths(change, CHANGE)
+    n = len(gdf)
     print(f"Ghana: {np.mean(series[:, 0]):.3f} in {y0}, {np.mean(now):.3f} in {y1}; change ranges {change.min():+.3f} to {change.max():+.3f}")
 
     def build(which):
@@ -154,17 +157,17 @@ def main():
         for i, row in gdf.iterrows():
             top = sorted(((lab, float(v[i])) for lab, v in parts.items()), key=lambda t: -t[1])[:3]
             rows = [[f"Human modification in {y1}", f"{now[i]:.2f}"],
-                    ["Higher than", f"{below_now[i]:.0f}% of Ghana's districts"],
+                    ["Rank in Ghana", f"{rank_now[i]} of {n} (1 = most modified)"],
                     [f"Change since {y0}", f"{change[i]:+.2f} (from {series[i, 0]:.2f})"],
-                    ["Change is larger than in", f"{below_chg[i]:.0f}% of districts"]]
+                    ["Rank by change", f"{rank_chg[i]} of {n} (1 = largest increase)"]]
             if top:
                 rows.append([f"Largest pressures in {y1}", ", ".join(f"{lab.lower()} {v:.2f}" for lab, v in top)])
             if which == "now":
                 d = {"cat": cat_now[i], "big": f"{now[i]:.2f}", "big_note": f"human modification in {y1}, on a scale from 0 (not modified) to 1 (fully modified)",
-                     "tip": f"{now[i]:.2f}, higher than {below_now[i]:.0f}% of districts", "c": [cat_now[i]] * len(YEARS)}
+                     "tip": f"{now[i]:.2f}, rank {rank_now[i]} of {n}", "c": [cat_now[i]] * len(YEARS)}
             else:
                 d = {"cat": cat_chg[i], "big": f"{change[i]:+.2f}", "big_note": f"change in human modification, {y0} to {y1}",
-                     "tip": f"{change[i]:+.2f} since {y0}", "c": [cat_chg[i]] * len(YEARS)}
+                     "tip": f"{change[i]:+.2f} since {y0}, rank {rank_chg[i]} of {n}", "c": [cat_chg[i]] * len(YEARS)}
             out[row.shapeID] = {"name": row.shapeName, "rows": rows, "v": [round(float(x), 3) for x in series[i]], **d}
         return out
 
@@ -175,7 +178,7 @@ def main():
               "The classes are fifths of Ghana's 260 districts, so they show where a district stands within Ghana, not a fixed level of pressure.",
               f"The latest date is {y1}. Change since then is not shown."]
     write_layer("pressure", {
-        "label": "Human pressure", "title": "Human modification of the land", "source": "Global Human Modification v3 (TNC)", "demo": False,
+        "build": BUILD, "label": "Human pressure", "title": "Human modification of the land", "source": "Global Human Modification v3 (TNC)", "demo": False,
         "subtitle": f"District average in {y1}, from 0 (not modified) to 1 (fully modified)",
         "categories": [{"key": k, "label": lab, "note": "", "color": c} for k, lab, c in LEVEL],
         "how": (f"Each district shows how far its land had been altered by people in {y1}, as the average of the Global Human "
