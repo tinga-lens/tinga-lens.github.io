@@ -2,6 +2,23 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-04
+
+- Human modification 1.0 and Change in human modification 1.0: district averages of the Global Human Modification v3 index, 1990 to 2020, ranked among Ghana's districts. A new product type, "Published index", marks indices created by other research groups.
+- The Urban Exposure module became Human Pressure and now also holds built-up area growth.
+- Biodiversity: the species list and the species explorer follow the chosen region; one species can be downloaded by district.
+- The region filter now appears on every layer.
+
+## 2026-10-03: new modules and the tingalens.org domain
+
+- Recorded species 0.1 (GBIF): species counts by district, species lists, a species explorer, threatened species (IUCN Red List categories), and data coverage. Records under a non-commercial licence were added after an expert noted that mammals were under-represented; a table of records by group was added.
+- Observed flooding 0.1 (Copernicus Global Flood Monitoring): one event, the lower Volta flooding of September to November 2023.
+- Built-up area growth 1.0 (Global Human Settlement Layer), 2000 to 2020.
+- Region filter for the 16 regions; satellite background; map image downloads carrying the Tinga Lens name; a recommended citation for every map.
+- Redesign: map first on the home page, new typefaces and colours.
+- The site moved to https://tingalens.org.
+- Active fire detections: the update no longer stalls when the data provider is unreachable; it publishes up to the last complete day.
+
 ## 2026-10-03: site version 2.0
 
 - Restructured the site into modules: Drought, Fire, Vegetation & Forest, Flood (in development), Urban Exposure (in development).

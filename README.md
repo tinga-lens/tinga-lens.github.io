@@ -16,8 +16,11 @@ Platform: https://tingalens.org
 | Drought | Rainfall anomaly (CHIRPS), soil moisture anomaly (NASA SMAP Level-4) | Published |
 | Fire | Active fire detections (NASA FIRMS), fire probability (experimental model) | Published |
 | Vegetation & Forest | Vegetation greenness anomaly (NASA VIIRS), tree cover loss (Global Forest Change) | Published |
-| Flood | Observed flooding, flood susceptibility | In development, no data |
-| Urban Exposure | Urban growth, exposure to flood-prone land | In development, no data |
+| Flood | Observed flooding for one documented event (Copernicus Global Flood Monitoring, Sentinel-1) | Published; flood susceptibility in development |
+| Human Pressure | Human modification index and its change since 1990 (Global Human Modification v3), built-up area growth (GHSL) | Published; exposure to flood-prone land in development |
+| Biodiversity | Recorded species by district and region, species explorer (GBIF occurrence records, IUCN Red List categories) | Published; habitat suitability in development |
+
+The site also has district profiles, a region filter, downloads (CSV and map images) and a recommended citation for every map.
 
 ## Data philosophy
 
@@ -25,7 +28,8 @@ Tinga Lens distinguishes between:
 
 1. **Observed**: what a satellite recorded
 2. **Environmental condition**: an observation compared with what is normal for the place and season
-3. **Modeled risk**: a statistical estimate made by Tinga Lens
+3. **Published index**: a combined index published by another research group, averaged here by district
+4. **Modeled risk**: a statistical estimate made by Tinga Lens
 
 Each product documents its source, method, resolution, validation, limitations and version. The site shows no placeholder numbers.
 
@@ -46,8 +50,10 @@ Repository secrets needed (Settings → Secrets and variables → Actions):
 
 - `EARTHDATA_USERNAME`, `EARTHDATA_PASSWORD`: a free NASA Earthdata login (soil moisture, vegetation)
 - `FIRMS_MAP_KEY`: a free NASA FIRMS key (fires)
+- `GBIF_USER`, `GBIF_PWD`, `GBIF_EMAIL`: a free GBIF account (biodiversity)
 
-Then: Actions → Update data → Run workflow. Tick "Rebuild forest loss" once a year.
+Then: Actions → Update data → Run workflow. Tick "Rebuild forest loss" once a year. Biodiversity rebuilds once a month,
+or when "Rebuild biodiversity now" is ticked. Flooding, built-up area and human pressure are built once.
 
 On your own computer:
 
@@ -67,6 +73,13 @@ This repository contains no university research code, unpublished models, restri
 - Vegetation: NASA VIIRS VNP13A3, LP DAAC
 - Fires: NASA FIRMS, VIIRS 375 m active fires
 - Tree cover: Hansen/UMD/Google/USGS/NASA Global Forest Change, CC BY 4.0
+- Flooding: Copernicus Emergency Management Service, Global Flood Monitoring (Sentinel-1)
+- Built-up area: Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC, CC BY 4.0
+- Human modification: Theobald and others (2025), Global Human Modification v3, The Nature Conservancy, CC BY 4.0
+- Species records: GBIF occurrence download (the DOI is shown on the Biodiversity page). Includes records under CC0, CC BY and CC BY-NC, so the biodiversity layer may not be used commercially
+- Conservation status: IUCN Red List of Threatened Species, via GBIF
+- Region names: geoBoundaries GHA ADM1 (OpenStreetMap)
+- Satellite background: Esri World Imagery, under Esri's terms
 - Boundaries: geoBoundaries GHA ADM2, CC BY 4.0 (source: USAID Ghana HPNO and Ghana Statistical Service)
 - Basemap: © OpenStreetMap contributors. Map library: Leaflet (BSD 2-Clause)
 
