@@ -77,6 +77,10 @@ dl.key dd{text-align:left;color:var(--muted)}
 .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
 
 /* ---------- map application ---------- */
+nav.mods{display:flex;flex-wrap:wrap;gap:2px 22px;margin:16px 0 0;border-bottom:1px solid var(--line)}
+nav.mods button{font:inherit;font-size:1.02rem;font-weight:600;padding:6px 0 8px;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;background:transparent;color:var(--muted);cursor:pointer}
+nav.mods button:hover{color:var(--ink)}
+nav.mods button[aria-current=true]{color:var(--ink);border-bottom-color:var(--accent)}
 nav.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 nav.tabs button{font:inherit;font-size:.95rem;padding:7px 14px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 nav.tabs button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
@@ -84,7 +88,10 @@ nav.tabs button:disabled{color:var(--muted);cursor:default}
 nav.tabs button:disabled small{opacity:.75;margin-left:4px}
 #demo{display:none;background:#fff3cd;color:#5c4400;border:1px solid #e6cf85;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.92rem}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
-@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.mapcol{min-width:0}
+.mapcol section.notes{margin:18px 0 0}
+@media (max-width:860px){.grid{grid-template-columns:1fr}
+  .mapcol{display:contents} #map{order:1} .grid > aside{order:2} .mapcol section.notes{order:3}}
 #map{height:640px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
 @media (max-width:860px){#map{height:440px}}
 .ctl{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;margin:0 0 6px;font-size:.84rem;color:var(--muted)}
@@ -140,6 +147,8 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .profile .card{margin:0}
 #mini{height:260px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
 
+ul.glance{margin:0 0 6px;padding-left:20px;max-width:78ch}
+ul.glance li{margin:3px 0}
 .cite{overflow-wrap:anywhere;margin:0 0 8px}
 .citebox{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:10px 14px;font-size:.95rem;overflow-wrap:anywhere}
 

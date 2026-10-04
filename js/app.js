@@ -1,10 +1,20 @@
 // Tinga Lens - the map application. Used on the home page (all layers) and on each module page (its own layers).
 // A page chooses its layers with <html data-layers="drought,soil">; with no list, every layer is shown.
-document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers" id="tabs"></nav>
+document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Modules" id="mods" hidden></nav>
+  <nav class="tabs" aria-label="Layers" id="tabs"></nav>
   <div id="demo"><strong>Demo data.</strong> These numbers are made up to preview the site. They are replaced with real data the first time the update runs.</div>
 
   <div class="grid">
-    <div id="map" role="application" aria-label="Map of Ghana districts"></div>
+    <div class="mapcol">
+      <div id="map" role="application" aria-label="Map of Ghana districts"></div>
+      <section class="notes">
+        <h2>How to read this map</h2>
+        <p id="how"></p>
+        <h2>Limits</h2>
+        <ul id="limits"></ul>
+        <div id="tables"></div>
+      </section>
+    </div>
     <aside>
       <div class="card">
         <div id="status" style="margin-bottom:4px"></div>
@@ -56,15 +66,7 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
         <ol class="rank" id="rank"></ol>
       </div>
     </aside>
-  </div>
-
-  <section class="notes">
-    <h2>How to read this map</h2>
-    <p id="how"></p>
-    <h2>Limits</h2>
-    <ul id="limits"></ul>
-    <div id="tables"></div>
-  </section>`;
+  </div>`;
 
 const EMPTY = '<p class="sub" style="margin:0">Click a district on the map, or search for one, to see its numbers.</p>';
 
@@ -142,11 +144,22 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   if (only.length) man = { layers: only.map(k => man.layers.find(l => l.key === k)).filter(Boolean), planned: [] };
   if (!man.layers.length) { $("title").textContent = "No data for this page yet"; return; }
   const tabName = l => only.length && TL.products[l.key] ? TL.products[l.key].tab : l.label;
-  $("tabs").innerHTML = man.layers.map(l => `<button data-key="${esc(l.key)}">${esc(tabName(l))}</button>`).join("");
-  $("tabs").hidden = man.layers.length < 2;
+  // On the home page the layers are grouped: pick a module, then one of its layers.
+  const grouped = !only.length, modOf = k => (TL.products[k] || {}).module || "Other";
+  const order = Object.keys(TL.products), rank = k => (order.indexOf(k) + 1) || 99;       // modules and layers in the order of the product register
+  if (grouped) man.layers.sort((a, b) => rank(a.key) - rank(b.key));
+  const mods = [...new Set(man.layers.map(l => modOf(l.key)))];
+  const drawTabs = key => {
+    const list = grouped ? man.layers.filter(l => modOf(l.key) === modOf(key)) : man.layers;
+    $("tabs").innerHTML = list.map(l => `<button data-key="${esc(l.key)}">${esc(grouped && TL.products[l.key] ? TL.products[l.key].tab : tabName(l))}</button>`).join("");
+    $("tabs").hidden = list.length < 2;
+    if (grouped) { $("mods").hidden = false; $("mods").innerHTML = mods.map(m => `<button data-mod="${esc(m)}" aria-current="${m === modOf(key)}">${esc(m)}</button>`).join(""); }
+  };
   $("tabs").addEventListener("click", e => { const k = e.target.closest("button")?.dataset.key; if (k) show(k); });
+  $("mods").addEventListener("click", e => { const m = e.target.closest("button")?.dataset.mod; if (m) show(man.layers.find(l => modOf(l.key) === m).key); });
   const show = key => {
     const l = man.layers.find(x => x.key === key) || man.layers[0];
+    drawTabs(l.key);
     (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => {
       BASE = d; REC = null; VIEW = ""; DAYS = daysCache[l.key] || null;
       const yearly = d.yearly || (d.key === "forest" ? { base_label: "Latest average", breaks: [0.5, 1, 2, 3] } : null);
