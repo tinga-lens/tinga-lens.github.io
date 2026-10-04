@@ -17,8 +17,8 @@ on:
         description: "Only test the Google Earth Engine key (updates nothing)"
         type: boolean
         default: false
-      floodprone_trial:
-        description: "Only run the flood-prone land trial on 13 districts (publishes nothing)"
+      floodprone:
+        description: "Rebuild flood-prone land (Google Earth Engine, needed about once a year)"
         type: boolean
         default: false
 
@@ -58,7 +58,7 @@ jobs:
           BIODIVERSITY: ${{ inputs.biodiversity }}
           EE_SERVICE_ACCOUNT_KEY: ${{ secrets.EE_SERVICE_ACCOUNT_KEY }}
           EE_CHECK: ${{ inputs.ee_check }}
-          FLOODPRONE: ${{ inputs.floodprone_trial && 'pilot' || '' }}
+          FLOODPRONE: ${{ inputs.floodprone }}
         run: python scripts/update.py
       - name: Keep downloads for next time
         uses: actions/cache/save@v4
