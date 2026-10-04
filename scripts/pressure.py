@@ -36,7 +36,7 @@ from common import load_districts, write_layer  # noqa: E402
 RECORD = os.environ.get("TINGA_GHM_RECORD", "https://zenodo.org/api/records/14449495")
 YEARS = [1990, 1995, 2000, 2005, 2010, 2015, 2020]
 PARTS = [("AG", "Agriculture"), ("BU", "Built-up areas"), ("TI", "Roads and other corridors"), ("EX", "Energy and mining"),
-         ("FR", "Logging and other harvesting"), ("HA", "Human access"), ("NS", "Changes to natural systems"), ("PO", "Pollution")]
+         ("FR", "Logging and other harvesting"), ("HI", "People moving through the land"), ("NS", "Changes to natural systems"), ("PO", "Pollution")]
 # --------------------------------------------------------------------------
 
 LEVEL = [("q1", "Lowest fifth of districts", "#ffffcc"), ("q2", "Second fifth", "#fed98e"), ("q3", "Middle fifth", "#fe9929"),
@@ -63,7 +63,7 @@ def files_on_record(s):
 
 def pick(files, year, code):
     """The file for one year and one kind of pressure ('AA' = all combined)."""
-    hits = [k for k in files if f"_{year}c_{code}_300" in k and k.lower().endswith((".tif", ".tiff"))]
+    hits = [k for k in files if f"_{year}c_{code}" in k and k.lower().endswith((".tif", ".tiff"))]   # e.g. HMv20240801_2020c_AA.tif
     return (hits[0], files[hits[0]]) if hits else (None, None)
 
 
