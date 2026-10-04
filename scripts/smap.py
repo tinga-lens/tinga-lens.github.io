@@ -121,9 +121,8 @@ def read_with_retry(earthaccess, granule, slices, key):
 
 def load_real(today):
     import earthaccess
-    auth = earthaccess.login(strategy="environment")
-    if not getattr(auth, "authenticated", False):
-        sys.exit("NASA Earthdata login failed. Set EARTHDATA_USERNAME and EARTHDATA_PASSWORD.")
+    from common import earthdata_login
+    earthdata_login()                                  # tries several times; exits with a plain message if NASA is unreachable
 
     have, grid = load_cache()
     slices = None

@@ -88,3 +88,35 @@ def write_manifest():
     layers = [{"key": k, "label": lab, "file": f"data/{k}.json"}
               for k, lab in ORDER if (DATA / f"{k}.json").exists()]
     (DATA / "layers.json").write_text(json.dumps({"layers": layers, "planned": PLANNED}, indent=1))
+
+
+def prefer_ipv4():
+    """GitHub's servers have no IPv6 route, and a host that also has an IPv6 address can fail with
+    'Network is unreachable'. Ask for IPv4 addresses only."""
+    import socket
+    try:
+        import urllib3.util.connection as c
+        c.allowed_gai_family = lambda: socket.AF_INET
+    except Exception:
+        pass
+
+
+def earthdata_login(tries=5):
+    """Log in to NASA Earthdata, trying again if NASA cannot be reached. Stops quietly if it never answers."""
+    import sys
+    import time
+    prefer_ipv4()
+    import earthaccess
+    for attempt in range(1, tries + 1):
+        try:
+            auth = earthaccess.login(strategy="environment")
+            if getattr(auth, "authenticated", False):
+                return auth
+            sys.exit("NASA Earthdata did not accept the login. Check EARTHDATA_USERNAME and EARTHDATA_PASSWORD.")
+        except SystemExit:
+            raise
+        except Exception as e:
+            print(f"  NASA Earthdata could not be reached ({type(e).__name__}), attempt {attempt} of {tries}", flush=True)
+            if attempt < tries:
+                time.sleep(45 * attempt)
+    sys.exit("NASA Earthdata could not be reached. The existing map is kept and this layer will be tried again on the next run.")

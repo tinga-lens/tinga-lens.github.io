@@ -146,6 +146,8 @@ def write_points(frames, gdf, first, last):
 
 def load_real(gdf, today):
     import requests
+    from common import prefer_ipv4
+    prefer_ipv4()
     key = os.environ.get("FIRMS_MAP_KEY", "").strip()
     if not key:
         sys.exit("FIRMS_MAP_KEY is not set.")
