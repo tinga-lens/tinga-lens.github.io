@@ -24,6 +24,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA = HERE.parent / "data"
 
+if os.environ.get("EE_CHECK", "").lower() == "true":      # only test the Google Earth Engine key, then stop
+    print("===== Earth Engine check =====", flush=True)
+    sys.exit(subprocess.run([sys.executable, str(HERE / "ee_check.py")]).returncode)
+
 earthdata = bool(os.environ.get("EARTHDATA_USERNAME") or os.environ.get("EARTHDATA_TOKEN"))
 jobs = [("drought", "drought.py")]
 if earthdata:

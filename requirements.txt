@@ -5,3 +5,5 @@ requests
 h5py
 earthaccess
 scikit-learn
+pandas
+earthengine-api
