@@ -28,6 +28,10 @@ if os.environ.get("EE_CHECK", "").lower() == "true":      # only test the Google
     print("===== Earth Engine check =====", flush=True)
     sys.exit(subprocess.run([sys.executable, str(HERE / "ee_check.py")]).returncode)
 
+if os.environ.get("FLOODPRONE", "").lower() == "pilot":   # only run the flood-prone trial (publishes nothing), then stop
+    print("===== flood-prone land (trial) =====", flush=True)
+    sys.exit(subprocess.run([sys.executable, str(HERE / "floodprone.py")]).returncode)
+
 earthdata = bool(os.environ.get("EARTHDATA_USERNAME") or os.environ.get("EARTHDATA_TOKEN"))
 jobs = [("drought", "drought.py")]
 if earthdata:
