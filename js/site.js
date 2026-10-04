@@ -16,6 +16,7 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
     if (document.querySelector(`link[rel="${rel}"]`)) return;
     const l = document.createElement("link"); l.rel = rel; if (type) l.type = type; l.href = ROOT + href; document.head.append(l);
   });
+  const onTopic = TL.topics.some(([label]) => label === here);
   const head = document.createElement("header");
   head.className = "site-head";
   head.innerHTML = `<div class="wrap">
@@ -24,17 +25,24 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
       <path d="M60 30 A30 30 0 1 1 30 60" fill="none" stroke="#74C69D" stroke-width="10" stroke-linecap="round"/>
       <circle cx="60" cy="60" r="11" fill="#C9A98D"/><circle cx="23" cy="23" r="7" fill="#6CB8D8"/></svg><span>Tinga <em>Lens</em></span></a>
     <button class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">☰</button>
-    <nav class="site-nav" id="site-nav" aria-label="Main">${TL.nav.map(([label, href]) =>
-      `<a href="${ROOT + href || "./"}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</nav>
+    <nav class="site-nav" id="site-nav" aria-label="Main">${TL.nav.map(([label, href]) => href === null
+      ? `<div class="nav-group"><button type="button" class="nav-drop${onTopic ? " here" : ""}" id="maps-btn" aria-expanded="false" aria-controls="maps-menu">${esc(label)} <span aria-hidden="true">▾</span></button>
+          <div class="nav-menu" id="maps-menu">${TL.topics.map(([t, h]) => `<a href="${ROOT + h}"${t === here ? ' aria-current="page"' : ""}>${esc(t)}</a>`).join("")}</div></div>`
+      : `<a href="${ROOT + href || "./"}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</nav>
   </div>`;
   document.body.prepend(head);
-  if (TL.topics.some(([label]) => label === here)) {       // on a map page: a row of the other topics
+  if (onTopic) {       // on a map page: a row of the other topics
     const row = document.createElement("nav");
     row.className = "topic-nav"; row.setAttribute("aria-label", "Topics");
     row.innerHTML = `<div class="wrap"><span>Maps</span>${TL.topics.map(([label, href]) =>
       `<a href="${ROOT + href}"${label === here ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("")}</div>`;
     head.after(row);
   }
+  const mapsBtn = $("maps-btn"), mapsMenu = $("maps-menu");
+  const setMaps = open => { mapsMenu.classList.toggle("open", open); mapsBtn.setAttribute("aria-expanded", open); };
+  mapsBtn.addEventListener("click", e => { e.stopPropagation(); setMaps(!mapsMenu.classList.contains("open")); });
+  document.addEventListener("click", e => { if (!mapsMenu.contains(e.target)) setMaps(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") setMaps(false); });
   $("menu-btn").addEventListener("click", () => {
     const open = $("site-nav").classList.toggle("open");
     $("menu-btn").setAttribute("aria-expanded", open);

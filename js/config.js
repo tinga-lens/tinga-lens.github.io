@@ -10,8 +10,8 @@ const TL = {
   author: "Adekilae, F. A.",            // how the author appears in citations
   repo: "https://github.com/tinga-lens/tinga-lens.github.io",
   nav: [
-    ["Home", ""], ["Districts", "pages/districts.html"], ["Data & Methods", "pages/methods.html"],
-    ["About", "pages/about.html"], ["Contact us", "pages/contact.html"],
+    ["Home", ""], ["About", "pages/about.html"], ["Maps", null],      // "Maps" opens the list of topics below
+    ["Districts", "pages/districts.html"], ["Data & Methods", "pages/methods.html"], ["Contact us", "pages/contact.html"],
   ],
   // the map pages; shown as a second row on those pages so a reader can move between topics
   topics: [

@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261004m">
+<link rel="stylesheet" href="../css/main.css?v=20261004o">
 </head>
 <body>
 <main class="wrap">
@@ -33,11 +33,11 @@
     <p>For flood warnings, follow the Ghana Meteorological Agency, the Ghana Hydrological Authority and NADMO.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261004m"></script>
-<script src="../js/site.js?v=20261004m"></script>
+<script src="../js/config.js?v=20261004o"></script>
+<script src="../js/site.js?v=20261004o"></script>
 <script>
   // show the map only once real data has been published
-  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004m"; document.body.append(s); })
+  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004o"; document.body.append(s); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>
 </body>
