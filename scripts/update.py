@@ -9,8 +9,11 @@ Tinga Lens - run every layer that is due.
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
   biodiversity: once a month, if a GBIF login is available
   pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
-  flood-prone: only when it has never been built (or FLOODPRONE=true), if a Google Earth Engine key is available
-  flood      : only when it has never been built (or FLOOD=true); it maps a past event
+  flood-prone: only when it has never been built, its script has a newer BUILD number, or FLOODPRONE=true;
+               needs a Google Earth Engine key
+  water      : only when it has never been built or its script has a newer BUILD number; needs the same key
+  flood hazard: only when it has never been built or its script has a newer BUILD number; needs the same key
+  flood      : only when an event has never been built, its script has a newer BUILD number, or FLOOD=true; it maps past events
   urban      : only when it has never been built (or URBAN=true); the source changes with each new release
   forest     : only when asked (FOREST=true) or when it has never been built,
                because the source changes once a year and the download is large
@@ -53,11 +56,28 @@ else:
 if os.environ.get("URBAN", "").lower() == "true" or not (DATA / "urban.json").exists():
     jobs.append(("urban growth", "urban.py"))       # one-off: the source changes only with a new release
 
-if os.environ.get("EE_SERVICE_ACCOUNT_KEY") and (os.environ.get("FLOODPRONE", "").lower() == "true" or not (DATA / "floodprone.json").exists()):
-    jobs.append(("flood-prone land", "floodprone.py"))   # about once a year: uses Google Earth Engine
+def is_old(key, script):
+    """True when the published layer is missing or was built by an older version of its script."""
+    import json, re
+    f = DATA / f"{key}.json"
+    if not f.exists():
+        return True
+    want = int(re.search(r"^BUILD = (\d+)", (HERE / script).read_text(), re.M).group(1))
+    return json.loads(f.read_text()).get("build", 1) < want
 
-if os.environ.get("FLOOD", "").lower() == "true" or not (DATA / "flood.json").exists():
-    jobs.append(("observed flooding", "flood.py"))  # one-off: a past flood event
+
+if os.environ.get("EE_SERVICE_ACCOUNT_KEY"):     # the layers that use Google Earth Engine
+    if os.environ.get("FLOODPRONE", "").lower() == "true" or is_old("floodprone", "floodprone.py"):
+        jobs.append(("flood-prone land", "floodprone.py"))       # about once a year
+    if is_old("floodhazard", "floodhazard.py"):
+        jobs.append(("river flood hazard", "floodhazard.py"))    # one-off: a fixed published dataset
+    if is_old("water", "water.py"):
+        jobs.append(("surface water change", "water.py"))        # one-off: a fixed published dataset
+else:
+    print("Skipping flood-prone land, river flood hazard and surface water change: no EE_SERVICE_ACCOUNT_KEY set.")
+
+if os.environ.get("FLOOD", "").lower() == "true" or is_old("flood", "flood.py") or is_old("flood2020", "flood.py"):
+    jobs.append(("observed flooding", "flood.py"))  # one-off: past flood events
 
 if os.environ.get("GBIF_USER") and os.environ.get("GBIF_PWD"):
     import datetime, json

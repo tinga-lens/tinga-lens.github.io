@@ -34,9 +34,27 @@ from common import load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 STAC = os.environ.get("TINGA_GFM_STAC", "https://stac.eodc.eu/api/v1")
-EVENTS = [   # the first one is shown on the map; bbox = west, south, east, north
-    {"key": "volta2023", "name": "Lower Volta flooding after the Akosombo and Kpong dam spillage",
-     "start": "2023-09-15", "end": "2023-11-15", "bbox": (0.0, 5.7, 1.0, 6.5)},
+BUILD = 2    # raise this to make the weekly update rebuild the events
+# Each event becomes its own map. bbox = west, south, east, north. "notes" adds a line to a district's panel.
+EVENTS = [
+    {"layer": "flood", "key": "volta2023", "label": "Flood 2023: lower Volta",
+     "name": "Flooding seen in the lower Volta area during the Akosombo and Kpong dam spillage",
+     "start": "2023-09-15", "end": "2023-11-15", "bbox": (0.0, 5.7, 1.0, 6.5),
+     "checked": ("Compared with official reports on 4 October 2026. The Volta River Authority named nine districts as affected; this map shows flooding "
+                 "in eight of them and the right dates, but it misses Asuogyaman and ranks the worst-hit Tongu districts low, because flooded towns are invisible to radar."),
+     "notes": {
+         "Asuogyaman": "Reported as flooded by the Volta River Authority, but not detected by radar.",
+         "Ada West": "Not named in official reports of this flood. The water may be lagoon or rain water.",
+         "Ningo/prampram": "Not named in official reports of this flood. The water may be lagoon or rain water.",
+         "Upper Manya": "Not named in official reports of this flood. The water may be rain water.",
+         "North Tongu": "Reported among the worst-hit districts. Flooded towns such as Mepe are mostly invisible to radar.",
+         "Central Tongu": "Reported among the worst-hit districts. Flooded towns are mostly invisible to radar.",
+         "South Tongu": "Reported among the worst-hit districts. Flooded towns are mostly invisible to radar.",
+     }},
+    {"layer": "flood2020", "key": "north2020", "label": "Flood 2020: northern Ghana",
+     "name": "Flooding seen in northern Ghana during the 2020 rains and the Bagre dam spillage",
+     "start": "2020-08-10", "end": "2020-10-15", "bbox": (-1.6, 9.2, 0.6, 11.2),
+     "checked": "This event has not yet been compared with official reports.", "notes": {}},
 ]
 MIN_KM2 = 0.1          # less flooded area than this is shown as "none detected"
 # --------------------------------------------------------------------------
@@ -125,7 +143,13 @@ def run_event(s, ev, gdf):
             ids = rasterize(((g, i + 1) for i, g in zip(local.index, local.geometry)), out_shape=(h, w), transform=wtf, fill=0, dtype="int32")
             px_km2 = abs(wtf.a * wtf.e) / 1e6
             union = np.zeros((h, w), bool)
-            day = {}
+            cur, f, valid = None, None, None          # one day is held in memory at a time
+
+            def close_day():
+                by_date[:, di[cur]] += np.bincount(ids[f], minlength=nd + 1)[1:] * px_km2
+                seen[:, di[cur]] |= np.bincount(ids[valid], minlength=nd + 1)[1:] > 0
+                np.logical_or(union, f, out=union)
+
             for it in sorted(group, key=lambda x: x["properties"]["datetime"]):
                 a, _, _ = read(it["assets"]["ensemble_flood_extent"]["href"], win)
                 done += 1
@@ -133,15 +157,17 @@ def run_event(s, ev, gdf):
                     failed += 1
                     continue
                 d = it["properties"]["datetime"][:10]
-                f, valid = day.setdefault(d, [np.zeros((h, w), bool), np.zeros((h, w), bool)])
+                if d != cur:
+                    if cur is not None:
+                        close_day()
+                    cur, f, valid = d, np.zeros((h, w), bool), np.zeros((h, w), bool)
                 f |= a == 1
                 valid |= a != 255
+                del a
                 if done % 10 == 0:
                     print(f"  {done}/{len(items)} scenes read", flush=True)
-            for d, (f, valid) in day.items():
-                by_date[:, di[d]] += np.bincount(ids[f], minlength=nd + 1)[1:] * px_km2
-                seen[:, di[d]] |= np.bincount(ids[valid], minlength=nd + 1)[1:] > 0
-                union |= f
+            if cur is not None:
+                close_day()
             ever += np.bincount(ids[union], minlength=nd + 1)[1:] * px_km2
     if failed > len(items) / 4:
         sys.exit(f"{failed} of {len(items)} scenes could not be read; not publishing.")
@@ -164,8 +190,12 @@ def main():
     import requests
     gdf = load_districts()
     area = gdf.geometry.to_crs("ESRI:54034").area.to_numpy() / 1e6
-    ev = EVENTS[0]
-    dates, by_date, seen, ever, inside, nscenes = run_event(requests.Session(), ev, gdf)
+    session = requests.Session()
+    for ev in EVENTS:
+        publish(ev, gdf, area, *run_event(session, ev, gdf))
+
+
+def publish(ev, gdf, area, dates, by_date, seen, ever, inside, nscenes):
     w, s_, e, n = ev["bbox"]
 
     districts = {}
@@ -187,19 +217,20 @@ def main():
                 ["Share of the district", f"{km2 / area[i] * 100:.1f}%"],
                 ["Largest extent on one pass", f"{by_date[i, peak]:,.1f} km² ({nice(dates[peak])})" if km2 >= MIN_KM2 else "–"],
                 ["Satellite passes over the district", str(int(seen[i].sum()))],
-            ],
+            ] + ([["Compared with official reports", ev["notes"][row.shapeName]]] if row.shapeName in ev["notes"] else []),
             "v": [round(float(x), 2) if ok else None for x, ok in zip(by_date[i], seen[i])],
             "c": [cat] * len(dates),
         }
     total = sum(ever[i] for i in inside)
     print(f"Flooded on at least one pass: {total:,.1f} km2 over {len(dates)} dates, {nscenes} scenes")
 
-    write_layer("flood", {
-        "label": "Observed flooding", "title": "Observed flooding", "source": "Copernicus GFM (Sentinel-1)", "demo": False,
+    write_layer(ev["layer"], {
+        "build": BUILD,
+        "label": ev["label"], "title": "Observed flooding", "source": "Copernicus GFM (Sentinel-1)", "demo": False,
         "subtitle": f"{ev['name']}, {nice(ev['start'])} to {nice(ev['end'])}",
         "event": {"key": ev["key"], "name": ev["name"], "start": ev["start"], "end": ev["end"], "bbox": list(ev["bbox"]), "scenes": nscenes},
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
-        "how": (f"This map covers one flood event: {ev['name'].lower()}. Each district shows the area of land that Sentinel-1 radar "
+        "how": (f"This map covers one flood event: {ev['name'][0].lower() + ev['name'][1:]}. Each district shows the area of land that Sentinel-1 radar "
                 f"satellites saw under water on at least one pass between {nice(ev['start'])} and {nice(ev['end'])}. Rivers, lakes "
                 f"and water that is normally there are not counted. Only districts between {s_}° and {n}° north and {w}° and {e}° east "
                 f"were assessed. Click a district to see the flooded area on each pass."),
@@ -207,7 +238,9 @@ def main():
             "A satellite passes every few days, so a flood that rose and fell between passes is missed, and the largest extent shown may be smaller than the true peak.",
             "Radar cannot map water under dense tree cover or between buildings, so flooding in forests, plantations and built-up areas is under-counted. Flooded homes in towns are mostly not visible.",
             "Flooded crops and wet bare soil can be confused. The source provides a likelihood for every pixel; this map uses its yes-or-no result.",
-            "The figure is land area, not people or property affected.",
+            "The figure is land area, not people or property affected, and it does not rank how badly districts were hit. Open flat land shows up far better than flooded towns.",
+            "Not all the water shown need come from the river. Rain water and rising lagoons in the same weeks are counted too.",
+            ev["checked"],
             "Districts outside the mapped area are grey. Grey does not mean there was no flooding there.",
             "This layer shows a past event. It is not a live flood map or a warning.",
         ],

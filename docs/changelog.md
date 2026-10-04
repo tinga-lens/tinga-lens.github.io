@@ -4,7 +4,12 @@ Every change to a method or product is recorded here. Product versions are shown
 
 ## 2026-10-04
 
-- Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by Tinga Lens in Google Earth Engine. This is the first product that uses Earth Engine; every other product still runs from plain downloads.
+- Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by Tinga Lens in Google Earth Engine. This is the first product that uses Earth Engine.
+- Flood-prone land 0.2: land along Lake Volta and other large reservoirs is reported separately, because the first version's ranking was led by lake-shore districts where the lake had risen over its banks. Early years with too few radar images are dropped automatically, because 2016 and 2017 showed far less flooding than later years. New colours.
+- River flood hazard 1.0: share of each district inside the modelled 1-in-100-year river flood zone (JRC global river flood hazard maps v2.1), with the people and built-up area inside it (GHSL 2020). A new product type, "Published model". Read through Earth Engine.
+- Observed flooding 0.2: a second event, northern Ghana in August to October 2020. The 2023 lower Volta map was renamed so that it no longer attributes all the water to the dam spillage, and now carries the result of its comparison with official reports, with notes on the districts where the two disagree.
+- Surface water change 1.0: permanent water gained and lost in each district, 1984 to 2021 (JRC Global Surface Water v1.4). Read through Earth Engine.
+- Top menu reduced to Home, Districts, Data & Methods, About and Contact us; a Contact us page; the map pages carry a row of topic links.
 - The percentage-of-normal figures on maps and district pages now read as "6% below normal" in place of "94% of normal".
 - Human modification 1.0 and Change in human modification 1.0: district averages of the Global Human Modification v3 index, 1990 to 2020, ranked among Ghana's districts. A new product type, "Published index", marks indices created by other research groups.
 - The Urban Exposure module became Human Pressure and now also holds built-up area growth.

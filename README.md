@@ -16,7 +16,7 @@ Platform: https://tingalens.org
 | Drought | Rainfall anomaly (CHIRPS), soil moisture anomaly (NASA SMAP Level-4) | Published |
 | Fire | Active fire detections (NASA FIRMS), fire probability (experimental model) | Published |
 | Vegetation & Forest | Vegetation greenness anomaly (NASA VIIRS), tree cover loss (Global Forest Change) | Published |
-| Flood | Observed flooding for one documented event (Copernicus Global Flood Monitoring, Sentinel-1) ; flood-prone land from ten years of Sentinel-1 radar (experimental) | Published; river flood hazard in development |
+| Flood | Observed flooding for two documented events (Copernicus Global Flood Monitoring, Sentinel-1) ; flood-prone land from Sentinel-1 radar (experimental); river flood hazard and exposure (JRC global flood model, GHSL); surface water change (JRC Global Surface Water) | Published |
 | Human Pressure | Human modification index and its change since 1990 (Global Human Modification v3), built-up area growth (GHSL) | Published; exposure to flood-prone land in development |
 | Biodiversity | Recorded species by district and region, species explorer (GBIF occurrence records, IUCN Red List categories) | Published; habitat suitability in development |
 
@@ -51,7 +51,7 @@ Repository secrets needed (Settings → Secrets and variables → Actions):
 - `EARTHDATA_USERNAME`, `EARTHDATA_PASSWORD`: a free NASA Earthdata login (soil moisture, vegetation)
 - `FIRMS_MAP_KEY`: a free NASA FIRMS key (fires)
 - `GBIF_USER`, `GBIF_PWD`, `GBIF_EMAIL`: a free GBIF account (biodiversity)
-- `EE_SERVICE_ACCOUNT_KEY`: the JSON key of a Google Earth Engine service account (flood-prone land only; every other layer runs without it)
+- `EE_SERVICE_ACCOUNT_KEY`: the JSON key of a Google Earth Engine service account (flood-prone land, river flood hazard and surface water change; every other layer runs without it)
 
 Then: Actions → Update data → Run workflow. Tick "Rebuild forest loss" once a year. Biodiversity rebuilds once a month,
 or when "Rebuild biodiversity now" is ticked. Flooding, built-up area and human pressure are built once.
@@ -76,6 +76,7 @@ This repository contains no university research code, unpublished models, restri
 - Tree cover: Hansen/UMD/Google/USGS/NASA Global Forest Change, CC BY 4.0
 - Flooding: Copernicus Emergency Management Service, Global Flood Monitoring (Sentinel-1)
 - Flood-prone land: Copernicus Sentinel-1 GRD, JRC Global Surface Water and NASA SRTM, read through Google Earth Engine
+- River flood hazard: JRC global river flood hazard maps v2.1 (Baugh et al. 2024) and GHSL R2023A, read through Google Earth Engine
 - Built-up area: Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC, CC BY 4.0
 - Human modification: Theobald and others (2025), Global Human Modification v3, The Nature Conservancy, CC BY 4.0
 - Species records: GBIF occurrence download (the DOI is shown on the Biodiversity page). Includes records under CC0, CC BY and CC BY-NC, so the biodiversity layer may not be used commercially

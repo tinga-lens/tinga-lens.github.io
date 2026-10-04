@@ -695,8 +695,9 @@ function chart(ch, x) {
     }).join("");
   } else {
     base = H - 16;
-    const max = ch.max || Math.max(...x.v, 1e-9);
+    const max = ch.max || Math.max(...x.v.map(v => v || 0), 1e-9);
     bars = x.v.map((v, i) => {
+      if (v == null) return `<rect x="${i * bw + pad}" y="${base - 2}" width="${bw - 2 * pad}" height="2" fill="#bdbdbd"><title>${esc(ch.x[i])}: no value</title></rect>`;
       const h = Math.max(v > 0 ? 1.5 : 0, v / max * (base - 14));
       return `<rect x="${i * bw + pad}" y="${base - h}" width="${bw - 2 * pad}" height="${h}" rx="${n > 40 ? 0 : 1.5}" fill="${x.bc ? x.bc[i] : "var(--accent)"}"><title>${esc(ch.x[i])}: ${v.toLocaleString()} ${esc(ch.unit)}${x.bt ? " · " + esc(x.bt[i]) : ""}</title></rect>`;
     }).join("") + `<text x="0" y="9">${ch.max ? "top of chart = " : "max "}${Math.round(max).toLocaleString()} ${esc(ch.unit)}</text>`;
