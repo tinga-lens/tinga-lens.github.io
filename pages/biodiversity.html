@@ -6,7 +6,7 @@
 <title>Biodiversity | Tinga Lens</title>
 <meta name="description" content="Species recorded in each district of Ghana, from public biodiversity records.">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261003c">
+<link rel="stylesheet" href="../css/main.css?v=20261004b">
 </head>
 <body>
 <main class="wrap">
@@ -64,13 +64,13 @@
     <p><strong>Habitat suitability</strong> <span class="badge dev">In development</span> would be a model estimate of where a species could live. Nothing is published for it yet.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261003c"></script>
-<script src="../js/site.js?v=20261003c"></script>
+<script src="../js/config.js?v=20261004b"></script>
+<script src="../js/site.js?v=20261004b"></script>
 <script>
   // show the map and lists only once real data has been published
   fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
-    const a = document.createElement("script"); a.src = "../js/app.js?v=20261003c";
-    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261003c"; document.body.append(b); };
+    const a = document.createElement("script"); a.src = "../js/app.js?v=20261004b";
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261004b"; document.body.append(b); };
     document.body.append(a); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>

@@ -10,10 +10,10 @@ document.getElementById("app").innerHTML = `<nav class="tabs" aria-label="Layers
         <div id="status" style="margin-bottom:4px"></div>
         <h2 id="title">Loading…</h2>
         <p class="sub" id="subtitle"></p>
+        <div class="ctl">
+          <label>Region <select id="region"><option value="">All of Ghana</option></select></label>
+        </div>
         <div id="time" hidden>
-          <div class="ctl">
-            <label>Region <select id="region"><option value="">All of Ghana</option></select></label>
-          </div>
           <div class="ctl">
             <label>Year <select id="yr"></select></label>
             <label id="mo-wrap">Month <select id="mo"></select></label>
@@ -131,6 +131,7 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   }).catch(() => { $("region").closest(".ctl").hidden = true; });
   $("region").addEventListener("change", e => {
     REGION = e.target.value; selected = null;
+    document.dispatchEvent(new CustomEvent("tl:region", { detail: { region: REGION } }));
     map.fitBounds(regionBounds(), { padding: [12, 12] });
     if (FULL) render(FULL.key, FULL);
   });

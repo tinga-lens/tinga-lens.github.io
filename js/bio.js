@@ -5,6 +5,8 @@
   const THREAT = ["CR", "EN", "VU"];
   let SP = null, GROUPS = [], PAIRS = null, REG = {}, NAMES = {}, geo = null;
   let cur = null, shown = 50, smap = null, slayer = null;     // district list state, explorer map
+  let REGION = "", curSpecies = null;                         // region chosen on the map above; species open in the explorer
+  const HINT = "Click a district on the map to list the species recorded there.";
   const F = { key: 0, name: 1, common: 2, group: 3, iucn: 4, records: 5, districts: 6, first: 7, last: 8 };
   const rl = c => c && c !== "LC" && RL[c] ? `<span class="rl ${c}" title="IUCN Red List: ${RL[c]}">${RL[c]}</span>` : (c === "LC" ? "Least Concern" : "–");
   const nm = s => `<i>${esc(s[F.name])}</i>${s[F.common] ? `<small>${esc(s[F.common])}</small>` : ""}`;
@@ -33,10 +35,28 @@
     if (location.hash.startsWith("#species=")) openSpecies(SP.findIndex(s => String(s[F.key]) === location.hash.slice(9)));
   }).catch(e => { $("bd-hint").textContent = "Could not load the species files: " + e.message; });
 
-  // ---------- species recorded in the chosen district ----------
+  // ---------- species recorded in the chosen district, or in the whole chosen region ----------
   document.addEventListener("tl:district", e => {
     const { id, name } = e.detail;
     getJSON(`data/bio/districts/${id}.json`).then(d => { cur = { id, name, rows: d.rows }; }).catch(() => { cur = { id, name, rows: [] }; }).then(() => { shown = 50; drawDistrict(); });
+  });
+  document.addEventListener("tl:region", e => {
+    REGION = e.detail.region;
+    if (curSpecies != null) openSpecies(curSpecies);
+    if (!REGION) { cur = null; $("bd").hidden = true; $("bd-hint").textContent = HINT; return; }
+    const region = REGION, ids = Object.keys(REG).filter(id => REG[id] === region);
+    $("bd-hint").textContent = `Adding up the records for ${region} Region…`;
+    Promise.all(ids.map(id => getJSON(`data/bio/districts/${id}.json`).then(d => d.rows).catch(() => []))).then(all => {
+      if (REGION !== region) return;                       // the region was changed again while loading
+      const m = new Map();                                 // species -> [species, records, places, first, last]
+      all.forEach(rows => rows.forEach(([s, n, places, first, last]) => {
+        const x = m.get(s);
+        if (!x) m.set(s, [s, n, places, first, last]);
+        else { x[1] += n; x[2] += places; if (first != null && (x[3] == null || first < x[3])) x[3] = first; if (last != null && (x[4] == null || last > x[4])) x[4] = last; }
+      }));
+      cur = { id: null, region, name: `${region} Region`, rows: [...m.values()].sort((a, b) => b[1] - a[1]) };
+      shown = 50; drawDistrict();
+    });
   });
   function filtered() {
     const q = $("bd-q").value.trim().toLowerCase(), g = $("bd-group").value, thr = $("bd-thr").checked;
@@ -46,10 +66,11 @@
   function drawDistrict() {
     if (!cur || !SP) return;
     $("bd").hidden = false;
-    $("bd-hint").textContent = `${cur.name}${REG[cur.id] ? ", " + REG[cur.id] + " Region" : ""}`;
+    $("bd-hint").textContent = cur.region ? `${cur.name}: every species recorded in any of its districts. Click a district on the map for that district alone.`
+      : `${cur.name}${REG[cur.id] ? ", " + REG[cur.id] + " Region" : ""}`;
     const rows = filtered();
     $("bd-count").textContent = cur.rows.length ? `${rows.length.toLocaleString()} of ${cur.rows.length.toLocaleString()} recorded species shown, most recorded first. Click a species to see where else it has been recorded.`
-      : "No usable records in GBIF for this district. That reflects surveying, not an absence of wildlife.";
+      : `No usable records in GBIF for this ${cur.region ? "region" : "district"}. That reflects surveying, not an absence of wildlife.`;
     $("bd-rows").innerHTML = rows.slice(0, shown).map(r => { const s = SP[r[0]];
       return `<tr data-s="${r[0]}"><td>${nm(s)}</td><td>${esc(GROUPS[s[F.group]])}</td><td>${rl(s[F.iucn])}</td><td class="num">${r[1].toLocaleString()}</td><td class="num">${r[2]}</td><td class="num">${yr(r[3])}</td><td class="num">${yr(r[4])}</td></tr>`; }).join("");
     $("bd-more").hidden = rows.length <= shown;
@@ -59,7 +80,7 @@
   $("bd-rows").addEventListener("click", e => { const tr = e.target.closest("tr[data-s]"); if (tr) openSpecies(+tr.dataset.s, true); });
   $("bd-csv").addEventListener("click", () => {
     const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const lines = [["District", "Scientific name", "Common name", "Group", "IUCN Red List (global)", "Records", "Recorded places", "First year", "Latest year", "GBIF species key"].map(q).join(",")];
+    const lines = [[cur.region ? "Region" : "District", "Scientific name", "Common name", "Group", "IUCN Red List (global)", "Records", "Recorded places", "First year", "Latest year", "GBIF species key"].map(q).join(",")];
     filtered().forEach(r => { const s = SP[r[0]]; lines.push([cur.name, s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", r[1], r[2], r[3], r[4], s[F.key]].map(q).join(",")); });
     lines.push("", q($("cov-cite").textContent + " Tinga Lens, " + TL.site));
     const a = document.createElement("a");
@@ -93,17 +114,19 @@
 
   function openSpecies(i, scroll) {
     if (i == null || i < 0 || !SP[i]) return;
-    const s = SP[i];
+    const s = SP[i]; curSpecies = i;
     $("sx-hits").hidden = true; $("sx").hidden = false;
     history.replaceState(null, "", "#species=" + s[F.key]);
     Promise.all([PAIRS || getJSON("data/bio/pairs.json"), geo || getJSON("data/districts.geojson")]).then(([p, g]) => {
       PAIRS = p; geo = g;
-      const rows = (p.species[i] || []).map(([d, n, last]) => ({ id: p.districts[d], n, last })).sort((a, b) => b.n - a.n);
+      const every = (p.species[i] || []).map(([d, n, last]) => ({ id: p.districts[d], n, last })).sort((a, b) => b.n - a.n);
+      const rows = REGION ? every.filter(r => REG[r.id] === REGION) : every, here = rows.reduce((a, r) => a + r.n, 0);
       $("sx-name").innerHTML = `<i>${esc(s[F.name])}</i>` + (s[F.common] ? ` <span style="font-weight:400;color:var(--muted)">${esc(s[F.common])}</span>` : "");
       $("sx-sub").innerHTML = `${esc(GROUPS[s[F.group]])}. IUCN Red List (global): ${s[F.iucn] ? rl(s[F.iucn]) : "not assessed or not supplied"}`;
-      $("sx-facts").innerHTML = [[s[F.records].toLocaleString(), "records in Ghana"], [s[F.districts], "districts with records"], [yr(s[F.first]), "earliest record"], [yr(s[F.last]), "latest record"]]
+      $("sx-facts").innerHTML = (REGION ? [[here.toLocaleString(), `records in ${REGION} Region`], [rows.length, `districts with records in ${REGION} Region`]] : [])
+        .concat([[s[F.records].toLocaleString(), "records in Ghana"], [s[F.districts], "districts with records in Ghana"], [yr(s[F.first]), "earliest record in Ghana"], [yr(s[F.last]), "latest record in Ghana"]])
         .map(([v, t]) => `<div><b>${v}</b><span>${t}</span></div>`).join("");
-      $("sx-rows").innerHTML = rows.map(r => `<tr data-id="${esc(r.id)}"><td>${esc(NAMES[r.id] || "")}</td><td>${esc(REG[r.id] || "")}</td><td class="num">${r.n.toLocaleString()}</td><td class="num">${yr(r.last)}</td></tr>`).join("");
+      $("sx-rows").innerHTML = (rows.length ? "" : `<tr style="cursor:default"><td colspan="4">No record of this species in ${esc(REGION)} Region. Choose "All of Ghana" above the map to see where it has been recorded.</td></tr>`) + rows.map(r => `<tr data-id="${esc(r.id)}"><td>${esc(NAMES[r.id] || "")}</td><td>${esc(REG[r.id] || "")}</td><td class="num">${r.n.toLocaleString()}</td><td class="num">${yr(r.last)}</td></tr>`).join("");
       const threatened = THREAT.includes(s[F.iucn]);
       $("sx-links").innerHTML = `Districts are shaded by number of records. No shading means no record, not that the species is absent. `
         + `<a href="https://www.gbif.org/species/${s[F.key]}">Species page on GBIF</a>`
@@ -114,12 +137,16 @@
       const shade = n => !n ? "#ffffff" : cols[n >= cuts[2] && max > 3 ? 3 : n >= cuts[1] ? 2 : n > cuts[0] ? 1 : 0];
       if (!smap) { smap = L.map("sp-map", { zoomSnap: 0.25, attributionControl: false, scrollWheelZoom: false }); }
       if (slayer) smap.removeLayer(slayer);
+      const inReg = f => !REGION || REG[f.properties.shapeID] === REGION;
       slayer = L.geoJSON(g, {
-        style: f => ({ fillColor: shade(by[f.properties.shapeID]), fillOpacity: by[f.properties.shapeID] ? 0.95 : 0.6, color: "#7d8a84", weight: 0.4 }),
+        style: f => inReg(f) ? { fillColor: shade(by[f.properties.shapeID]), fillOpacity: by[f.properties.shapeID] ? 0.95 : 0.6, color: "#7d8a84", weight: 0.4 }
+          : { fillColor: "#999", fillOpacity: 0.08, color: "#7d8a84", weight: 0.2 },
         onEachFeature: (f, l) => l.bindTooltip(`${f.properties.shapeName}: ${by[f.properties.shapeID] ? by[f.properties.shapeID].toLocaleString() + " records" : "no record"}`, { sticky: true }),
       }).addTo(smap);
-      smap.invalidateSize(); smap.fitBounds(slayer.getBounds(), { padding: [6, 6] });
-      $("sx-legend").textContent = `Darker green: more records (up to ${max.toLocaleString()} in one district). White: no record.`;
+      let b = null;
+      slayer.eachLayer(l => { if (inReg(l.feature)) b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast()); });
+      smap.invalidateSize(); smap.fitBounds(b || slayer.getBounds(), { padding: [6, 6] });
+      $("sx-legend").textContent = (REGION ? `Showing ${REGION} Region only. ` : "") + `Darker green: more records (up to ${max.toLocaleString()} in one district). White: no record.`;
       if (scroll) $("explorer").scrollIntoView({ behavior: "smooth" });
     });
   }

@@ -6,7 +6,7 @@
 <title>Urban Exposure | Tinga Lens</title>
 <meta name="description" content="How built-up area has grown in every district of Ghana since 2000.">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261003c">
+<link rel="stylesheet" href="../css/main.css?v=20261004b">
 </head>
 <body>
 <main class="wrap">
@@ -21,11 +21,11 @@
     <p><strong>Exposure</strong> <span class="badge dev">In development</span> will show how much new development and how many people are on flood-prone land. It depends on the flood module, so no exposure figures are published yet.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261003c"></script>
-<script src="../js/site.js?v=20261003c"></script>
+<script src="../js/config.js?v=20261004b"></script>
+<script src="../js/site.js?v=20261004b"></script>
 <script>
   // show the map only once real data has been published
-  fetch("../data/urban.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261003c"; document.body.append(s); })
+  fetch("../data/urban.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261004b"; document.body.append(s); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>
 </body>
