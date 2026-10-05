@@ -67,3 +67,16 @@
     if (s.signup_url) { $("signup").href = s.signup_url; $("signup").hidden = false; }
   }).catch(() => {});
 })();
+
+// Under the home map: a pointer to the topic's own page, which has the tools the home map leaves out.
+(function () {
+  const extra = {
+    biodiversity: "The species list for each district, the species explorer and the species downloads are on the",
+  };
+  document.addEventListener("tl:layer", e => {
+    const p = TL.products[e.detail.key], el = document.getElementById("more");
+    if (!p || !el) return;
+    el.innerHTML = `${extra[e.detail.key] || "More detail and the notes for this map are on the"} <a href="${ROOT + p.page}#${e.detail.key}">${esc(p.module)} page</a>.`;
+    el.hidden = false;
+  });
+})();

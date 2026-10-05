@@ -160,6 +160,7 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   const show = key => {
     const l = man.layers.find(x => x.key === key) || man.layers[0];
     drawTabs(l.key);
+    document.dispatchEvent(new CustomEvent("tl:layer", { detail: { key: l.key } }));
     (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => {
       BASE = d; REC = null; VIEW = ""; DAYS = daysCache[l.key] || null;
       const yearly = d.yearly || (d.key === "forest" ? { base_label: "Latest average", breaks: [0.5, 1, 2, 3] } : null);
