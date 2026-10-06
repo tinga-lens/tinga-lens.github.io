@@ -37,7 +37,10 @@
     const go = v => { const hit = names.find(n => n.toLowerCase() === v.trim().toLowerCase()); if (hit) show(hit); };
     $("pick").addEventListener("change", e => go(e.target.value));
     $("download").addEventListener("click", download);
-    $("share").addEventListener("click", shareCard);
+    $("card").addEventListener("click", () => makeCard(false));
+    $("share").addEventListener("click", () => makeCard(true));
+    // the Share button appears only where the device can share an image (phones, and some computers)
+    try { $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [new File([""], "x.png", { type: "image/png" })] })); } catch (e) { $("share").hidden = true; }
     window.addEventListener("hashchange", () => go(decodeURIComponent(location.hash.slice(1))));
     go(decodeURIComponent(location.hash.slice(1)));
   }).catch(e => { $("profile").innerHTML = `<p class="sub">Could not load the data files: ${esc(e.message)}</p>`; });
@@ -185,21 +188,22 @@
     return c;
   }
 
-  function shareCard() {
+  function makeCard(share) {
     if (!current) return;
     const fonts = document.fonts && document.fonts.load ? Promise.all(['600 60px "Source Serif 4"', '600 40px "Source Sans 3"', '400 30px "Source Sans 3"', '700 44px "Sora"'].map(f => document.fonts.load(f))).catch(() => {}) : Promise.resolve();
     fonts.then(() => drawCard().toBlob(blob => {
       const name = `tinga-lens-${current.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
+      const save = () => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      };
+      if (!share) return save();
       const file = new File([blob], name, { type: "image/png" });
       const link = `${TL.site}/pages/districts.html#${encodeURIComponent(current.name)}`;
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` }).catch(() => {});
-        return;
-      }
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` })
+        .catch(e => { if (e && e.name !== "AbortError") save(); });      // if sharing fails, fall back to a download
     }, "image/png"));
   }
 
