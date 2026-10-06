@@ -38,7 +38,7 @@ from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 API = os.environ.get("TINGA_GBIF_API", "https://api.gbif.org/v1")
-INCLUDE_NONCOMMERCIAL = True            # True adds records under CC BY-NC: more mammals, but the layer may then not be used commercially
+INCLUDE_NONCOMMERCIAL = False           # True adds records under CC BY-NC: more mammals, but the layer may then not be used commercially
 LICENSES = ["CC0_1_0", "CC_BY_4_0"] + (["CC_BY_NC_4_0"] if INCLUDE_NONCOMMERCIAL else [])
 MAX_UNCERTAINTY_M = 25000               # records whose position is vaguer than this are left out
 SKIP_BASIS = {"FOSSIL_SPECIMEN", "LIVING_SPECIMEN"}   # fossils, and zoo or garden specimens
@@ -202,6 +202,37 @@ def lookups(s, keys):
     return known
 
 
+POINT_BUCKETS = 128          # species are spread over this many files of recorded places
+GENERALISE_DEG = 0.1         # threatened species: positions are rounded to this (about 11 km) so exact sites are not published
+
+
+def write_points(df, ids, threatened, out):
+    """Recorded places with coordinates, for downloads.
+    df has s (species index), d (district index), lat, lon, year. Places are rounded to 4 decimals already.
+    Writes out/points/<n>.json (by species) and out/dpoints/<district>.json (by district). Returns the number of places."""
+    p = df[["s", "d", "lat", "lon", "year"]].copy()
+    hide = p["s"].isin(threatened)
+    p.loc[hide, "lat"] = (p.loc[hide, "lat"] / GENERALISE_DEG).round() * GENERALISE_DEG
+    p.loc[hide, "lon"] = (p.loc[hide, "lon"] / GENERALISE_DEG).round() * GENERALISE_DEG
+    p["lat"], p["lon"] = p["lat"].round(4), p["lon"].round(4)
+    g = p.groupby(["s", "d", "lat", "lon"]).agg(n=("s", "size"), first=("year", "min"), last=("year", "max")).reset_index()
+    yr = lambda v: None if pd.isna(v) else int(v)  # noqa: E731
+    for name in ("points", "dpoints"):
+        (out / name).mkdir(parents=True, exist_ok=True)
+        for old in (out / name).glob("*.json"):
+            old.unlink()
+    buckets = {}
+    for r in g.itertuples():
+        buckets.setdefault(int(r.s) % POINT_BUCKETS, {}).setdefault(int(r.s), []).append([r.lat, r.lon, int(r.d), int(r.n), yr(r.first), yr(r.last)])
+    for b, species in buckets.items():
+        (out / "points" / f"{b}.json").write_text(json.dumps({"fields": ["lat", "lon", "district", "records", "first", "last"], "species": species}, separators=(",", ":")))
+    for d, rows in g.groupby("d"):
+        (out / "dpoints" / f"{ids[int(d)]}.json").write_text(json.dumps({
+            "fields": ["species", "lat", "lon", "records", "first", "last"],
+            "rows": [[int(r.s), r.lat, r.lon, int(r.n), yr(r.first), yr(r.last)] for r in rows.itertuples()]}, separators=(",", ":")))
+    return len(g)
+
+
 def main():
     import requests
     user, pwd = os.environ.get("GBIF_USER"), os.environ.get("GBIF_PWD")
@@ -257,6 +288,7 @@ def main():
     (out / "species.json").write_text(json.dumps({
         "fields": ["key", "name", "common", "group", "iucn", "records", "districts", "first", "last"],
         "groups": GROUPS,
+        "points": {"buckets": POINT_BUCKETS, "generalise_deg": GENERALISE_DEG},
         "rows": [[int(r.speciesKey), r.name_, r.common, GROUPS.index(r.group), r.iucn, int(r.n), int(r.nd), yr(r.first), yr(r.last)]
                  for r in sp.rename(columns={"name": "name_"}).itertuples()],
     }, separators=(",", ":"), ensure_ascii=False))
@@ -278,6 +310,9 @@ def main():
             "fields": ["species", "records", "places", "first", "last"],
             "rows": [[int(r.s), int(r.n), int(r.places), yr(r.first), yr(r.last)] for r in g.itertuples()],
         }, separators=(",", ":")))
+
+    n_places = write_points(df, ids, threatened, out)
+    print(f"{n_places:,} recorded places with coordinates written for downloads")
 
     # ---- the map layer ----
     per = df.groupby("d").agg(n=("gbifID", "size"), species=("s", "nunique"), datasets=("datasetKey", "nunique"),

@@ -5,6 +5,19 @@
   const THREAT = ["CR", "EN", "VU"];
   let SP = null, GROUPS = [], PAIRS = null, REG = {}, NAMES = {}, geo = null;
   let cur = null, shown = 50, smap = null, slayer = null;     // district list state, explorer map
+  let PTS = null, CEN = {};                                      // recorded places with coordinates (once built); district centres
+  getJSON("data/centroids.json").then(c => { CEN = c; }).catch(() => {});
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const save = (lines, name) => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = name; document.body.append(a); a.click(); a.remove();
+  };
+  const blurred = s => THREAT.includes(s[F.iucn]);
+  const foot = extra => q(extra + "Each row is one recorded place. Positions are rounded to about 10 m"
+    + (PTS ? `; positions of globally threatened species are rounded to ${PTS.generalise_deg} degree (about 11 km) so that exact sites are not published. ` : ". ")
+    + "A place with no record does not mean the species is absent. " + $("cov-cite").textContent + " Tinga Lens, " + TL.site);
   let REGION = "", curSpecies = null, curRows = [];                         // region chosen on the map above; species open in the explorer
   const HINT = "Click a district on the map to list the species recorded there.";
   const F = { key: 0, name: 1, common: 2, group: 3, iucn: 4, records: 5, districts: 6, first: 7, last: 8 };
@@ -14,7 +27,8 @@
 
   $("bio").hidden = false;
   Promise.all([getJSON("data/bio/species.json"), getJSON("data/biodiversity.json"), getJSON("data/regions.json").catch(() => ({}))]).then(([sp, layer, reg]) => {
-    SP = sp.rows; GROUPS = sp.groups; REG = reg;
+    SP = sp.rows; GROUPS = sp.groups; REG = reg; PTS = sp.points || null;
+    $("bd-pts").hidden = !PTS;
     Object.entries(layer.districts).forEach(([id, x]) => NAMES[id] = x.name);
     $("bd-group").innerHTML = `<option value="">All groups</option>` + GROUPS.map((g, i) => `<option value="${i}">${esc(g)}</option>`).join("");
     const c = layer.coverage;
@@ -38,12 +52,12 @@
   // ---------- species recorded in the chosen district, or in the whole chosen region ----------
   document.addEventListener("tl:district", e => {
     const { id, name } = e.detail;
-    getJSON(`data/bio/districts/${id}.json`).then(d => { cur = { id, name, rows: d.rows }; }).catch(() => { cur = { id, name, rows: [] }; }).then(() => { shown = 50; drawDistrict(); });
+    getJSON(`data/bio/districts/${id}.json`).then(d => { cur = { id, name, rows: d.rows }; }).catch(() => { cur = { id, name, rows: [] }; }).then(() => { shown = 50; drawDistrict(); areas(); });
   });
   document.addEventListener("tl:region", e => {
     REGION = e.detail.region;
     if (curSpecies != null) openSpecies(curSpecies);
-    if (!REGION) { cur = null; $("bd").hidden = true; $("bd-hint").textContent = HINT; return; }
+    if (!REGION) { cur = null; $("bd").hidden = true; $("bd-hint").textContent = HINT; areas(); return; }
     const region = REGION, ids = Object.keys(REG).filter(id => REG[id] === region);
     $("bd-hint").textContent = `Adding up the records for ${region} Region…`;
     Promise.all(ids.map(id => getJSON(`data/bio/districts/${id}.json`).then(d => d.rows).catch(() => []))).then(all => {
@@ -55,7 +69,7 @@
         else { x[1] += n; x[2] += places; if (first != null && (x[3] == null || first < x[3])) x[3] = first; if (last != null && (x[4] == null || last > x[4])) x[4] = last; }
       }));
       cur = { id: null, region, name: `${region} Region`, rows: [...m.values()].sort((a, b) => b[1] - a[1]) };
-      shown = 50; drawDistrict();
+      shown = 50; drawDistrict(); areas();
     });
   });
   function filtered() {
@@ -78,10 +92,52 @@
   ["bd-q", "bd-group", "bd-thr"].forEach(id => $(id).addEventListener("input", () => { shown = 50; drawDistrict(); }));
   $("bd-more").addEventListener("click", () => { shown += 200; drawDistrict(); });
   $("bd-rows").addEventListener("click", e => { const tr = e.target.closest("tr[data-s]"); if (tr) openSpecies(+tr.dataset.s, true); });
+  // every recorded place in the chosen district, or in every district of the chosen region
+  $("bd-pts").addEventListener("click", () => {
+    if (!cur || !PTS) return;
+    const ids = cur.region ? Object.keys(REG).filter(id => REG[id] === cur.region) : [cur.id], btn = $("bd-pts"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Preparing…";
+    Promise.all(ids.map(id => getJSON(`data/bio/dpoints/${id}.json`).then(d => d.rows.map(r => [id, r])).catch(() => []))).then(all => {
+      const lines = [["District", "Region", "Scientific name", "Common name", "Group", "IUCN Red List (global)", "Latitude", "Longitude", "Records at this place", "First year", "Latest year", "Position rounded to about 11 km", "GBIF species key"].map(q).join(",")];
+      all.flat().sort((a, b) => SP[a[1][0]][F.name].localeCompare(SP[b[1][0]][F.name])).forEach(([id, [si, lat, lon, n, first, last]]) => {
+        const s = SP[si];
+        lines.push([NAMES[id] || "", REG[id] || "", s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", lat, lon, n, first, last, blurred(s) ? "yes" : "no", s[F.key]].map(q).join(","));
+      });
+      lines.push("", foot(`${cur.name}. `));
+      save(lines, `tinga-lens-records-${slug(cur.name)}.csv`);
+    }).finally(() => { btn.disabled = false; btn.textContent = label; });
+  });
+  // one species: every recorded place in the whole country, the chosen region, or the chosen district
+  $("sx-pts").addEventListener("click", () => {
+    if (curSpecies == null || !PTS || !PAIRS) return;
+    const i = curSpecies, s = SP[i], area = $("sx-area").value, btn = $("sx-pts");
+    btn.disabled = true;
+    getJSON(`data/bio/points/${i % PTS.buckets}.json`).then(f => {
+      const keep = id => area === "country" || (area === "region" ? REG[id] === REGION : cur && id === cur.id);
+      const rows = (f.species[i] || []).map(([lat, lon, d, n, first, last]) => ({ id: PAIRS.districts[d], lat, lon, n, first, last })).filter(r => keep(r.id));
+      const where = area === "country" ? "Ghana" : area === "region" ? `${REGION} Region` : cur.name;
+      if (!rows.length) { $("sx-pts-note").textContent = `No record of this species in ${where}.`; return; }
+      $("sx-pts-note").textContent = "";
+      const lines = [["Scientific name", "Common name", "Group", "IUCN Red List (global)", "District", "Region", "Latitude", "Longitude", "Records at this place", "First year", "Latest year", "Position rounded to about 11 km", "GBIF species key"].map(q).join(",")];
+      rows.sort((a, b) => (NAMES[a.id] || "").localeCompare(NAMES[b.id] || "")).forEach(r =>
+        lines.push([s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", NAMES[r.id] || "", REG[r.id] || "", r.lat, r.lon, r.n, r.first, r.last, blurred(s) ? "yes" : "no", s[F.key]].map(q).join(",")));
+      lines.push("", foot(`${where}. `));
+      save(lines, `tinga-lens-${slug(s[F.name])}-records-${slug(where)}.csv`);
+    }).catch(() => { $("sx-pts-note").textContent = "The records could not be loaded. Please try again."; }).finally(() => { btn.disabled = false; });
+  });
+  const areas = () => {                      // the choices offered follow what is selected on the map
+    if (!PTS) return;
+    const keep = $("sx-area").value;
+    $("sx-area").innerHTML = `<option value="country">all of Ghana</option>` + (REGION ? `<option value="region">${esc(REGION)} Region</option>` : "")
+      + (cur && !cur.region ? `<option value="district">${esc(cur.name)}</option>` : "");
+    $("sx-area").value = [...$("sx-area").options].some(o => o.value === keep) ? keep : (cur && !cur.region ? "district" : REGION ? "region" : "country");
+    $("sx-pts-wrap").hidden = false; $("sx-pts-note").textContent = "";
+  };
+
   $("bd-csv").addEventListener("click", () => {
-    const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const lines = [[cur.region ? "Region" : "District", "Scientific name", "Common name", "Group", "IUCN Red List (global)", "Records", "Recorded places", "First year", "Latest year", "GBIF species key"].map(q).join(",")];
-    filtered().forEach(r => { const s = SP[r[0]]; lines.push([cur.name, s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", r[1], r[2], r[3], r[4], s[F.key]].map(q).join(",")); });
+    const c = cur.region ? [] : (CEN[cur.id] || ["", ""]);
+    const lines = [[cur.region ? "Region" : "District"].concat(cur.region ? [] : ["District centre latitude", "District centre longitude"], ["Scientific name", "Common name", "Group", "IUCN Red List (global)", "Records", "Recorded places", "First year", "Latest year", "GBIF species key"]).map(q).join(",")];
+    filtered().forEach(r => { const s = SP[r[0]]; lines.push([cur.name].concat(c, [s[F.name], s[F.common], GROUPS[s[F.group]], RL[s[F.iucn]] || "", r[1], r[2], r[3], r[4], s[F.key]]).map(q).join(",")); });
     lines.push("", q($("cov-cite").textContent + " Tinga Lens, " + TL.site));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
@@ -130,7 +186,7 @@
     $("sx-hits").hidden = true; $("sx").hidden = false;
     history.replaceState(null, "", "#species=" + s[F.key]);
     Promise.all([PAIRS || getJSON("data/bio/pairs.json"), geo || getJSON("data/districts.geojson")]).then(([p, g]) => {
-      PAIRS = p; geo = g;
+      PAIRS = p; geo = g; areas();
       const every = (p.species[i] || []).map(([d, n, last]) => ({ id: p.districts[d], n, last })).sort((a, b) => b.n - a.n);
       const rows = REGION ? every.filter(r => REG[r.id] === REGION) : every, here = rows.reduce((a, r) => a + r.n, 0);
       curRows = rows;
@@ -143,7 +199,7 @@
       const threatened = THREAT.includes(s[F.iucn]);
       $("sx-links").innerHTML = `Districts are shaded by number of records. No shading means no record, not that the species is absent. `
         + `<a href="https://www.gbif.org/species/${s[F.key]}">Species page on GBIF</a>`
-        + (threatened ? ". Record locations of threatened species are not linked from this site." : `, <a href="https://www.gbif.org/occurrence/search?country=GH&taxon_key=${s[F.key]}">individual records on GBIF</a>.`);
+        + (threatened ? ". Exact record locations of threatened species are not linked from this site, and their positions in downloads are rounded to about 11 km." : `, <a href="https://www.gbif.org/occurrence/search?country=GH&taxon_key=${s[F.key]}">individual records on GBIF</a>.`);
       // map: districts shaded by number of records
       const by = Object.fromEntries(rows.map(r => [r.id, r.n])), max = rows.length ? rows[0].n : 1;
       const cuts = max <= 3 ? [1, 2, 3] : [1, Math.ceil(max ** (1 / 3)), Math.ceil(max ** (2 / 3))], cols = ["#c7e9c0", "#74c476", "#238b45", "#00441b"];

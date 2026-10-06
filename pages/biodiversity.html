@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261006a">
+<link rel="stylesheet" href="../css/main.css?v=20261006b">
 </head>
 <body>
 <main class="wrap">
@@ -35,7 +35,8 @@
       </div>
       <p class="sub" id="bd-count"></p>
       <div class="scroll"><table class="sp"><thead><tr><th>Species</th><th>Group</th><th>Red List</th><th class="num">Records</th><th class="num">Places</th><th class="num">First</th><th class="num">Latest</th></tr></thead><tbody id="bd-rows"></tbody></table></div>
-      <p><button class="btn" id="bd-more" type="button" hidden>Show more</button> <button class="btn" id="bd-csv" type="button">Download this list (CSV)</button></p>
+      <p><button class="btn" id="bd-more" type="button" hidden>Show more</button> <button class="btn" id="bd-csv" type="button">Download this list (CSV)</button>
+        <button class="btn" id="bd-pts" type="button" hidden>Download every record here with coordinates (CSV)</button></p>
     </div>
 
     <h2 id="explorer">Species explorer</h2>
@@ -54,6 +55,8 @@
         <div class="scroll" style="max-height:470px;overflow-y:auto"><table class="sp"><thead><tr><th>District</th><th>Region</th><th class="num">Records</th><th class="num">Latest</th></tr></thead><tbody id="sx-rows"></tbody></table></div>
       </div>
       <p><button class="btn" id="sx-csv" type="button">Download this species by district (CSV)</button></p>
+      <p id="sx-pts-wrap" hidden><label>Records with coordinates for <select id="sx-area"></select></label>
+        <button class="btn" id="sx-pts" type="button">Download (CSV)</button> <span class="sub" id="sx-pts-note"></span></p>
       <p class="sub" id="sx-links"></p>
     </div>
 
@@ -73,13 +76,13 @@
     <p><strong>Habitat suitability</strong> <span class="badge dev">In development</span> would be a model estimate of where a species could live. Nothing is published for it yet.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261006a"></script>
-<script src="../js/site.js?v=20261006a"></script>
+<script src="../js/config.js?v=20261006b"></script>
+<script src="../js/site.js?v=20261006b"></script>
 <script>
   // show the map and lists only once real data has been published
   fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
-    const a = document.createElement("script"); a.src = "../js/app.js?v=20261006a";
-    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261006a"; document.body.append(b); };
+    const a = document.createElement("script"); a.src = "../js/app.js?v=20261006b";
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261006b"; document.body.append(b); };
     document.body.append(a); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>

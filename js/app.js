@@ -117,6 +117,9 @@ function regionBounds() {
   return b || geoLayer.getBounds();
 }
 
+let CEN = {};       // district centre points, [latitude, longitude], added to every CSV
+getJSON("data/centroids.json").then(c => { CEN = c; }).catch(() => {});
+const LL = ["District centre latitude", "District centre longitude"], ll = id => CEN[id] || ["", ""];
 Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).then(([geo, man]) => {
   geoLayer = L.geoJSON(geo, {
     style: { fillColor: "#999", fillOpacity: 0.9, color: "#55605c", weight: 0.6 },
@@ -646,10 +649,10 @@ function downloadImage() {
 function download() {                  // the map as shown
   const cols = [];
   Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (!cols.includes(r[0])) cols.push(r[0]); }));
-  const lines = [["District", "Rating", "Main figure", "What the figure means"].concat(cols).map(q).join(",")];
-  Object.values(D.districts).sort((a, b) => a.name.localeCompare(b.name)).forEach(x => {
+  const lines = [["District"].concat(LL, ["Rating", "Main figure", "What the figure means"], cols).map(q).join(",")];
+  Object.entries(D.districts).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([id, x]) => {
     const m = Object.fromEntries(x.rows);
-    lines.push([x.name, label[x.cat], x.big, x.big_note].concat(cols.map(c => m[c] ?? "")).map(q).join(","));
+    lines.push([x.name].concat(ll(id), [label[x.cat], x.big, x.big_note], cols.map(c => m[c] ?? "")).map(q).join(","));
   });
   lines.push("", credit());
   saveCSV(lines, `tinga-lens-${D.key}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}-${REC && VIEW ? VIEW : D.updated}.csv`);
@@ -659,20 +662,20 @@ function downloadAll() {               // every district and every period on rec
   const name = extra => `tinga-lens-${BASE.key}-full-record${extra || ""}-${BASE.updated}.csv`;
   let lines;
   if (REC.kind === "probability") {
-    lines = [["District", "Five days from", "Estimated chance (%)", "Usual chance for these dates (%)", "Fire detected (1 = yes, 0 = no)"].map(q).join(",")];
-    byName().forEach(([id, x]) => REC.days.forEach((k, i) => lines.push([x.name, k, REC.p[id][i] ?? "", REC.u[id][i] ?? "", REC.o[id][i] ?? ""].map(q).join(","))));
+    lines = [["District"].concat(LL, ["Five days from", "Estimated chance (%)", "Usual chance for these dates (%)", "Fire detected (1 = yes, 0 = no)"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.days.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, REC.p[id][i] ?? "", REC.u[id][i] ?? "", REC.o[id][i] ?? ""]).map(q).join(","))));
   } else if (REC.kind === "count") {
-    lines = [["District", "Month", "Fire detections"].map(q).join(",")];
-    byName().forEach(([id, x]) => REC.months.forEach((k, i) => lines.push([x.name, k, REC.counts[id][i]].map(q).join(","))));
+    lines = [["District"].concat(LL, ["Month", "Fire detections"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.months.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, REC.counts[id][i]]).map(q).join(","))));
   } else if (REC.kind === "yearly") {
-    lines = [["District", "Year", "Tree cover lost (ha)", "Tree cover in 2000 (ha)"].map(q).join(",")];
-    byName().forEach(([id, x]) => REC.years.forEach((k, i) => lines.push([x.name, k, x.v[i], x.tc ?? num(x.rows[0][1]) ?? ""].map(q).join(","))));
+    lines = [["District"].concat(LL, ["Year", "Tree cover lost (ha)", "Tree cover in 2000 (ha)"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.years.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, x.v[i], x.tc ?? num(x.rows[0][1]) ?? ""]).map(q).join(","))));
   } else {
     const run = () => {
       const src = DAYS || REC, axis = DAYS ? DAYS.days : REC.months;
-      const out = [["District", DAYS ? "Date" : "Month"].concat(REC.series.map(s => s.label + (s.unit ? ` (${s.unit})` : ""))).map(q).join(",")];
+      const out = [["District"].concat(LL, [DAYS ? "Date" : "Month"], REC.series.map(s => s.label + (s.unit ? ` (${s.unit})` : ""))).map(q).join(",")];
       byName().forEach(([id, x]) => axis.forEach((k, i) =>
-        out.push([x.name, k].concat(REC.series.map(s => { const v = (src.values[s.key][id] || [])[i]; return v == null ? "" : v; })).map(q).join(","))));
+        out.push([x.name].concat(ll(id), [k], REC.series.map(s => { const v = (src.values[s.key][id] || [])[i]; return v == null ? "" : v; })).map(q).join(","))));
       out.push("", credit());
       saveCSV(out, name(DAYS ? "-by-day" : "-by-month"));
     };

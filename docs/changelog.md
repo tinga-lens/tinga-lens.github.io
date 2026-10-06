@@ -2,6 +2,12 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-06
+
+- Every district download (CSV) now carries the latitude and longitude of the district's centre point.
+- Biodiversity: recorded places can be downloaded with their coordinates, for one species across Ghana, a region or a district, and for every species in a district or region. Positions of globally threatened species (IUCN Critically Endangered, Endangered, Vulnerable) are rounded to 0.1 degree, about 11 km, so that exact sites are not published.
+- "This month in Ghana": a brief written automatically from the published figures. District pages can produce a one-image summary card.
+
 ## 2026-10-04
 
 - Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by Tinga Lens in Google Earth Engine. This is the first product that uses Earth Engine.

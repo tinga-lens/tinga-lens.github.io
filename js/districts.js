@@ -1,7 +1,8 @@
 // Tinga Lens - district profiles: every product for one district on one page.
 (function () {
   const keys = Object.keys(TL.products);
-  let layers = {}, geo = null, map = null, shapes = {}, current = null, REG = {}, all = null;
+  let layers = {}, geo = null, map = null, shapes = {}, current = null, REG = {}, all = null, CEN = {};
+  getJSON("data/centroids.json").then(c => { CEN = c; }).catch(() => {});
 
   Promise.all([getJSON("data/districts.geojson"), ...keys.map(k => getJSON(`data/${k}.json`).catch(() => null))]).then(([g, ...ls]) => {
     geo = g;
@@ -210,11 +211,11 @@
   function download() {
     if (!current) return;
     const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const lines = [["District", "Product", "Kind", "Rating", "Main figure", "What the figure means", "Detail", "Value", "Source", "Updated", "Product version"].map(q).join(",")];
+    const lines = [["District", "District centre latitude", "District centre longitude", "Product", "Kind", "Rating", "Main figure", "What the figure means", "Detail", "Value", "Source", "Updated", "Product version"].map(q).join(",")];
     keys.forEach(k => {
       const p = TL.products[k], e = entry(k, current.id); if (!e) return;
       const c = e.d.categories.find(x => x.key === e.x.cat) || { label: "" };
-      const head = [current.name, p.name, TL.status[p.status].label, c.label, e.x.big, e.x.big_note];
+      const head = [current.name, ...(CEN[current.id] || ["", ""]), p.name, TL.status[p.status].label, c.label, e.x.big, e.x.big_note];
       const tail = [e.d.source, e.d.updated, p.version];
       (e.x.rows.length ? e.x.rows : [["", ""]]).forEach(r => lines.push(head.concat(r, tail).map(q).join(",")));
     });
