@@ -37,6 +37,7 @@
     const go = v => { const hit = names.find(n => n.toLowerCase() === v.trim().toLowerCase()); if (hit) show(hit); };
     $("pick").addEventListener("change", e => go(e.target.value));
     $("download").addEventListener("click", download);
+    $("share").addEventListener("click", shareCard);
     window.addEventListener("hashchange", () => go(decodeURIComponent(location.hash.slice(1))));
     go(decodeURIComponent(location.hash.slice(1)));
   }).catch(e => { $("profile").innerHTML = `<p class="sub">Could not load the data files: ${esc(e.message)}</p>`; });
@@ -105,6 +106,101 @@
       return `<h2>${esc(m)}</h2><div class="profile">${cards}</div>`;
     }).join("") + Object.values(TL.planned).map(p =>
       `<h2>${esc(p.name)}</h2><div class="card"><span class="badge dev">In development</span><p class="sub" style="margin:8px 0 0">No ${esc(p.name.toLowerCase())} data is published yet. <a href="${ROOT + p.page}">See the plan</a>.</p></div>`).join("");
+  }
+
+  // ---------- a single image of the district's key figures, sized for phone messaging apps ----------
+  // Status colours on the card mean one thing only: how far from usual. Facts carry no colour.
+  const TONE = { alert: "#B8502E", watch: "#D49A2A", usual: "#A9B5AD", wetter: "#2A6F8F", fact: null };
+  const toneOf = cat => ({ very_dry: "alert", dry: "watch", normal: "usual", wet: "wetter", very_wet: "wetter",
+    far_more: "alert", more: "watch", fewer: "usual", far_fewer: "usual", quiet: "usual",
+    p5: "alert", p4: "alert", p3: "watch", p2: "usual", p1: "usual" }[cat] || "usual");
+  const diff = x => Math.round(num(x.big)) - 100;
+  const than = (x, more, less, same) => { const d = diff(x); return d === 0 ? same : d > 0 ? `${d}% ${more} than usual` : `${-d}% ${less} than usual`; };
+  const FIRE = { far_more: "far more than usual", more: "more than usual", normal: "about the usual number", fewer: "fewer than usual", far_fewer: "far fewer than usual", quiet: "a quiet period" };
+  const CARD = [   // [product, title, how to word the value, has a status colour]
+    ["drought", "Rainfall", (x, lab) => num(x.big) === null ? lab : `${lab}: ${than(x, "more rain", "less rain", "the usual amount of rain")}`, true],
+    ["soil", "Soil moisture", (x, lab) => num(x.big) === null ? lab : `${lab}: ${than(x, "wetter", "drier", "about the usual level")}`, true],
+    ["vegetation", "Vegetation", (x, lab) => num(x.big) === null ? "Too cloudy to measure" : (x.cat === "normal" ? "Near normal: " : "") + than(x, "greener", "less green", "as green as usual").replace(/^./, c => x.cat === "normal" ? c : c.toUpperCase()), true],
+    ["fires", "Fires in the last 30 days", x => num(x.big) ? `${x.big} fire${x.big === "1" ? "" : "s"} detected, ${FIRE[x.cat] || ""}`.replace(/, $/, "") : "No fires detected", true],
+    ["firerisk", "Estimated chance of fire", (x, lab) => `${lab}: ${x.big} chance of a fire being detected`, true],
+    ["forest", "Forest", x => `${x.big} of tree cover lost each year`, false],
+    ["floodprone", "Flooding", x => x.big === "None" ? "No land seen flooded repeatedly" : `${x.big} of land flooded in 2 or more years`, false],
+    ["urban", "Towns and buildings", x => num(x.big) === null ? x.big : `Built-up area has ${num(x.big) < 0 ? "shrunk" : "grown"} ${Math.abs(num(x.big)).toLocaleString()}% since 2000`, false],
+    ["biodiversity", "Wildlife and plants", x => `${x.big} species recorded`, false],
+  ];
+  const when = e => (e.d.subtitle || "").split(",")[0].replace(/ against.*$/, "").replace(/^(\w+) (\d{4}) to (\w+) \2$/, "$1 to $3 $2");
+
+  function drawCard() {
+    const W = 1080, H = 1350, c = document.createElement("canvas"), g = c.getContext("2d");
+    c.width = W; c.height = H;
+    const sans = '"Source Sans 3", system-ui, sans-serif', serif = '"Source Serif 4", Georgia, serif';
+    g.fillStyle = "#F2F4EE"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#1D4534"; g.fillRect(0, 0, W, 300);
+    // mark
+    g.lineCap = "round"; g.lineWidth = 9;
+    g.strokeStyle = "#F3F5F4"; g.beginPath(); g.arc(104, 92, 38, -Math.PI / 2, Math.PI); g.stroke();
+    g.strokeStyle = "#74C69D"; g.beginPath(); g.arc(104, 92, 21, -Math.PI / 2, Math.PI); g.stroke();
+    g.fillStyle = "#C9A98D"; g.beginPath(); g.arc(104, 92, 8, 0, 7); g.fill();
+    g.textBaseline = "alphabetic";
+    g.font = `700 44px "Sora", ${sans}`; g.fillStyle = "#F3F5F4"; g.fillText("Tinga", 162, 108);
+    g.fillStyle = "#74C69D"; g.fillText("Lens", 162 + g.measureText("Tinga ").width, 108);
+    // district name, shrunk to fit
+    let size = 78; g.fillStyle = "#FFFFFF";
+    do { g.font = `600 ${size}px ${serif}`; size -= 4; } while (g.measureText(current.name).width > W - 128 && size > 40);
+    g.fillText(current.name, 64, 218);
+    g.font = `400 34px ${sans}`; g.fillStyle = "#CFE3D6";
+    g.fillText([REG[current.id] ? REG[current.id] + " Region" : "", "Ghana"].filter(Boolean).join(", "), 64, 268);
+
+    const rows = CARD.map(([k, title, say, status]) => {
+      const e = entry(k, current.id); if (!e || e.x.cat === "out" || e.x.big === "–" && k !== "vegetation") return null;
+      const cat = e.d.categories.find(q => q.key === e.x.cat) || { label: "" };
+      const unrated = num(e.x.big) === null && ["drought", "soil", "vegetation"].includes(k);
+      return { title: title + (["drought", "soil", "vegetation"].includes(k) ? ", " + when(e) : ""), value: say(e.x, cat.label),
+               tone: status ? (unrated ? "usual" : toneOf(e.x.cat)) : "fact" };
+    }).filter(Boolean).slice(0, 8);
+    const top = 348, step = Math.min(108, (H - top - 190) / Math.max(rows.length, 1));
+    rows.forEach((r, i) => {
+      const y = top + i * step;
+      if (TONE[r.tone]) { g.fillStyle = TONE[r.tone]; g.beginPath(); g.roundRect(64, y - 14, 12, 82, 6); g.fill(); }
+      else { g.fillStyle = "#D5DBCF"; g.beginPath(); g.roundRect(64, y - 14, 12, 82, 6); g.fill(); }
+      g.font = `400 29px ${sans}`; g.fillStyle = "#56655C"; g.fillText(r.title, 104, y + 12);
+      let size = 39; g.fillStyle = "#1B2B24";
+      do { g.font = `600 ${size}px ${sans}`; size -= 2; } while (g.measureText(r.value).width > W - 168 && size > 26);
+      g.fillText(r.value, 104, y + 60);
+    });
+    // what the colours mean
+    const ky = H - 150; let kx = 64;
+    g.font = `400 25px ${sans}`;
+    [["alert", "Very unusual"], ["watch", "Unusual"], ["usual", "About usual"], ["wetter", "Wetter or greener"]].forEach(([t, label]) => {
+      g.fillStyle = TONE[t]; g.beginPath(); g.roundRect(kx, ky - 20, 22, 22, 5); g.fill();
+      g.fillStyle = "#56655C"; g.fillText(label, kx + 32, ky); kx += 32 + g.measureText(label).width + 30;
+    });
+    const dates = Object.values(layers).map(d => d.updated).sort(), d = dates[dates.length - 1] || "";
+    g.fillStyle = "#1D4534"; g.fillRect(0, H - 118, W, 118);
+    g.font = `600 34px ${sans}`; g.fillStyle = "#FFFFFF"; g.fillText("tingalens.org", 64, H - 66);
+    g.font = `400 26px ${sans}`; g.fillStyle = "#CFE3D6";
+    const [yy, mo, dd] = d.split("-").map(Number);
+    const nice = yy ? `${dd} ${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][mo - 1]} ${yy}` : d;
+    g.fillText(`Data as of ${nice}. Estimates from satellite records, not an official warning.`, 64, H - 28);
+    return c;
+  }
+
+  function shareCard() {
+    if (!current) return;
+    const fonts = document.fonts && document.fonts.load ? Promise.all(['600 60px "Source Serif 4"', '600 40px "Source Sans 3"', '400 30px "Source Sans 3"', '700 44px "Sora"'].map(f => document.fonts.load(f))).catch(() => {}) : Promise.resolve();
+    fonts.then(() => drawCard().toBlob(blob => {
+      const name = `tinga-lens-${current.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
+      const file = new File([blob], name, { type: "image/png" });
+      const link = `${TL.site}/pages/districts.html#${encodeURIComponent(current.name)}`;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` }).catch(() => {});
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png"));
   }
 
   function download() {

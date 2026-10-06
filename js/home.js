@@ -80,3 +80,14 @@
     el.hidden = false;
   });
 })();
+
+// "This month in Ghana": the first sentence of each section of the brief
+(function () {
+  if (!window.TLbrief || !document.getElementById("teaser")) return;
+  TLbrief.load().then(b => {
+    if (!b.sections.length) return;
+    $("teaser-list").innerHTML = b.sections.slice(0, 3).map(s => `<li><strong>${esc(s.title)}, ${esc(s.when.split(",")[0])}:</strong> ${esc(s.paras[s.paras.length > 2 && /could be rated/.test(s.paras[0]) ? 1 : 0])}</li>`).join("");
+    $("teaser-date").textContent = "Data as of " + TLbrief.niceDate(b.updated) + ".";
+    $("teaser").hidden = false;
+  }).catch(() => {});
+})();

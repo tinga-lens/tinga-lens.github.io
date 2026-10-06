@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Brief">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>This month in Ghana | Tinga Lens</title>
+<meta name="description" content="A short monthly brief on rainfall, soil moisture, fires and vegetation across Ghana, written from satellite records.">
+<link rel="canonical" href="https://tingalens.org/pages/brief.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tinga Lens">
+<meta property="og:title" content="This month in Ghana | Tinga Lens">
+<meta property="og:description" content="A short monthly brief on rainfall, soil moisture, fires and vegetation across Ghana, written from satellite records.">
+<meta property="og:url" content="https://tingalens.org/pages/brief.html">
+<meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../css/main.css?v=20261005c">
+</head>
+<body>
+<main class="wrap narrow prose">
+  <h1>This month in Ghana</h1>
+  <p class="lead" id="b-date">Loading the latest figures…</p>
+  <p class="noprint"><button class="btn" id="b-copy" type="button">Copy as text</button> <button class="btn" id="b-print" type="button">Print or save as PDF</button></p>
+  <div id="brief"></div>
+  <h2>About this brief</h2>
+  <p>This page is written automatically from the figures on the Tinga Lens maps each time they are updated, usually every Monday. Each section covers the latest period that product has, so the dates differ between sections. The district lists link to the full figures.</p>
+  <p>These are estimates from satellite and climate records. They are not official warnings. For forecasts and warnings, go to the Ghana Meteorological Agency and NADMO. See <a href="methods.html">Data &amp; methods</a> for sources and limits.</p>
+  <p class="citebox" id="b-cite"></p>
+</main>
+<script src="../js/config.js?v=20261005c"></script>
+<script src="../js/site.js?v=20261005c"></script>
+<script src="../js/brief.js?v=20261005c"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  TLbrief.load().then(b => {
+    const when = TLbrief.niceDate(b.updated);
+    $("b-date").textContent = `Rainfall, soil moisture, fires and vegetation across the 260 districts. Data as of ${when}.`;
+    $("brief").innerHTML = b.sections.map(s => `<h2>${esc(s.title)} ${badge(TL.products[s.key].status)}</h2>
+      <p class="sub" style="margin-top:-6px">${esc(s.when)} · <a href="${ROOT + TL.products[s.key].page}#${s.key}">open the map</a></p>
+      ${s.paras.map(p => `<p>${esc(p)}</p>`).join("")}
+      ${s.items.length ? `<p class="sub" style="margin-bottom:2px">${esc(s.head)}</p><ul>${s.items.map(i =>
+        `<li><a href="districts.html#${encodeURIComponent(i[0])}">${esc(i[0])}</a>${i[1] ? ", " + esc(i[1]) : ""}: ${esc(i[2])}</li>`).join("")}</ul>` : ""}`).join("");
+    $("b-cite").innerHTML = `${esc(TL.author)} (${b.updated.slice(0, 4)}). <em>This month in Ghana</em>, data as of ${when}. Tinga Lens. ${TL.site}/pages/brief.html`;
+    $("b-copy").addEventListener("click", () => navigator.clipboard.writeText(TLbrief.text(b)).then(() => { $("b-copy").textContent = "Copied"; setTimeout(() => $("b-copy").textContent = "Copy as text", 1500); }));
+    $("b-print").addEventListener("click", () => window.print());
+  }).catch(e => { $("b-date").textContent = "The figures could not be loaded. Please try again later."; });
+});
+</script>
+</body>
+</html>
