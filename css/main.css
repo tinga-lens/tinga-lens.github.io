@@ -205,3 +205,6 @@ ul.hits li:hover{background:var(--bg)}
 .site-foot{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);padding:16px 0 34px;margin-top:30px}
 .site-foot p{margin:0 0 8px;max-width:95ch}
 .disclaimer{border-left:3px solid var(--hazard);padding-left:10px}
+
+.founder-photo{float:right;width:190px;height:190px;object-fit:cover;border-radius:50%;margin:4px 0 12px 22px;border:3px solid var(--line)}
+@media(max-width:560px){.founder-photo{float:none;display:block;width:150px;height:150px;margin:0 0 14px}}

@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261006c">
+<link rel="stylesheet" href="../css/main.css?v=20261006d">
 </head>
 <body>
 <main class="wrap">
@@ -76,13 +76,13 @@
     <p><strong>Habitat suitability</strong> <span class="badge dev">In development</span> would be a model estimate of where a species could live. Nothing is published for it yet.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261006c"></script>
-<script src="../js/site.js?v=20261006c"></script>
+<script src="../js/config.js?v=20261006d"></script>
+<script src="../js/site.js?v=20261006d"></script>
 <script>
   // show the map and lists only once real data has been published
   fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
-    const a = document.createElement("script"); a.src = "../js/app.js?v=20261006c";
-    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261006c"; document.body.append(b); };
+    const a = document.createElement("script"); a.src = "../js/app.js?v=20261006d";
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261006d"; document.body.append(b); };
     document.body.append(a); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>
