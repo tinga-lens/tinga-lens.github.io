@@ -74,5 +74,44 @@ window.TLbrief = (function () {
     .concat([getJSON("data/regions.json").catch(() => ({}))]))
     .then(([drought, soil, fires_, firerisk, vegetation, REG]) => build({ drought, soil, fires: fires_, firerisk, vegetation }, REG));
 
-  return { load, text, niceDate };
+  // the brief as one image (1080 x 1350), sized for phone messaging apps
+  function image(b) {
+    const W = 1080, H = 1350, c = document.createElement("canvas"), g = c.getContext("2d");
+    c.width = W; c.height = H;
+    if (!g.roundRect) g.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+    const sans = '"Source Sans 3", system-ui, sans-serif', serif = '"Source Serif 4", Georgia, serif';
+    g.fillStyle = "#F2F4EE"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#1D4534"; g.fillRect(0, 0, W, 270);
+    g.lineCap = "round"; g.lineWidth = 9;
+    g.strokeStyle = "#F3F5F4"; g.beginPath(); g.arc(104, 92, 38, -Math.PI / 2, Math.PI); g.stroke();
+    g.strokeStyle = "#74C69D"; g.beginPath(); g.arc(104, 92, 21, -Math.PI / 2, Math.PI); g.stroke();
+    g.fillStyle = "#C9A98D"; g.beginPath(); g.arc(104, 92, 8, 0, 7); g.fill();
+    g.font = `700 44px "Sora", ${sans}`; g.fillStyle = "#F3F5F4"; g.fillText("Tinga", 162, 108);
+    g.fillStyle = "#74C69D"; g.fillText("Lens", 162 + g.measureText("Tinga ").width, 108);
+    g.font = `600 70px ${serif}`; g.fillStyle = "#FFFFFF"; g.fillText("This month in Ghana", 64, 205);
+    g.font = `400 30px ${sans}`; g.fillStyle = "#CFE3D6"; g.fillText(`Data as of ${niceDate(b.updated)}`, 64, 247);
+    const wrap = (t, w, max) => {
+      const words = t.split(" "), lines = []; let cur = "";
+      words.forEach(x => { const n = cur ? cur + " " + x : x; if (g.measureText(n).width > w && cur) { lines.push(cur); cur = x; } else cur = n; });
+      if (cur) lines.push(cur);
+      if (lines.length > max) { lines.length = max; lines[max - 1] = lines[max - 1].replace(/[ ,;.]*\S*$/, "") + "…"; }
+      return lines;
+    };
+    let y = 330;
+    b.sections.slice(0, 5).forEach(s => {
+      g.fillStyle = "#2D6A4F"; g.beginPath(); g.roundRect(64, y - 28, 10, 150, 5); g.fill();
+      g.font = `600 36px ${sans}`; g.fillStyle = "#1B2B24"; g.fillText(`${s.title}  `, 98, y);
+      const tw = g.measureText(`${s.title}  `).width;
+      g.font = `400 26px ${sans}`; g.fillStyle = "#56655C"; g.fillText(s.when, 98 + tw, y);
+      g.font = `400 29px ${sans}`; g.fillStyle = "#33433A";
+      wrap(s.paras[0], W - 170, 3).forEach((l, i) => g.fillText(l, 98, y + 44 + i * 38));
+      y += 190;
+    });
+    g.fillStyle = "#1D4534"; g.fillRect(0, H - 118, W, 118);
+    g.font = `600 34px ${sans}`; g.fillStyle = "#FFFFFF"; g.fillText("tingalens.org/pages/brief.html", 64, H - 66);
+    g.font = `400 26px ${sans}`; g.fillStyle = "#CFE3D6"; g.fillText("Estimates from satellite and climate records, not an official warning.", 64, H - 28);
+    return c;
+  }
+
+  return { load, text, niceDate, image };
 })();

@@ -59,7 +59,7 @@
     shapes[name].setStyle({ fillColor: "#2D6A4F", fillOpacity: 0.7, color: "#111", weight: 2 }).bringToFront();
     map.fitBounds(shapes[name].getBounds().pad(2.2));
     $("dname").textContent = name;
-    $("head").hidden = false;
+    $("head").hidden = false; $("card").disabled = false; $("download").disabled = false;
 
     const modules = [...new Set(Object.values(TL.products).map(p => p.module))];
     // "At a glance": one plain sentence per product, built only from the published figures
@@ -137,6 +137,7 @@
   function drawCard() {
     const W = 1080, H = 1350, c = document.createElement("canvas"), g = c.getContext("2d");
     c.width = W; c.height = H;
+    if (!g.roundRect) g.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };      // older browsers
     const sans = '"Source Sans 3", system-ui, sans-serif', serif = '"Source Serif 4", Georgia, serif';
     g.fillStyle = "#F2F4EE"; g.fillRect(0, 0, W, H);
     g.fillStyle = "#1D4534"; g.fillRect(0, 0, W, 300);
@@ -192,20 +193,23 @@
   function makeCard(share) {
     if (!current) return;
     const fonts = document.fonts && document.fonts.load ? Promise.all(['600 60px "Source Serif 4"', '600 40px "Source Sans 3"', '400 30px "Source Sans 3"', '700 44px "Sora"'].map(f => document.fonts.load(f))).catch(() => {}) : Promise.resolve();
-    fonts.then(() => drawCard().toBlob(blob => {
-      const name = `tinga-lens-${current.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
-      const save = () => {
+    const name = `tinga-lens-${current.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
+    fonts.then(() => {
+      const canvas = drawCard();
+      const save = blob => {
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob); a.download = name;
+        a.href = blob ? URL.createObjectURL(blob) : canvas.toDataURL("image/png"); a.download = name;
         document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        setTimeout(() => { if (blob) URL.revokeObjectURL(a.href); }, 4000);
       };
-      if (!share) return save();
-      const file = new File([blob], name, { type: "image/png" });
-      const link = `${TL.site}/pages/districts.html#${encodeURIComponent(current.name)}`;
-      navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` })
-        .catch(e => { if (e && e.name !== "AbortError") save(); });      // if sharing fails, fall back to a download
-    }, "image/png"));
+      canvas.toBlob(blob => {
+        if (!share || !blob) return save(blob);
+        const file = new File([blob], name, { type: "image/png" });
+        const link = `${TL.site}/pages/districts.html#${encodeURIComponent(current.name)}`;
+        navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` })
+          .catch(e => { if (e && e.name !== "AbortError") save(blob); });      // if sharing fails, fall back to a download
+      }, "image/png");
+    }).catch(() => alert("The image could not be made on this device. Please try another browser."));
   }
 
   function download() {
