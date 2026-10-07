@@ -109,7 +109,7 @@
         return `<div class="card"><div>${badge(p.status)}</div><h2 style="margin-top:6px">${esc(p.name)}</h2>
           <div><span class="big">${esc(TL.relBig(e.x.big, e.x.big_note)[0])}</span><span class="pill" style="background:${c.color};color:${ink(c.color)}">${esc(c.label)}</span></div>
           <p class="sub">${esc(TL.relBig(e.x.big, e.x.big_note)[1])}</p>
-          <dl>${TL.dl(e.x.rows)}</dl>
+          <dl>${TL.dl(e.x.rows)}</dl>${TL.table(e.x.table)}
           <p class="sub" style="margin:0">Updated ${esc(e.d.updated)} · version ${esc(p.version)} · <a href="${ROOT + p.page}#${k}">Open on the map</a></p></div>`;
       }).join("");
       return `<h2>${esc(m)}</h2><div class="profile">${cards}</div>`;

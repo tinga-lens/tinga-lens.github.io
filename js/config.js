@@ -110,6 +110,8 @@ const TL = {
 // "94% of normal" is easier to read as "6% below normal". Used wherever a figure is shown.
 TL.dl = rows => rows.map(r => r[1] === "" ? `<dt class="hd">${TL.esc(r[0])}</dt><dd class="hd"></dd>` : r[0] === "" ? `<dd class="full">${TL.esc(r[1])}</dd>` : `<dt>${TL.esc(r[0])}</dt><dd>${TL.esc(TL.rel(r[1]))}</dd>`).join("");
 TL.esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+TL.table = t => !t ? "" : `<table class="mv"><caption>${TL.esc(t.caption)}</caption><thead><tr>${t.head.map(c => `<th>${TL.esc(c)}</th>`).join("")}</tr></thead>
+  <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${TL.esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>${t.note ? `<p class="sub">${TL.esc(t.note)}</p>` : ""}`;
 TL.rel = t => String(t ?? "").replace(/(\d+)% of normal/g, (m, n) => { const p = +n - 100; return p === 0 ? "equal to normal" : `${Math.abs(p)}% ${p > 0 ? "above" : "below"} normal`; });
 TL.relBig = (big, note) => {
   const m = /^(\d+)%$/.exec(big || "");

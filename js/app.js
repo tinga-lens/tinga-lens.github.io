@@ -747,6 +747,5 @@ function select(id) {
     <p class="sub">${esc(TL.relBig(x.big, x.big_note)[1])}</p>
     <dl>${TL.dl(x.rows)}</dl>
     ${chart(D.chart, x)}
-    ${t ? `<table class="mv"><caption>${esc(t.caption)}</caption><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
-      <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;
+    ${TL.table(t)}`;
 }

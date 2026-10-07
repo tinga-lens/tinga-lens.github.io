@@ -165,18 +165,18 @@ def main():
                               "rows": [], "v": chart_for(i)["v"], "bc": chart_for(i)["bc"], "c": ["none"] * len(mains)}
             continue
         t5 = top[i]
-        rows = [["Dominant crop", label_of(t5[0])],
-                ["Common crops", ", ".join(label_of(c) for c in t5[1:] if ha[c][i] >= 1) or "None other estimated"],
-                ["Estimated area", ""]]
-        rows += [[name_of(c), f"{ha[c][i]:,.0f} ha"] for c in t5 if ha[c][i] >= 1]
-        rows += [["Share of mapped crop area", ""],
-                 ["", " · ".join(f"{name_of(c)} {ha[c][i] / total[i] * 100:.0f}%" for c in t5 if ha[c][i] >= 1)],
-                 ["All mapped crops", f"{total[i]:,.0f} ha"]]
+        t5 = [c for c in top[i] if ha[c][i] >= 1]
+        rows = [["Main crop", label_of(t5[0])],
+                ["Other major crops", ", ".join(label_of(c) for c in t5[1:]) or "None other estimated"],
+                ["All mapped crops", f"{total[i]:,.0f} ha"]]
+        table = {"caption": f"Crop profile: {nm}", "head": ["Crop", "Estimated area", "Share"],
+                 "rows": [[label_of(c), f"{ha[c][i]:,.0f} ha", f"{ha[c][i] / total[i] * 100:.0f}%"] for c in t5],
+                 "note": "Source: SPAM 2020 (IFPRI). Interpretation: a model estimate of the usual crop distribution, not a current-year crop census. Shares are of the mapped crop area in the district."}
         cat = keyof(lead[i])
         districts[sid] = {"name": nm, "cat": cat, "big": label_of(lead[i]),
                           "big_note": f"has the largest crop area of any crop in the district, {ha[lead[i]][i] / total[i] * 100:.0f}% of the total mapped crop area (model estimate)",
                           "tip": f"{name_of(lead[i])}, {ha[lead[i]][i] / total[i] * 100:.0f}% of mapped crop area",
-                          "rows": rows, **{k: v for k, v in chart_for(i).items()}, "c": [cat] * len(mains)}
+                          "rows": rows, "table": table, **{k: v for k, v in chart_for(i).items()}, "c": [cat] * len(mains)}
     cats = [{"key": keyof(c), "label": name_of(c), "note": "", "color": color[c]} for c in shown]
     if len(order) > len(shown):
         cats.append({"key": "k_other", "label": "Other crops", "note": "", "color": color["_other"]})
