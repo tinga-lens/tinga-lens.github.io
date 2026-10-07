@@ -6,6 +6,9 @@ Every change to a method or product is recorded here. Product versions are shown
 
 - New Agriculture module (version 0.1): cropland (ESA WorldCover 2021) and the average soil nitrogen, phosphorus and potassium on each district's cropland (iSDAsoil Africa, 30 m). Districts are shaded in fifths among Ghana's districts; there are no agronomic thresholds. Both sources are read through Google Earth Engine by `scripts/agriculture.py`, which has a trial mode that publishes nothing.
 - Agriculture: main crop in each district and one map for each of nine main crops (maize, cassava, yam, rice, plantain, cocoa, sorghum, pearl millet, groundnut), from SPAM 2020 (a published model, not an observation). Built by `scripts/crops.py` from a free download; no Earth Engine is used. It has a trial mode that publishes nothing.
+- Agriculture: district crop profile (main crop, other major crops, estimated area and share) on the map and the Districts page.
+- Agriculture: soil maps now cover every district on one basis (average over all land). New soil layers: pH, organic matter (estimated from organic carbon), clay, sand and bulk density. The cropland-only value and the deeper soil are in the panel. A table of all values can be downloaded (data/soil-by-district.csv).
+- The purpose of Tinga Lens was added to the Home and About pages.
 - The photograph of the founder was added to the About page.
 
 ## 2026-10-06

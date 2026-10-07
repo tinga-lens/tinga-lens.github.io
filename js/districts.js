@@ -83,9 +83,8 @@
       flood2020: x => `Flooding, 2020 northern event: ${x.big} ${x.big_note.split(",")[0]}.`,
       crops: x => { const m = /(\d+)% of the total/.exec(x.big_note || ""); return x.big === "–" ? "" : `Main crop (model estimate): ${x.big}${m ? ", " + m[1] + "% of mapped crop area" : ""}.`; },
       cropland: x => `Cropland: ${x.big} ${x.big_note}.`,
-      soiln: x => x.big === "–" ? "" : `Soil nitrogen: ${x.big} in the topsoil (${x.basis === "all_land_fallback" ? "district-wide average, too little mapped cropland" : "mapped cropland"}, model estimate).`,
-      soilp: x => x.big === "–" ? "" : `Soil phosphorus: ${x.big} in the topsoil (${x.basis === "all_land_fallback" ? "district-wide average, too little mapped cropland" : "mapped cropland"}, model estimate).`,
-      soilk: x => x.big === "–" ? "" : `Soil potassium: ${x.big} in the topsoil (${x.basis === "all_land_fallback" ? "district-wide average, too little mapped cropland" : "mapped cropland"}, model estimate).`,
+      ...Object.fromEntries([["soiln", "nitrogen"], ["soilp", "phosphorus"], ["soilk", "potassium"], ["soilph", "pH"], ["soilom", "organic matter"], ["soilclay", "clay"], ["soilsand", "sand"], ["soilbd", "bulk density"]]
+        .map(([k, n]) => [k, x => x.big === "–" ? "" : `Soil ${n}: ${x.big} in the topsoil, averaged over all land in the district (model estimate).`])),
       water: x => `Permanent surface water: ${x.big} between the 1980s and 2021.`,
       floodprone: x => `Flood-prone land: ${x.big} ${x.big_note.replace(/^of land /, "")}.`,
       floodhazard: x => `River flood hazard (model): ${x.big} ${x.big_note}.`,
