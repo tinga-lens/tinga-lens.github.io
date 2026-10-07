@@ -33,7 +33,7 @@ Tinga Lens publishes estimates derived from satellite, climate and model data. I
 - Soil nitrogen, phosphorus and potassium come from iSDAsoil, a machine-learning prediction at 30 m made from soil samples and satellite data of about 2001 to 2017. They are predictions, not measurements, and are not a substitute for a soil test.
 - The shading compares districts with each other. It is not a sufficiency rating and it is not fertiliser advice.
 - Total nitrogen is not plant-available nitrogen. Phosphorus and potassium are "extractable", and the result depends on the laboratory method.
-- Averages are over cropland as seen at 30 m. Districts with under 1 km² of cropland are not rated. The soil model is less reliable in dense forest.
+- Nutrient averages are taken over mapped cropland where a district has at least 1 km² of it (basis "cropland"). In the other districts, mostly the forest belt where cocoa and oil palm are not classed as cropland, a district-wide average over all land is shown instead (basis "all_land_fallback"), with a dashed outline. That average includes forest, settlements and wetlands, and the two kinds of value are not ranked against each other. The soil model is less reliable in dense forest.
 
 ### Crops
 

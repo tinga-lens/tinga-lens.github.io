@@ -191,62 +191,77 @@ def main():
     # ---- nutrient layers ----
     for key, (asset, div, unit, dec, label, short) in NUTRIENTS.items():
         top, sub, allv = (f"{key}_top_crop", f"{key}_sub_crop", f"{key}_all")
-        rated = [s for s in ids if crop[s] >= MIN_CROP_KM2 and results[s][1].get(top) is not None]
+        rated = [s for s in ids if crop[s] >= MIN_CROP_KM2 and results[s][1].get(top) is not None]       # cropland-specific estimate
+        fallback = [s for s in ids if s not in rated and results[s][1].get(allv) is not None]            # district-wide estimate
         vals = np.array([results[s][1][top] for s in rated])
-        cuts = np.percentile(vals, [20, 40, 60, 80]) if len(vals) else []
+        cuts = np.percentile(vals, [20, 40, 60, 80]) if len(vals) else []                                  # classes come from cropland values only
         weight = np.array([crop[s] for s in rated])
         national = float(np.average(vals, weights=weight)) if len(vals) else None
         order_v = sorted(rated, key=lambda s: -results[s][1][top])
         rank = {s: i + 1 for i, s in enumerate(order_v)}
-        print(f"{label}: {len(rated)} districts rated. Lowest {vals.min():.2f}, median {np.median(vals):.2f}, highest {vals.max():.2f} {unit}; "
+        print(f"{label}: {len(rated)} districts on cropland, {len(fallback)} district-wide fallbacks. Cropland: lowest {vals.min():.2f}, median {np.median(vals):.2f}, highest {vals.max():.2f} {unit}; "
               f"Ghana cropland average {national:.2f} {unit}")
         cats = [{"key": f"n{i}", "label": FIFTHS[i], "note": "", "color": GREENS[i]} for i in range(5)] + \
-               [{"key": "none", "label": "Too little cropland to rate", "note": "", "color": "#bdbdbd"}]
+               [{"key": "none", "label": "No estimate", "note": "", "color": "#bdbdbd"}]
         districts = {}
         for s in ids:
             r, v = results[s]
-            if s not in rated:
-                districts[s] = {"name": r.shapeName, "cat": "none", "big": "–", "big_note": f"Less than {MIN_CROP_KM2:g} km² of cropland, so no rating.",
-                                "tip": "Too little cropland to rate", "rows": [["Cropland (2021)", f"{crop[s]:,.1f} km²"]],
-                                "v": [None, None], "c": ["none", "none"]}
-                continue
-            i = int(np.searchsorted(cuts, v[top], side="right"))
-            cat = f"n{i}"
-            det = [[f"Topsoil, 0 to 20 cm, on cropland", f"{fmt(v[top], dec)} {unit}"]]
-            if v.get(sub) is not None:
-                det.append(["Subsoil, 20 to 50 cm, on cropland", f"{fmt(v[sub], dec)} {unit}"])
-            if v.get(allv) is not None:
-                det.append(["Topsoil, all land in the district", f"{fmt(v[allv], dec)} {unit}"])
-            det += [["Average for Ghana's cropland, topsoil", f"{fmt(national, dec)} {unit}"],
-                    ["Rank among rated districts (1 = highest)", f"{rank[s]} of {len(rated)}"],
-                    ["Cropland the average covers", f"{crop[s]:,.1f} km²"]]
-            districts[s] = {"name": r.shapeName, "cat": cat, "big": f"{fmt(v[top], dec)} {unit}",
-                            "big_note": f"{label.lower()} in the topsoil of cropland, {FIFTHS[i].lower()} of Ghana's districts",
-                            "tip": f"{fmt(v[top], dec)} {unit}, {FIFTHS[i].lower()}",
-                            "rows": det, "v": [round(v[top], 3), None if v.get(sub) is None else round(v[sub], 3)], "c": [cat, cat]}
+            if s in rated:
+                i = int(np.searchsorted(cuts, v[top], side="right"))
+                cat = f"n{i}"
+                det = [["Coverage basis", "Mapped cropland"],
+                       [f"Topsoil, 0 to 20 cm, on cropland", f"{fmt(v[top], dec)} {unit}"]]
+                if v.get(sub) is not None:
+                    det.append(["Subsoil, 20 to 50 cm, on cropland", f"{fmt(v[sub], dec)} {unit}"])
+                if v.get(allv) is not None:
+                    det.append(["Topsoil, all land in the district", f"{fmt(v[allv], dec)} {unit}"])
+                det += [["Average for Ghana's cropland, topsoil", f"{fmt(national, dec)} {unit}"],
+                        ["Rank among cropland-based districts (1 = highest)", f"{rank[s]} of {len(rated)}"],
+                        ["Cropland the average covers", f"{crop[s]:,.1f} km²"]]
+                districts[s] = {"name": r.shapeName, "cat": cat, "basis": "cropland", "big": f"{fmt(v[top], dec)} {unit}",
+                                "big_note": f"{label.lower()} in the topsoil of mapped cropland, {FIFTHS[i].lower()} of cropland-based districts",
+                                "tip": f"{fmt(v[top], dec)} {unit}, mapped cropland, {FIFTHS[i].lower()}",
+                                "rows": det, "v": [round(v[top], 3), None if v.get(sub) is None else round(v[sub], 3)], "c": [cat, cat]}
+            elif s in fallback:
+                i = int(np.searchsorted(cuts, v[allv], side="right"))
+                cat = f"n{i}"
+                det = [["Coverage basis", "District-wide estimate"],
+                       ["Topsoil, 0 to 20 cm, all land in the district", f"{fmt(v[allv], dec)} {unit}"],
+                       ["Average for Ghana's cropland, topsoil", f"{fmt(national, dec)} {unit}"],
+                       ["Mapped cropland in the district", f"{crop[s]:,.1f} km²"],
+                       ["Rank", "Not ranked (different basis)"]]
+                districts[s] = {"name": r.shapeName, "cat": cat, "basis": "all_land_fallback", "big": f"{fmt(v[allv], dec)} {unit}",
+                                "big_note": (f"Insufficient mapped cropland for a cropland-specific estimate. The value is the average {label.lower()} in the topsoil across all land in the district, "
+                                             "so it also reflects forest, settlements and other land."),
+                                "tip": f"{fmt(v[allv], dec)} {unit}, district-wide estimate",
+                                "rows": det, "v": [round(v[allv], 3), None], "c": [cat, cat]}
+            else:
+                districts[s] = {"name": r.shapeName, "cat": "none", "basis": "none", "big": "–", "big_note": "No soil estimate available for this district.",
+                                "tip": "No estimate", "rows": [["Mapped cropland", f"{crop[s]:,.1f} km²"]], "v": [None, None], "c": ["none", "none"]}
         write_layer(key, {
-            "label": short, "title": f"Soil {short.lower()} on cropland", "source": "iSDAsoil Africa v1 (Hengl and others, 2021) and ESA WorldCover 2021", "demo": False,
-            "subtitle": f"Average {label.lower()} ({unit}) in the topsoil of each district's cropland",
+            "label": short, "title": f"Soil {short.lower()}", "source": "iSDAsoil Africa v1 (Hengl and others, 2021) and ESA WorldCover 2021", "demo": False,
+            "subtitle": f"Average {label.lower()} ({unit}) in the topsoil, on mapped cropland where there is enough, otherwise district-wide",
             "build": BUILD,
             "categories": cats,
-            "how": (f"Each district shows the average {label.lower()} in the top 20 cm of soil, taken only over the land that satellites saw as cropland in 2021. "
+            "how": (f"Each district shows the average {label.lower()} in the top 20 cm of soil. Where satellites saw at least {MIN_CROP_KM2:g} km² of cropland in 2021, the average is taken over that cropland only. "
+                    f"In the other districts a district-wide average over all land is shown instead, with a dashed outline on the map and a 'Coverage basis' line in the panel. "
                     f"The soil values come from iSDAsoil, a computer model that predicted soil properties across Africa at 30 m from thousands of soil samples and satellite data. "
                     f"Districts are shaded by where they fall among Ghana's rated districts, in fifths. The shading compares districts with each other. It does not say whether the soil has enough {short.lower()} for a crop. "
-                    f"Click a district for the exact figure, the deeper layer and the Ghana average."),
+                    f"Click a district for the exact figure, the deeper layer and the Ghana average. Cropland-based and district-wide values are not ranked against each other."),
             "limits": [
                 "These are model predictions, not measurements. They show broad patterns and can be wrong for a single farm or field. They are not a substitute for a soil test.",
                 "The shading is relative. 'Highest fifth' means higher than most other districts, not high enough for a crop. Tinga Lens does not give fertiliser advice.",
                 "The maps describe conditions as predicted from samples and satellite data of about 2001 to 2017. Fertiliser use, erosion and changes in farming since then are not shown.",
                 ("Total nitrogen is all the nitrogen in the soil, mostly locked in organic matter. It is not the amount plants can take up." if key == "soiln"
                  else f"'Extractable' means the part a laboratory method can remove from the soil. Results depend on the method, and the model's values are not directly comparable with a particular laboratory's soil test."),
-                "Averages are taken over cropland as seen at a 30 m grid. Where cropland is under-counted (see the Cropland map), the average may not reflect all farms in the district.",
-                f"Districts with less than {MIN_CROP_KM2:g} km² of cropland are not rated.",
+                "Coverage note: nutrient estimates are calculated over mapped cropland where sufficient cropland is identified. In districts with limited mapped cropland, a district-wide soil estimate is shown instead, marked with a dashed outline. Some perennial tree-crop systems, including cocoa and oil palm areas, may not be classified as cropland in the underlying land-cover dataset, so much of the forest belt shows a district-wide value.",
+                "A district-wide value includes forest, settlements, wetlands and other land, so it can differ from the soil under farms. It is shown to give full coverage, not as the same measurement.",
                 "In dense forest the soil model is less reliable and can show stripes.",
             ],
             "credits": [{"text": "Soil nutrients: iSDAsoil, Hengl and others (2021), Scientific Reports 11, 6130, CC BY 4.0", "url": "https://www.isda-africa.com/isdasoil"},
                         {"text": "Cropland: ESA WorldCover 10 m 2021 v200, Zanaga and others (2022), CC BY 4.0", "url": "https://esa-worldcover.org/"}],
             "chart": {"kind": "bars", "unit": unit, "x": ["0 to 20 cm", "20 to 50 cm"],
-                      "caption": f"Average {label.lower()} on cropland at two depths ({unit})", "top": "", "bottom": ""},
+                      "caption": f"Average {label.lower()} at two depths ({unit}); district-wide values have the top depth only", "top": "", "bottom": ""},
             "districts": districts,
         })
 

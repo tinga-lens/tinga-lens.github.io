@@ -530,7 +530,8 @@ function render(key, d) {
     const x = d.districts[l.feature.properties.shapeID];
     if (!x && REGION) return l.setStyle({ fillColor: "#999", fillOpacity: 0.08, color: SAT ? "#ffffff" : "#55605c", weight: 0.3 });
     l.setStyle({ fillOpacity: 0.9 * FILL });
-    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: 0.6 });
+    const fb = x && x.basis === "all_land_fallback";                  // district-wide estimate: dashed outline
+    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: fb ? 1.1 : 0.6, dashArray: fb ? "3 2" : null });
   });
   dots.clearLayers();
   (d.marks || []).forEach(id => {
@@ -547,6 +548,7 @@ function render(key, d) {
   }).join("");
   $("legend").innerHTML = d.categories.map(c =>
     `<li><span class="sw" style="background:${c.color}"></span>${esc(c.label)} <span class="n">${esc(c.note || "")}</span><b>${d.counts[c.key] || 0}</b></li>`).join("")
+    + (Object.values(d.districts).some(q => q.basis === "all_land_fallback") ? `<li><span class="sw" style="background:#fff;border:1.5px dashed #55605c"></span>Dashed outline: district-wide estimate <b>${Object.values(d.districts).filter(q => q.basis === "all_land_fallback").length}</b></li>` : "")
     + (d.marks ? `<li><span class="sw" style="background:#111;border-radius:50%;width:9px;height:9px;margin:0 2.5px;border:1px solid #fff;outline:1px solid #111"></span>Dot: a fire was detected <b>${d.marks.length}</b></li>` : "");
   $("names").innerHTML = Object.values(d.districts).map(x => x.name).sort().map(n => `<option value="${esc(n)}">`).join("");
   $("how").textContent = d.how;
