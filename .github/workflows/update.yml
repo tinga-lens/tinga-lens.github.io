@@ -22,6 +22,18 @@ on:
         type: boolean
         default: false
 
+      agriculture:
+        description: "Cropland and soil nutrients (Google Earth Engine): trial = 8 districts, nothing published; full = all districts"
+        type: choice
+        options: ["no", "trial", "full"]
+        default: "no"
+
+      crops:
+        description: "Which crops are grown where (SPAM 2020 download, no Earth Engine): trial = lists files, publishes nothing; full = publish"
+        type: choice
+        options: ["no", "trial", "full"]
+        default: "no"
+
 permissions:
   contents: write
 
@@ -59,6 +71,8 @@ jobs:
           EE_SERVICE_ACCOUNT_KEY: ${{ secrets.EE_SERVICE_ACCOUNT_KEY }}
           EE_CHECK: ${{ inputs.ee_check }}
           FLOODPRONE: ${{ inputs.floodprone }}
+          AGRICULTURE: ${{ inputs.agriculture }}
+          CROPS: ${{ inputs.crops }}
         run: python scripts/update.py
       - name: Keep downloads for next time
         uses: actions/cache/save@v4
