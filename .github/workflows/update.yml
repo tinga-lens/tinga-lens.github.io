@@ -28,6 +28,12 @@ on:
         options: ["no", "trial", "full"]
         default: "no"
 
+      soilgrid:
+        description: "Soil values across Ghana on a 1 km grid (Google Earth Engine): trial = pH only, published; full = all soil properties. Run the trial first"
+        type: choice
+        options: ["no", "trial", "full"]
+        default: "no"
+
       crops:
         description: "Which crops are grown where (SPAM 2020 file kept in the repository, no download, no Earth Engine): trial = prints totals, publishes nothing; full = rebuild. Already published, so leave on no"
         type: choice
@@ -73,6 +79,7 @@ jobs:
           FLOODPRONE: ${{ inputs.floodprone }}
           AGRICULTURE: ${{ inputs.agriculture }}
           CROPS: ${{ inputs.crops }}
+          SOILGRID: ${{ inputs.soilgrid }}
         run: python scripts/update.py
       - name: Keep downloads for next time
         uses: actions/cache/save@v4
