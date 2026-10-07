@@ -155,7 +155,7 @@ def main():
         for sid, (r, v) in results.items():
             cells = " ".join("      -" if v.get(f"{k}_all") is None else f"{v[f'{k}_all']:7.2f}" for k in PROPS)
             print(f"{r.shapeName[:26]:26s} {r.land_km2:8.0f} {v['crop_km2']:8.1f} | {cells}")
-        print("Plausible ranges, for checking the units:  " + "; ".join(f"{PROPS[k][7]} {PROPS[k][9][0]} to {PROPS[k][9][1]} {PROPS[k][4]}" for k in PROPS))
+        print("Plausible ranges, for checking the units:  " + "; ".join(f"{PROPS[k][7]} {PROPS[k][8][0]} to {PROPS[k][8][1]} {PROPS[k][4]}" for k in PROPS))
         return
 
     ids = list(results)
