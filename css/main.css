@@ -212,3 +212,8 @@ ul.hits li:hover{background:var(--bg)}
 .grp{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 12px}.grp label{font-weight:600;color:var(--muted)}.grp select{width:auto;min-width:220px;margin:0}
 
 dt.hd{grid-column:1/-1;margin-top:8px;font-weight:600;color:var(--ink,inherit)}dd.hd{display:none}dd.full{grid-column:1/-1;text-align:left;margin:0}
+.gridbox{margin:8px 0 10px;font-size:.9rem}.gridbox label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.gridleg{display:block!important;list-style:none}.gridleg .bar{display:block;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15);margin:2px 0 4px}
+.gridleg .lab{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+.gridnote{list-style:none;font-size:.82rem;color:var(--muted);margin-top:6px}
+.gridpop span{font-size:.8rem;color:#555}

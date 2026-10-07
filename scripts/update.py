@@ -71,9 +71,11 @@ if os.environ.get("EE_SERVICE_ACCOUNT_KEY"):     # the layers that use Google Ea
         jobs.append(("flood-prone land", "floodprone.py"))       # about once a year
     if is_old("floodhazard", "floodhazard.py"):
         jobs.append(("river flood hazard", "floodhazard.py"))    # one-off: a fixed published dataset
-    # cropland and soil nutrients: only when asked for, or when a published layer was built by an older version
-    if os.environ.get("AGRICULTURE", "").lower() in ("true", "full", "trial") or ((DATA / "cropland.json").exists() and is_old("cropland", "agriculture.py")):
+    # cropland and soil layers: only when asked for in the form, never by the weekly run
+    if os.environ.get("AGRICULTURE", "").lower() in ("true", "full", "trial"):         # only when you choose it: it uses Earth Engine time
         jobs.append(("cropland and soil nutrients", "agriculture.py"))
+    if os.environ.get("SOILGRID", "").lower() in ("trial", "full"):      # soil on a 1 km grid: only when asked for
+        jobs.append(("soil on a 1 km grid", "soilgrid.py"))
     if is_old("water", "water.py"):
         jobs.append(("surface water change", "water.py"))        # one-off: a fixed published dataset
 else:
@@ -82,7 +84,7 @@ else:
 if os.environ.get("FLOOD", "").lower() == "true" or is_old("flood", "flood.py") or is_old("flood2020", "flood.py"):
     jobs.append(("observed flooding", "flood.py"))  # one-off: past flood events
 
-# which crops are grown where (SPAM 2020, a plain download; no Earth Engine). Only when asked for, or when a published layer is out of date.
+# which crops are grown where (SPAM 2020, read from the file in data/source; no download, no Earth Engine). Only when asked for, or when a published layer is out of date.
 if os.environ.get("CROPS", "").lower() in ("true", "full", "trial") or ((DATA / "crops.json").exists() and is_old("crops", "crops.py")):
     jobs.append(("crops (SPAM 2020)", "crops.py"))
 

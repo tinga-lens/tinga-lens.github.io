@@ -565,6 +565,7 @@ function render(key, d) {
   drawPoints();
   ranking();
   if (selected && d.districts[selected]) select(selected); else { selected = null; $("detail").innerHTML = EMPTY; }
+  if (TL.afterRender) TL.afterRender(key, d);          // lets a page add to the map (the soil grid)
 }
 
 function ranking() {
