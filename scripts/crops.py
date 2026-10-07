@@ -63,27 +63,47 @@ def name_of(code):
     return NAMES.get(code, code.title())
 
 
+AGENTS = ["Mozilla/5.0 (compatible; TingaLens/1.0; +https://tingalens.org)",
+          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"]
+
+
 def get(url, **kw):
+    """GET with a few tries, each time under a different browser identity. Prints what the server said if it refuses."""
+    last = None
     for attempt in range(1, 5):
+        ua = AGENTS[(attempt - 1) % len(AGENTS)]
         try:
-            r = requests.get(url, timeout=120, **kw)
+            r = requests.get(url, timeout=120, headers={"User-Agent": ua, "Accept": "application/json, */*"}, **kw)
+            if r.status_code >= 400:
+                kind = r.headers.get("content-type", "")
+                print(f"  {r.status_code} from {url.split('?')[0]} (identity {attempt % 2 + 1}); server said: {r.text[:240].strip()!r} [{kind}]", flush=True)
             r.raise_for_status()
             return r
         except Exception as e:
+            last = e
             print(f"  request failed ({type(e).__name__}), attempt {attempt}", flush=True)
-            if attempt == 4:
-                raise
-            time.sleep(15 * attempt)
+            time.sleep(10 * attempt)
+    raise last
 
 
 def find_files():
     """List the files of the SPAM 2020 dataset on Dataverse; returns (list of (name, id, size), licence)."""
-    r = get(f"{DATAVERSE}/api/datasets/:persistentId/", params={"persistentId": DOI}).json()
-    ver = r["data"]["latestVersion"]
-    files = [(f["dataFile"]["filename"], f["dataFile"]["id"], f["dataFile"].get("filesize", 0)) for f in ver["files"]]
-    lic = ver.get("license")
-    lic = lic.get("name") if isinstance(lic, dict) else lic
-    return files, lic or ver.get("termsOfUse", "not stated")
+    tries = [(f"{DATAVERSE}/api/datasets/:persistentId/", {"persistentId": DOI}),
+             (f"{DATAVERSE}/api/datasets/:persistentId/versions/:latest/", {"persistentId": DOI}),
+             (f"{DATAVERSE}/api/datasets/:persistentId/versions/:latest-published/", {"persistentId": DOI})]
+    err = None
+    for url, params in tries:
+        try:
+            r = get(url, params=params).json()
+            ver = r["data"].get("latestVersion", r["data"])
+            files = [(f["dataFile"]["filename"], f["dataFile"]["id"], f["dataFile"].get("filesize", 0)) for f in ver["files"]]
+            lic = ver.get("license")
+            lic = lic.get("name") if isinstance(lic, dict) else lic
+            return files, lic or ver.get("termsOfUse", "not stated")
+        except Exception as e:
+            err = e
+            print(f"  could not list the files through {url.split('/api/')[1]} ({type(e).__name__})", flush=True)
+    sys.exit(f"Harvard Dataverse would not list the SPAM 2020 files ({type(err).__name__}). The messages above show what it said. Nothing was published.")
 
 
 def pick_harvested_tif(files):
@@ -94,7 +114,7 @@ def pick_harvested_tif(files):
 
 
 def download(fid, dest):
-    with get(f"{DATAVERSE}/api/access/datafile/{fid}", params={"format": "original"}, stream=True) as r:
+    with get(f"{DATAVERSE}/api/access/datafile/{fid}", stream=True) as r:
         with open(dest, "wb") as out:
             for chunk in r.iter_content(1 << 22):
                 out.write(chunk)
