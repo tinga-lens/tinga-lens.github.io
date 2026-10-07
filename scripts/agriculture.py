@@ -77,7 +77,7 @@ def soil_image():
 def ask(shape):
     """One district -> cropland area (km2) and the mean of each nutrient."""
     geom = ee.Geometry(json.loads(json.dumps(mapping(shape))))
-    crop = ee.Image(WORLDCOVER).select("Map").eq(CROPLAND_CLASS)
+    crop = ee.ImageCollection(WORLDCOVER).first().select("Map").eq(CROPLAND_CLASS)
     area = ee.Image.pixelArea().divide(1e6).updateMask(crop).rename("crop_km2")
     out = retry(lambda: area.reduceRegion(reducer=ee.Reducer.sum(), geometry=geom, scale=CROP_SCALE_M,
                                           maxPixels=1e12, tileScale=8).getInfo())
