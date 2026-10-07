@@ -29,7 +29,7 @@ on:
         default: "no"
 
       crops:
-        description: "Which crops are grown where (SPAM 2020 download, no Earth Engine): trial = lists files, publishes nothing; full = publish"
+        description: "Which crops are grown where (SPAM 2020 file kept in the repository, no download, no Earth Engine): trial = prints totals, publishes nothing; full = rebuild. Already published, so leave on no"
         type: choice
         options: ["no", "trial", "full"]
         default: "no"
