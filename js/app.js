@@ -668,7 +668,7 @@ function downloadImage() {
 
 function download() {                  // the map as shown
   const cols = [];
-  Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (!cols.includes(r[0])) cols.push(r[0]); }));
+  Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (r[0] && r[1] !== "" && !cols.includes(r[0])) cols.push(r[0]); }));
   const lines = [["District"].concat(LL, ["Rating", "Main figure", "What the figure means"], cols).map(q).join(",")];
   Object.entries(D.districts).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([id, x]) => {
     const m = Object.fromEntries(x.rows);
@@ -745,7 +745,7 @@ function select(id) {
     <div><span class="big">${esc(TL.relBig(x.big, x.big_note)[0])}</span>
       <span class="pill" style="background:${color[x.cat]};color:${ink(color[x.cat])}">${esc(label[x.cat])}</span></div>
     <p class="sub">${esc(TL.relBig(x.big, x.big_note)[1])}</p>
-    <dl>${x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(TL.rel(r[1]))}</dd>`).join("")}</dl>
+    <dl>${TL.dl(x.rows)}</dl>
     ${chart(D.chart, x)}
     ${t ? `<table class="mv"><caption>${esc(t.caption)}</caption><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
       <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`;

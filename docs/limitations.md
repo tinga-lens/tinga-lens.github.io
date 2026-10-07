@@ -39,7 +39,7 @@ Tinga Lens publishes estimates derived from satellite, climate and model data. I
 
 - Crop areas are a model estimate (SPAM 2020), not a record of what each farmer planted. National and regional statistics are shared out over a 10 km grid using satellite cropland maps and the suitability of the land for each crop.
 - Grid cells are about 85 km², similar to many districts, and each cell is shared between districts by overlapping area. Differences between neighbouring districts can be an artefact of the grid.
-- The estimates show a typical year around 2020, not the current season or a trend. Harvested area counts each harvest, and rainfed and irrigated land are added together.
+- The estimates show a typical year around 2020, not the current season or a trend. Crop area is physical area, not counting repeat harvests, and rainfed and irrigated land are added together.
 - Crop groups such as "other roots and tubers" hide individual crops. District crop statistics from the Ministry of Food and Agriculture are not published as open data, so the model could not be checked district by district.
 
 ## Not yet published

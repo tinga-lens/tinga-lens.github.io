@@ -31,49 +31,54 @@
    "file": "data/forest.json"
   },
   {
-   "key": "floodprone",
-   "label": "Flood-prone land",
-   "file": "data/floodprone.json"
+   "key": "crops",
+   "label": "Main crops",
+   "file": "data/crops.json"
   },
   {
-   "key": "floodhazard",
-   "label": "River flood hazard",
-   "file": "data/floodhazard.json"
+   "key": "crop_maiz",
+   "label": "Maize",
+   "file": "data/crop_maiz.json"
   },
   {
-   "key": "water",
-   "label": "Surface water change",
-   "file": "data/water.json"
+   "key": "crop_cass",
+   "label": "Cassava",
+   "file": "data/crop_cass.json"
   },
   {
-   "key": "flood",
-   "label": "Flood 2023: lower Volta",
-   "file": "data/flood.json"
+   "key": "crop_yams",
+   "label": "Yam",
+   "file": "data/crop_yams.json"
   },
   {
-   "key": "flood2020",
-   "label": "Flood 2020: northern Ghana",
-   "file": "data/flood2020.json"
+   "key": "crop_rice",
+   "label": "Rice",
+   "file": "data/crop_rice.json"
   },
   {
-   "key": "pressure",
-   "label": "Human pressure",
-   "file": "data/pressure.json"
+   "key": "crop_plnt",
+   "label": "Plantain",
+   "file": "data/crop_plnt.json"
   },
   {
-   "key": "pressurechange",
-   "label": "Pressure change",
-   "file": "data/pressurechange.json"
+   "key": "crop_coco",
+   "label": "Cocoa",
+   "file": "data/crop_coco.json"
   },
   {
-   "key": "urban",
-   "label": "Urban growth",
-   "file": "data/urban.json"
+   "key": "crop_sorg",
+   "label": "Sorghum",
+   "file": "data/crop_sorg.json"
   },
   {
-   "key": "biodiversity",
-   "label": "Recorded species",
-   "file": "data/biodiversity.json"
+   "key": "crop_pmil",
+   "label": "Pearl millet",
+   "file": "data/crop_pmil.json"
+  },
+  {
+   "key": "crop_grou",
+   "label": "Groundnut",
+   "file": "data/crop_grou.json"
   }
  ],
  "planned": [

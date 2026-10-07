@@ -81,7 +81,7 @@
       forest: x => `Tree cover: ${x.big} ${x.big_note}.`,
       flood: x => `Flooding, 2023 lower Volta event: ${x.big} ${x.big_note.split(",")[0]}.`,
       flood2020: x => `Flooding, 2020 northern event: ${x.big} ${x.big_note.split(",")[0]}.`,
-      crops: x => { const m = /(\d+)% of the total/.exec(x.big_note || ""); return x.big === "–" ? "" : `Main crop (model estimate): ${x.big}${m ? ", " + m[1] + "% of harvested area" : ""}.`; },
+      crops: x => { const m = /(\d+)% of the total/.exec(x.big_note || ""); return x.big === "–" ? "" : `Main crop (model estimate): ${x.big}${m ? ", " + m[1] + "% of mapped crop area" : ""}.`; },
       cropland: x => `Cropland: ${x.big} ${x.big_note}.`,
       soiln: x => x.big === "–" ? "" : `Soil nitrogen on cropland: ${x.big} in the topsoil, ${x.big_note.split(", ").slice(1).join(", ")} (model estimate).`,
       soilp: x => x.big === "–" ? "" : `Soil phosphorus on cropland: ${x.big} in the topsoil, ${x.big_note.split(", ").slice(1).join(", ")} (model estimate).`,
@@ -109,7 +109,7 @@
         return `<div class="card"><div>${badge(p.status)}</div><h2 style="margin-top:6px">${esc(p.name)}</h2>
           <div><span class="big">${esc(TL.relBig(e.x.big, e.x.big_note)[0])}</span><span class="pill" style="background:${c.color};color:${ink(c.color)}">${esc(c.label)}</span></div>
           <p class="sub">${esc(TL.relBig(e.x.big, e.x.big_note)[1])}</p>
-          <dl>${e.x.rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(TL.rel(r[1]))}</dd>`).join("")}</dl>
+          <dl>${TL.dl(e.x.rows)}</dl>
           <p class="sub" style="margin:0">Updated ${esc(e.d.updated)} · version ${esc(p.version)} · <a href="${ROOT + p.page}#${k}">Open on the map</a></p></div>`;
       }).join("");
       return `<h2>${esc(m)}</h2><div class="profile">${cards}</div>`;

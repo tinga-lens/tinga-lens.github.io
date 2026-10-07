@@ -4,39 +4,34 @@ Tinga Lens - which crops are grown where (model estimate), by district.
 
 Source: SPAM 2020, the Spatial Production Allocation Model of the International Food Policy Research
 Institute (IFPRI) and partners. SPAM shares national and regional crop statistics out over a 10 km grid,
-using satellite maps of cropland and how suitable the land is for each crop. It estimates harvested area
+using satellite maps of cropland and how suitable the land is for each crop. It estimates crop area
 for 46 crops and crop groups. It is a model, not an observation of fields.
 
 This script adds that grid up by district. Each grid cell is shared between the districts it overlaps in
 proportion to the overlapping area. It publishes:
-  * "crops": the crop with the largest harvested area in each district, and the top five crops;
-  * one layer for each of the main crops: harvested area in each district.
+  * "crops": the crop with the largest crop area in each district, and the top five crops;
+  * one layer for each of the main crops: crop area in each district.
 
-No Earth Engine is used. The data are free downloads from Harvard Dataverse.
+No Earth Engine and no download are used: a small Ghana extract of the free SPAM 2020 files (physical area, all production systems)
+is kept in data/source/
 
-Run (a trial that lists the files, prints Ghana's totals and publishes nothing, then the full run):
+Run (a trial that prints Ghana's totals and publishes nothing, then the full run):
   CROPS=trial python scripts/crops.py
   python scripts/crops.py
 """
-import io
 import json
 import os
-import re
 import sys
-import time
-import zipfile
 from pathlib import Path
 
 import numpy as np
-import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import BBOX, CACHE, load_districts, prefer_ipv4, write_layer  # noqa: E402
+from common import load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
 BUILD = 1                              # raise this to make the weekly update rebuild the layers
-DOI = "doi:10.7910/DVN/SWPENT"         # SPAM 2020 on Harvard Dataverse
-DATAVERSE = "https://dataverse.harvard.edu"
+SOURCE = Path(__file__).resolve().parent.parent / "data" / "source" / "spam2020_ghana_physical_area.npz"   # Ghana extract of SPAM 2020 v2r2 physical area, all production systems
 TECH = "A"                             # all production systems together (rainfed and irrigated)
 MAIN = ["MAIZ", "CASS", "YAMS", "RICE", "PLNT", "COCO", "SORG", "PMIL", "GROU"]   # crops that get their own tab
 NAMES = {
@@ -47,107 +42,39 @@ NAMES = {
     "SUNF": "Sunflower", "RAPE": "Rapeseed", "SESA": "Sesame", "SUGC": "Sugar cane", "SUGB": "Sugar beet", "COTT": "Cotton",
     "OFIB": "Other fibre crops", "ACOF": "Arabica coffee", "RCOF": "Robusta coffee", "COCO": "Cocoa", "TEAS": "Tea",
     "TOBA": "Tobacco", "BANA": "Banana", "PLNT": "Plantain", "TROF": "Tropical fruit", "TEMF": "Temperate fruit",
-    "VEGE": "Vegetables", "REST": "Rest of crops",
+    "VEGE": "Vegetables", "REST": "Rest of crops", "MILL": "Small millet", "COFF": "Coffee", "CITR": "Citrus", "ONIO": "Onion",
+    "OOIL": "Other oil crops", "RUBB": "Rubber", "TOMA": "Tomato",
 }
 SKIP = {"REST"}                        # left out of the rankings: it is a catch-all, not a crop
 TRIAL_ROWS = 12
 # --------------------------------------------------------------------------
 
-STORE = CACHE / "crops"
 PALETTE = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#1f78b4", "#b2182b", "#666666"]
 GREENS = ["#eef4e6", "#cfe3bd", "#9ccb88", "#56a05f", "#1f6b43"]
 FIFTHS = ["Lowest fifth", "Lower fifth", "Middle fifth", "Higher fifth", "Highest fifth"]
+
+
+EMOJI = {"MAIZ": "🌽", "GROU": "🥜", "COWP": "🫘", "BEAN": "🫘", "SOYB": "🫘", "PIGE": "🫘", "CHIC": "🫘", "LENT": "🫘", "OPUL": "🫘",
+         "SORG": "🌾", "PMIL": "🌾", "MILL": "🌾", "RICE": "🌾", "WHEA": "🌾", "BARL": "🌾", "OCER": "🌾",
+         "CASS": "🍠", "YAMS": "🍠", "SWPO": "🍠", "ORTS": "🍠", "POTA": "🥔", "PLNT": "🍌", "BANA": "🍌", "COCO": "🍫", "OILP": "🌴",
+         "CNUT": "🥥", "COTT": "☁️", "TOMA": "🍅", "ONIO": "🧅", "VEGE": "🥬", "CITR": "🍊", "TROF": "🍍", "TEMF": "🍎", "SUGC": "🎋",
+         "TOBA": "🍂", "COFF": "☕", "RCOF": "☕", "TEAS": "🍵", "RUBB": "🌳", "SESA": "🌱", "SUNF": "🌻"}
+
+
+def label_of(code):
+    return f"{EMOJI.get(code, '🌱')} {name_of(code)}"
 
 
 def name_of(code):
     return NAMES.get(code, code.title())
 
 
-AGENTS = ["Mozilla/5.0 (compatible; TingaLens/1.0; +https://tingalens.org)",
-          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"]
-
-
-def get(url, **kw):
-    """GET with a few tries, each time under a different browser identity. Prints what the server said if it refuses."""
-    last = None
-    for attempt in range(1, 5):
-        ua = AGENTS[(attempt - 1) % len(AGENTS)]
-        try:
-            r = requests.get(url, timeout=120, headers={"User-Agent": ua, "Accept": "application/json, */*"}, **kw)
-            if r.status_code >= 400:
-                kind = r.headers.get("content-type", "")
-                print(f"  {r.status_code} from {url.split('?')[0]} (identity {attempt % 2 + 1}); server said: {r.text[:240].strip()!r} [{kind}]", flush=True)
-            r.raise_for_status()
-            return r
-        except Exception as e:
-            last = e
-            print(f"  request failed ({type(e).__name__}), attempt {attempt}", flush=True)
-            time.sleep(10 * attempt)
-    raise last
-
-
-def find_files():
-    """List the files of the SPAM 2020 dataset on Dataverse; returns (list of (name, id, size), licence)."""
-    tries = [(f"{DATAVERSE}/api/datasets/:persistentId/", {"persistentId": DOI}),
-             (f"{DATAVERSE}/api/datasets/:persistentId/versions/:latest/", {"persistentId": DOI}),
-             (f"{DATAVERSE}/api/datasets/:persistentId/versions/:latest-published/", {"persistentId": DOI})]
-    err = None
-    for url, params in tries:
-        try:
-            r = get(url, params=params).json()
-            ver = r["data"].get("latestVersion", r["data"])
-            files = [(f["dataFile"]["filename"], f["dataFile"]["id"], f["dataFile"].get("filesize", 0)) for f in ver["files"]]
-            lic = ver.get("license")
-            lic = lic.get("name") if isinstance(lic, dict) else lic
-            return files, lic or ver.get("termsOfUse", "not stated")
-        except Exception as e:
-            err = e
-            print(f"  could not list the files through {url.split('/api/')[1]} ({type(e).__name__})", flush=True)
-    sys.exit(f"Harvard Dataverse would not list the SPAM 2020 files ({type(err).__name__}). The messages above show what it said. Nothing was published.")
-
-
-def pick_harvested_tif(files):
-    cands = [f for f in files if "harvest" in f[0].lower() and f[0].lower().endswith(".zip") and re.search(r"tif", f[0], re.I)]
-    if not cands:
-        cands = [f for f in files if "harvest" in f[0].lower() and re.search(r"tif", f[0], re.I)]
-    return sorted(cands)[-1] if cands else None
-
-
-def download(fid, dest):
-    with get(f"{DATAVERSE}/api/access/datafile/{fid}", stream=True) as r:
-        with open(dest, "wb") as out:
-            for chunk in r.iter_content(1 << 22):
-                out.write(chunk)
-
-
-def read_ghana(zpath):
-    """-> (affine transform, {crop code: 2-D array of harvested hectares}) for the window around Ghana."""
-    import rasterio
-    from rasterio.windows import Window, from_bounds
-    from rasterio.io import MemoryFile
-    out, tf = {}, None
-    with zipfile.ZipFile(zpath) as z:
-        members = [n for n in z.namelist() if n.lower().endswith(".tif")]
-        print(f"  {len(members)} map files in the download; first few: {members[:4]}", flush=True)
-        for n in members:
-            m = re.search(r"_([A-Za-z0-9]{3,5})_([A-Za-z])\.tif$", n)
-            if not m or m.group(2).upper() != TECH:
-                continue
-            kind = re.search(r"_([HAYPhayp])_[A-Za-z0-9]{3,5}_[A-Za-z]\.tif$", n)
-            if kind and kind.group(1).upper() != "H":      # harvested area only, not physical area, yield or production
-                continue
-            code = m.group(1).upper()
-            with MemoryFile(z.read(n)) as mf, mf.open() as src:
-                w0 = from_bounds(*BBOX, transform=src.transform)
-                w = Window(int(round(w0.col_off)), int(round(w0.row_off)), int(round(w0.width)), int(round(w0.height)))
-                a = src.read(1, window=w, masked=True).astype("float64").filled(0)
-                a[~np.isfinite(a)] = 0
-                a[a < 0] = 0
-                if tf is None:
-                    tf = src.window_transform(w)
-                    print(f"  grid: {a.shape[1]} x {a.shape[0]} cells, cell size {abs(src.transform.a):.4f} degrees", flush=True)
-                out[code] = a
-    return tf, out
+def load_ghana():
+    """-> (affine transform, {crop code: 2-D array of hectares}) from the small Ghana extract kept in the repository."""
+    import affine
+    z = np.load(SOURCE, allow_pickle=False)
+    tf = affine.Affine(*[float(v) for v in z["tf"]])
+    return tf, {k[2:]: z[k].astype("float64") for k in z.files if k.startswith("g_")}
 
 
 def weights(tf, shape, gdf):
@@ -174,40 +101,12 @@ def weights(tf, shape, gdf):
 
 def main():
     trial = os.environ.get("CROPS", "").lower() == "trial"
-    prefer_ipv4()
-    STORE.mkdir(parents=True, exist_ok=True)
-    files, lic = find_files()
-    print(f"SPAM 2020 dataset on Dataverse: {len(files)} files. Licence: {lic}")
-    for n, i, s in sorted(files)[:TRIAL_ROWS if trial else 0]:
-        print(f"   {n}  ({s / 1e6:,.0f} MB)")
-    pick = pick_harvested_tif(files)
-    if not pick:
-        for n, i, sz in sorted(files)[:40]:
-            print(f"   {n}  ({sz / 1e6:,.0f} MB)")
-        sys.exit("Could not find the harvested-area map files in the dataset. The file list is printed above; send it to the developer. Nothing was published.")
-    name, fid, size = pick
-    print(f"Using {name} ({size / 1e6:,.0f} MB)", flush=True)
-    version = (re.search(r"(spam\d{4}[A-Za-z0-9.]*)", name, re.I) or re.search(r"(v\d[\w.]*)", name) or [None, "SPAM 2020"])[1]
-
-    cache = STORE / f"ghana_{TECH}_b{BUILD}.npz"
-    if cache.exists():
-        z = np.load(cache, allow_pickle=True)
-        tf = __import__("affine").Affine(*z["tf"])
-        grids = {k[2:]: z[k] for k in z.files if k.startswith("g_")}
-    else:
-        zpath = STORE / "harvested.zip"
-        t0 = time.time()
-        download(fid, zpath)
-        print(f"  downloaded in {(time.time() - t0) / 60:.1f} min", flush=True)
-        tf, grids = read_ghana(zpath)
-        zpath.unlink(missing_ok=True)
-        if not grids:
-            sys.exit("No crop maps for all production systems were found inside the download. Nothing was published.")
-        np.savez_compressed(cache, tf=np.array(tf)[:6], **{f"g_{k}": v for k, v in grids.items()})
+    tf, grids = load_ghana()
+    version = "SPAM 2020 v2r2"
     codes = sorted(grids)
     shape = next(iter(grids.values())).shape
     print(f"{len(codes)} crops read: {', '.join(codes)}")
-    print("Harvested area inside the window (all of it, not only Ghana), hectares, largest first:")
+    print("Crop area inside the window (all of it, not only Ghana), hectares, largest first:")
     for c in sorted(codes, key=lambda c: -grids[c].sum())[:14]:
         print(f"   {c:5s} {name_of(c):24s} {grids[c].sum():>14,.0f}")
 
@@ -245,15 +144,15 @@ def main():
         return {"v": [round(float(ha[c][i]), 1) for c in mains],
                 "bc": [("#2D6A4F" if (highlight is None or c == highlight) else "#b8c4bd") for c in mains]}
 
-    credits = [{"text": f"Crop areas: SPAM 2020 ({version}), International Food Policy Research Institute and partners, open data (see the licence on the dataset page)",
-                "url": "https://www.mapspam.info/"},
+    credits = [{"text": f"Crop areas: International Food Policy Research Institute (IFPRI), 2025. Spatial Production Allocation Model (SPAM) 2020 v2r2. Harvard Dataverse. doi:10.7910/DVN/SWPENT. Data provided by IFPRI, which bears no responsibility for the analyses or interpretations presented here",
+                "url": "https://doi.org/10.7910/DVN/SWPENT"},
                {"text": "Boundaries are 2019 districts; each 10 km grid cell is shared between districts by overlapping area", "url": "https://www.geoboundaries.org"}]
     limits = [
         "This is a model estimate, not a record of what each farmer planted. SPAM shares national and regional crop statistics out over a 10 km grid, using satellite cropland maps and the suitability of the land for each crop.",
         "The grid cells are about 85 km², similar in size to many districts. Each cell is shared between the districts it overlaps by area, so figures for small districts mostly reflect the surrounding cells. Differences between neighbouring districts can be an artefact of the grid.",
-        "The estimates are built mainly on statistics for 2019 to 2021 and show one typical year, not this season or a trend.",
+        "Physical area is read from the SPAM 2020 files; Tinga Lens adds the 10 km cells up by district. The estimates are built mainly on statistics for 2019 to 2021 and show one typical year, not this season or a trend.",
         "Ghana's district crop statistics were not available to the model at district level, so the district pattern comes from the model, not from district records.",
-        "Harvested area counts each harvest, so land harvested twice in a year is counted twice and the total can exceed the cropland area. Rainfed and irrigated land are added together.",
+        "The figures are physical area: the land a crop occupies, whatever the number of harvests in a year. Where two crops share a field, each is given its part. Rainfed and irrigated land are added together.",
         "Crop groups such as 'other roots and tubers' hide individual crops. In SPAM, cocoyam is not a crop of its own.",
     ]
 
@@ -265,12 +164,18 @@ def main():
             districts[sid] = {"name": nm, "cat": "none", "big": "–", "big_note": "No crop area estimated for this district.", "tip": "No crop area estimated",
                               "rows": [], "v": chart_for(i)["v"], "bc": chart_for(i)["bc"], "c": ["none"] * len(mains)}
             continue
-        rows = [[f"{n + 1}. {name_of(c)}", f"{ha[c][i]:,.0f} ha ({ha[c][i] / total[i] * 100:.0f}% of harvested area)"] for n, c in enumerate(top[i])]
-        rows.append(["All crops, harvested area", f"{total[i]:,.0f} ha"])
+        t5 = top[i]
+        rows = [["Dominant crop", label_of(t5[0])],
+                ["Common crops", ", ".join(label_of(c) for c in t5[1:] if ha[c][i] >= 1) or "None other estimated"],
+                ["Estimated area", ""]]
+        rows += [[name_of(c), f"{ha[c][i]:,.0f} ha"] for c in t5 if ha[c][i] >= 1]
+        rows += [["Share of mapped crop area", ""],
+                 ["", " · ".join(f"{name_of(c)} {ha[c][i] / total[i] * 100:.0f}%" for c in t5 if ha[c][i] >= 1)],
+                 ["All mapped crops", f"{total[i]:,.0f} ha"]]
         cat = keyof(lead[i])
-        districts[sid] = {"name": nm, "cat": cat, "big": name_of(lead[i]),
-                          "big_note": f"has the largest harvested area of any crop in the district, {ha[lead[i]][i] / total[i] * 100:.0f}% of the total (model estimate)",
-                          "tip": f"{name_of(lead[i])}, {ha[lead[i]][i] / total[i] * 100:.0f}% of harvested area",
+        districts[sid] = {"name": nm, "cat": cat, "big": label_of(lead[i]),
+                          "big_note": f"has the largest crop area of any crop in the district, {ha[lead[i]][i] / total[i] * 100:.0f}% of the total mapped crop area (model estimate)",
+                          "tip": f"{name_of(lead[i])}, {ha[lead[i]][i] / total[i] * 100:.0f}% of mapped crop area",
                           "rows": rows, **{k: v for k, v in chart_for(i).items()}, "c": [cat] * len(mains)}
     cats = [{"key": keyof(c), "label": name_of(c), "note": "", "color": color[c]} for c in shown]
     if len(order) > len(shown):
@@ -278,13 +183,13 @@ def main():
     cats.append({"key": "none", "label": "No estimate", "note": "", "color": "#bdbdbd"})
     print("Leading crop by number of districts: " + ", ".join(f"{name_of(c)} {counts[c]}" for c in order))
     write_layer("crops", {
-        "label": "Main crops", "title": "Main crop in each district (model estimate)", "source": f"SPAM 2020 ({version})", "demo": False,
-        "subtitle": "The crop with the largest harvested area, from a published model of crop areas",
+        "label": "Main crops", "title": "Main crop in each district (model estimate)", "source": version, "demo": False,
+        "subtitle": "The crop with the largest crop area, from a published model of crop areas",
         "build": BUILD, "categories": cats,
-        "how": ("Each district is coloured by the crop with the largest estimated harvested area. The estimates come from SPAM 2020, a model that shares national and regional "
+        "how": ("Each district is coloured by the crop with the largest estimated crop area. The estimates come from SPAM 2020, a model that shares national and regional "
                 "crop statistics out over a 10 km grid. Click a district for its five largest crops. This is an estimate of the usual crop pattern, not a survey of what is planted this season."),
         "limits": limits, "credits": credits,
-        "chart": {"kind": "bars", "unit": "ha", "x": chart_x, "caption": "Estimated harvested area of the main crops in the district (hectares)", "top": "", "bottom": ""},
+        "chart": {"kind": "bars", "unit": "ha", "x": chart_x, "caption": "Estimated crop area of the main crops in the district (hectares)", "top": "", "bottom": ""},
         "districts": districts,
     })
 
@@ -305,20 +210,20 @@ def main():
             else:
                 k = int(np.searchsorted(cuts, share[i], side="right"))
                 cat = f"n{k}"
-                big, note, tip = f"{v[i]:,.0f} ha", f"estimated harvested area of {name_of(c).lower()}, {FIFTHS[k].lower()} of districts by share of land", f"{v[i]:,.0f} ha, {share[i]:.1f}% of the land"
-            rows = [["Harvested area (model estimate)", f"{v[i]:,.0f} ha"], ["Share of the district's land", f"{share[i]:.1f}%"],
+                big, note, tip = f"{v[i]:,.0f} ha", f"estimated crop area of {name_of(c).lower()}, {FIFTHS[k].lower()} of districts by share of land", f"{v[i]:,.0f} ha, {share[i]:.1f}% of the land"
+            rows = [["Estimated crop area", f"{v[i]:,.0f} ha"], ["Share of the district's land", f"{share[i]:.1f}%"],
                     ["Share of Ghana's estimated area", f"{v[i] / nat[c] * 100:.2f}%" if nat[c] else "–"],
                     ["Rank by area", f"{rank[i]} of {len(ids)}"]] if v[i] >= 1 else []
             districts[sid] = {"name": nm, "cat": cat, "big": big, "big_note": note, "tip": tip, "rows": rows, **chart_for(i, c), "c": [cat] * len(mains)}
         write_layer(f"crop_{c.lower()}", {
-            "label": name_of(c), "title": f"{name_of(c)}: estimated harvested area", "source": f"SPAM 2020 ({version})", "demo": False,
-            "subtitle": f"Estimated harvested area of {name_of(c).lower()} in each district (model estimate)",
+            "label": name_of(c), "title": f"{name_of(c)}: estimated crop area", "source": version, "demo": False,
+            "subtitle": f"Estimated crop area of {name_of(c).lower()} in each district (model estimate)",
             "build": BUILD,
             "categories": [{"key": f"n{k}", "label": FIFTHS[k], "note": "share of land", "color": GREENS[k]} for k in range(5)] + [{"key": "none", "label": "None estimated", "note": "", "color": "#bdbdbd"}],
-            "how": (f"Each district shows the estimated harvested area of {name_of(c).lower()} from SPAM 2020, a model that shares national and regional crop statistics out over a 10 km grid. "
+            "how": (f"Each district shows the estimated crop area of {name_of(c).lower()} from SPAM 2020, a model that shares national and regional crop statistics out over a 10 km grid. "
                     "Colours rank districts by the share of their land, in fifths. Click a district for the area in hectares and the district's rank."),
             "limits": limits, "credits": credits,
-            "chart": {"kind": "bars", "unit": "ha", "x": chart_x, "caption": f"Estimated harvested area of the main crops in the district (hectares). Dark bar: {name_of(c).lower()}.", "top": "", "bottom": ""},
+            "chart": {"kind": "bars", "unit": "ha", "x": chart_x, "caption": f"Estimated crop area of the main crops in the district (hectares). Dark bar: {name_of(c).lower()}.", "top": "", "bottom": ""},
             "districts": districts,
         })
         print(f"{name_of(c)}: {n_pos} districts with an estimate, {nat[c]:,.0f} ha in Ghana")

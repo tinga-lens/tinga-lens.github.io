@@ -102,12 +102,14 @@ const TL = {
 
 // one layer for each main crop (built by scripts/crops.py)
 [["maiz", "Maize"], ["cass", "Cassava"], ["yams", "Yam"], ["rice", "Rice"], ["plnt", "Plantain"], ["coco", "Cocoa"], ["sorg", "Sorghum"], ["pmil", "Pearl millet"], ["grou", "Groundnut"]].forEach(([c, n]) => {
-  TL.products["crop_" + c] = { name: n + ": estimated harvested area", tab: n, module: "Agriculture", group: "crops", option: n, page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+  TL.products["crop_" + c] = { name: n + ": estimated crop area", tab: n, module: "Agriculture", group: "crops", option: n, page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
     source: "SPAM 2020, International Food Policy Research Institute and partners", type: "Published model, added up by district",
     resolution: "10 km grid, shared between districts by area", updates: "With each new release of the source", baseline: "A typical year around 2020" };
 });
 
 // "94% of normal" is easier to read as "6% below normal". Used wherever a figure is shown.
+TL.dl = rows => rows.map(r => r[1] === "" ? `<dt class="hd">${TL.esc(r[0])}</dt><dd class="hd"></dd>` : r[0] === "" ? `<dd class="full">${TL.esc(r[1])}</dd>` : `<dt>${TL.esc(r[0])}</dt><dd>${TL.esc(TL.rel(r[1]))}</dd>`).join("");
+TL.esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 TL.rel = t => String(t ?? "").replace(/(\d+)% of normal/g, (m, n) => { const p = +n - 100; return p === 0 ? "equal to normal" : `${Math.abs(p)}% ${p > 0 ? "above" : "below"} normal`; });
 TL.relBig = (big, note) => {
   const m = /^(\d+)%$/.exec(big || "");
