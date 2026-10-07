@@ -56,6 +56,26 @@
    "file": "data/flood2020.json"
   },
   {
+   "key": "cropland",
+   "label": "Cropland",
+   "file": "data/cropland.json"
+  },
+  {
+   "key": "soiln",
+   "label": "Nitrogen",
+   "file": "data/soiln.json"
+  },
+  {
+   "key": "soilp",
+   "label": "Phosphorus",
+   "file": "data/soilp.json"
+  },
+  {
+   "key": "soilk",
+   "label": "Potassium",
+   "file": "data/soilk.json"
+  },
+  {
    "key": "crops",
    "label": "Main crops",
    "file": "data/crops.json"
