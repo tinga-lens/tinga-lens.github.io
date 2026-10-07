@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Agriculture" data-layers="cropland,crops,crop_maiz,crop_cass,crop_yams,crop_rice,crop_plnt,crop_coco,crop_sorg,crop_pmil,crop_grou,soiln,soilp,soilk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agriculture | Tinga Lens</title>
+<meta name="description" content="Cropland, main crops and soil nitrogen, phosphorus and potassium for every district of Ghana.">
+<link rel="canonical" href="https://tingalens.org/pages/agriculture.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tinga Lens">
+<meta property="og:title" content="Agriculture | Tinga Lens">
+<meta property="og:description" content="Cropland, main crops and soil nitrogen, phosphorus and potassium for every district of Ghana.">
+<meta property="og:url" content="https://tingalens.org/pages/agriculture.html">
+<meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../vendor/leaflet.css">
+<link rel="stylesheet" href="../css/main.css?v=20261007d">
+</head>
+<body>
+<main class="wrap">
+  <h1>Agriculture</h1>
+  <p class="lead">Where cropland is, which crops are grown, and what the soil under it holds, district by district.</p>
+  <div class="card" id="wait" hidden><span class="badge dev">In development</span>
+    <p style="margin:8px 0 0">This module has no data yet. Tinga Lens does not show placeholder or example numbers, so this page stays empty of figures until real results are published.</p></div>
+  <div id="app"></div>
+  <section class="notes prose">
+    <h2>About this module</h2>
+    <p><strong>Main crops</strong> <span class="badge pubmodel">Published model</span> shows, for each district, the crop with the largest estimated harvested area, and the five largest crops when you click it. There is also a map for each main crop: maize, cassava, yam, rice, plantain, cocoa, sorghum, pearl millet and groundnut. The figures come from SPAM 2020, a model that shares national and regional crop statistics out over a 10 km grid, using satellite maps of cropland and how suitable the land is for each crop. It is an estimate of the usual crop pattern around 2020, not a survey of what farmers planted. Grid cells are about the size of a district, so differences between neighbouring districts can come from the grid and should be read with care.</p>
+    <p><strong>Cropland</strong> <span class="badge observed">Observed</span> shows how much of each district satellites saw as cropland in 2021, from the European Space Agency's WorldCover map at 10 m. It is a satellite classification, not a farm census. Small farms mixed with trees, tree crops such as cocoa and resting fields are hard to separate, so cropland is likely to be under-counted, most of all in the forest zone.</p>
+    <p><strong>Nitrogen, phosphorus and potassium</strong> <span class="badge pubmodel">Published model</span> show the average of each nutrient in the topsoil (0 to 20 cm) of a district's cropland. The values come from iSDAsoil, a computer model that predicted soil properties across Africa at 30 m from soil samples and satellite data. Tinga Lens averages them over cropland only and shades each district by where it falls among Ghana's districts, in fifths. Click a district for the figures, the deeper layer (20 to 50 cm) and the Ghana average.</p>
+    <p><strong>How to read them.</strong> These are model predictions, not measurements, and they are not a soil test. They show broad patterns between districts. They do not tell a farmer how much fertiliser to use, and they can be wrong for a single field. The shading is relative: the "highest fifth" is higher than most other districts, not necessarily high enough for a crop. For advice on a field, have the soil tested and ask your agricultural extension officer.</p>
+    <p>Total nitrogen is all the nitrogen in the soil, mostly held in organic matter, not the amount plants can use. Phosphorus and potassium are the "extractable" parts, the portions that a laboratory method can remove from the soil.</p>
+    <p>Soil fertility also depends on pH, organic carbon, rainfall and management. Those are not shown yet.</p>
+    </section>
+</main>
+<script src="../vendor/leaflet.js"></script>
+<script src="../js/config.js?v=20261007d"></script>
+<script src="../js/site.js?v=20261007d"></script>
+<script>
+  // show the map only once real data has been published
+  Promise.any(["cropland", "crops"].map(k => fetch(`../data/${k}.json`, { method: "HEAD" }).then(r => { if (!r.ok) throw 0; }))).then(() => { const s = document.createElement("script"); s.src = "../js/app.js?v=20261007d"; document.body.append(s); })
+    .catch(() => { document.getElementById("wait").hidden = false; });
+</script>
+</body>
+</html>

@@ -2,6 +2,12 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-07
+
+- New Agriculture module (version 0.1): cropland (ESA WorldCover 2021) and the average soil nitrogen, phosphorus and potassium on each district's cropland (iSDAsoil Africa, 30 m). Districts are shaded in fifths among Ghana's districts; there are no agronomic thresholds. Both sources are read through Google Earth Engine by `scripts/agriculture.py`, which has a trial mode that publishes nothing.
+- Agriculture: main crop in each district and one map for each of nine main crops (maize, cassava, yam, rice, plantain, cocoa, sorghum, pearl millet, groundnut), from SPAM 2020 (a published model, not an observation). Built by `scripts/crops.py` from a free download; no Earth Engine is used. It has a trial mode that publishes nothing.
+- The photograph of the founder was added to the About page.
+
 ## 2026-10-06
 
 - Every district download (CSV) now carries the latitude and longitude of the district's centre point.

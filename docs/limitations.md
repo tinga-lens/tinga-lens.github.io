@@ -27,6 +27,21 @@ Tinga Lens publishes estimates derived from satellite, climate and model data. I
 - **Human modification**: an index created by other researchers from many datasets, not a measurement. The source reports a typical error of about 0.18 for a single cell. Classes are fifths of Ghana's districts, not fixed levels.
 - **Recorded species**: reflects where recording has happened. Birds make up about three quarters of the records; large mammals are almost absent. No record does not mean a species is absent. Includes non-commercial records.
 
+### Cropland and soil nutrients
+
+- Cropland is a satellite classification for 2021. Small farms mixed with trees, tree crops such as cocoa and resting fields are hard to separate, so cropland is likely to be under-counted, most of all in the forest zone. Individual fields are not mapped.
+- Soil nitrogen, phosphorus and potassium come from iSDAsoil, a machine-learning prediction at 30 m made from soil samples and satellite data of about 2001 to 2017. They are predictions, not measurements, and are not a substitute for a soil test.
+- The shading compares districts with each other. It is not a sufficiency rating and it is not fertiliser advice.
+- Total nitrogen is not plant-available nitrogen. Phosphorus and potassium are "extractable", and the result depends on the laboratory method.
+- Averages are over cropland as seen at 30 m. Districts with under 1 km² of cropland are not rated. The soil model is less reliable in dense forest.
+
+### Crops
+
+- Crop areas are a model estimate (SPAM 2020), not a record of what each farmer planted. National and regional statistics are shared out over a 10 km grid using satellite cropland maps and the suitability of the land for each crop.
+- Grid cells are about 85 km², similar to many districts, and each cell is shared between districts by overlapping area. Differences between neighbouring districts can be an artefact of the grid.
+- The estimates show a typical year around 2020, not the current season or a trend. Harvested area counts each harvest, and rainfed and irrigated land are added together.
+- Crop groups such as "other roots and tubers" hide individual crops. District crop statistics from the Ministry of Food and Agriculture are not published as open data, so the model could not be checked district by district.
+
 ## Not yet published
 
 Habitat suitability is in development. The site shows no numbers for them.

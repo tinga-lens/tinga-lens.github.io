@@ -208,3 +208,5 @@ ul.hits li:hover{background:var(--bg)}
 
 .founder-photo{float:right;width:190px;height:190px;object-fit:cover;border-radius:50%;margin:4px 0 12px 22px;border:3px solid var(--line)}
 @media(max-width:560px){.founder-photo{float:none;display:block;width:150px;height:150px;margin:0 0 14px}}
+
+.grp{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 12px}.grp label{font-weight:600;color:var(--muted)}.grp select{width:auto;min-width:220px;margin:0}

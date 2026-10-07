@@ -16,9 +16,14 @@ const TL = {
   // the map pages; shown as a second row on those pages so a reader can move between topics
   topics: [
     ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
-    ["Vegetation & Forest", "pages/vegetation.html"], ["Flood", "pages/flood.html"],
+    ["Vegetation & Forest", "pages/vegetation.html"], ["Flood", "pages/flood.html"], ["Agriculture", "pages/agriculture.html"],
     ["Human Pressure", "pages/pressure.html"], ["Biodiversity", "pages/biodiversity.html"],
   ],
+  // layers that share one tab and are chosen from a list under it (the list label and the tab name)
+  groups: {
+    crops: { tab: "Crops", label: "Crop" },
+    soilprops: { tab: "Soil nutrients", label: "Nutrient" },
+  },
   status: {
     observed: { label: "Observed", text: "What a satellite recorded." },
     index: { label: "Published index", text: "A combined index published by another research group, averaged here by district." },
@@ -61,6 +66,21 @@ const TL = {
     flood2020: { name: "Observed flooding: northern Ghana, 2020", tab: "Flood 2020: northern Ghana", module: "Flood", page: "pages/flood.html", status: "observed", version: "0.2",
                  source: "Copernicus Global Flood Monitoring (GFM), Sentinel-1 radar", type: "Derived from satellite radar images",
                  resolution: "20 m, summed by district", updates: "Per flood event", baseline: "Reference water map" },
+    cropland: { name: "Cropland", tab: "Cropland", module: "Agriculture", page: "pages/agriculture.html", status: "observed", version: "0.1",
+          source: "ESA WorldCover 10 m v200 (2021)", type: "Derived from satellite images",
+          resolution: "10 m, summed by district", updates: "With each new release of the sources", baseline: "Land seen as cropland in 2021" },
+    crops: { name: "Main crop in each district", tab: "Main crops", module: "Agriculture", group: "crops", option: "Main crop in each district", page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+             source: "SPAM 2020, International Food Policy Research Institute and partners", type: "Published model, added up by district",
+             resolution: "10 km grid, shared between districts by area", updates: "With each new release of the source", baseline: "A typical year around 2020" },
+    soiln: { name: "Soil nitrogen on cropland", tab: "Nitrogen", module: "Agriculture", group: "soilprops", option: "Nitrogen", page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+          source: "iSDAsoil Africa v1 (Hengl and others, 2021), on cropland from ESA WorldCover 2021", type: "Published model, averaged by district",
+          resolution: "30 m, averaged by district", updates: "With each new release of the sources", baseline: "Ranked among Ghana's districts" },
+    soilp: { name: "Soil phosphorus on cropland", tab: "Phosphorus", module: "Agriculture", group: "soilprops", option: "Phosphorus", page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+          source: "iSDAsoil Africa v1 (Hengl and others, 2021), on cropland from ESA WorldCover 2021", type: "Published model, averaged by district",
+          resolution: "30 m, averaged by district", updates: "With each new release of the sources", baseline: "Ranked among Ghana's districts" },
+    soilk: { name: "Soil potassium on cropland", tab: "Potassium", module: "Agriculture", group: "soilprops", option: "Potassium", page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+          source: "iSDAsoil Africa v1 (Hengl and others, 2021), on cropland from ESA WorldCover 2021", type: "Published model, averaged by district",
+          resolution: "30 m, averaged by district", updates: "With each new release of the sources", baseline: "Ranked among Ghana's districts" },
     pressure: { name: "Human modification of the land", tab: "Human modification", module: "Human Pressure", page: "pages/pressure.html", status: "index", version: "1.0",
                 source: "Global Human Modification v3, Theobald and others (2025), The Nature Conservancy", type: "Combined index from many datasets",
                 resolution: "300 m, averaged by district", updates: "With each new release", baseline: "Ranked among Ghana's districts" },
@@ -79,6 +99,13 @@ const TL = {
   },
   disclaimer: "Tinga Lens provides research and environmental information derived from satellite, climate and geospatial datasets. Products may contain measurement, model and classification uncertainties. Tinga Lens should not be used as the sole source for emergency response, evacuation, disaster management or other safety-critical decisions. Consult the relevant Ghanaian authorities for official warnings and emergency information.",
 };
+
+// one layer for each main crop (built by scripts/crops.py)
+[["maiz", "Maize"], ["cass", "Cassava"], ["yams", "Yam"], ["rice", "Rice"], ["plnt", "Plantain"], ["coco", "Cocoa"], ["sorg", "Sorghum"], ["pmil", "Pearl millet"], ["grou", "Groundnut"]].forEach(([c, n]) => {
+  TL.products["crop_" + c] = { name: n + ": estimated harvested area", tab: n, module: "Agriculture", group: "crops", option: n, page: "pages/agriculture.html", status: "pubmodel", version: "0.1",
+    source: "SPAM 2020, International Food Policy Research Institute and partners", type: "Published model, added up by district",
+    resolution: "10 km grid, shared between districts by area", updates: "With each new release of the source", baseline: "A typical year around 2020" };
+});
 
 // "94% of normal" is easier to read as "6% below normal". Used wherever a figure is shown.
 TL.rel = t => String(t ?? "").replace(/(\d+)% of normal/g, (m, n) => { const p = +n - 100; return p === 0 ? "equal to normal" : `${Math.abs(p)}% ${p > 0 ? "above" : "below"} normal`; });

@@ -71,6 +71,9 @@ if os.environ.get("EE_SERVICE_ACCOUNT_KEY"):     # the layers that use Google Ea
         jobs.append(("flood-prone land", "floodprone.py"))       # about once a year
     if is_old("floodhazard", "floodhazard.py"):
         jobs.append(("river flood hazard", "floodhazard.py"))    # one-off: a fixed published dataset
+    # cropland and soil nutrients: only when asked for, or when a published layer was built by an older version
+    if os.environ.get("AGRICULTURE", "").lower() in ("true", "full", "trial") or ((DATA / "cropland.json").exists() and is_old("cropland", "agriculture.py")):
+        jobs.append(("cropland and soil nutrients", "agriculture.py"))
     if is_old("water", "water.py"):
         jobs.append(("surface water change", "water.py"))        # one-off: a fixed published dataset
 else:
@@ -78,6 +81,10 @@ else:
 
 if os.environ.get("FLOOD", "").lower() == "true" or is_old("flood", "flood.py") or is_old("flood2020", "flood.py"):
     jobs.append(("observed flooding", "flood.py"))  # one-off: past flood events
+
+# which crops are grown where (SPAM 2020, a plain download; no Earth Engine). Only when asked for, or when a published layer is out of date.
+if os.environ.get("CROPS", "").lower() in ("true", "full", "trial") or ((DATA / "crops.json").exists() and is_old("crops", "crops.py")):
+    jobs.append(("crops (SPAM 2020)", "crops.py"))
 
 if os.environ.get("GBIF_USER") and os.environ.get("GBIF_PWD"):
     import datetime, json

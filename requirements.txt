@@ -7,3 +7,4 @@ earthaccess
 scikit-learn
 pandas
 earthengine-api
+scipy

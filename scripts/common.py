@@ -32,7 +32,7 @@ MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "No
 
 # order of the tabs on the website; layers without a data file are left out
 ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("vegetation", "Vegetation"),
-         ("fires", "Fires"), ("firerisk", "Fire risk"), ("forest", "Forest loss"), ("floodprone", "Flood-prone land"), ("floodhazard", "River flood hazard"), ("water", "Surface water change"), ("flood", "Flood 2023: lower Volta"), ("flood2020", "Flood 2020: northern Ghana"), ("pressure", "Human pressure"), ("pressurechange", "Pressure change"), ("urban", "Urban growth"), ("biodiversity", "Recorded species")]
+         ("fires", "Fires"), ("firerisk", "Fire risk"), ("forest", "Forest loss"), ("floodprone", "Flood-prone land"), ("floodhazard", "River flood hazard"), ("water", "Surface water change"), ("flood", "Flood 2023: lower Volta"), ("flood2020", "Flood 2020: northern Ghana"), ("cropland", "Cropland"), ("soiln", "Nitrogen"), ("soilp", "Phosphorus"), ("soilk", "Potassium"), ("crops", "Main crops"), ("crop_maiz", "Maize"), ("crop_cass", "Cassava"), ("crop_yams", "Yam"), ("crop_rice", "Rice"), ("crop_plnt", "Plantain"), ("crop_coco", "Cocoa"), ("crop_sorg", "Sorghum"), ("crop_pmil", "Pearl millet"), ("crop_grou", "Groundnut"), ("pressure", "Human pressure"), ("pressurechange", "Pressure change"), ("urban", "Urban growth"), ("biodiversity", "Recorded species")]
 PLANNED = ["Mining"]
 
 BOUNDARY_CREDIT = {"text": "Boundaries: geoBoundaries (CC BY 4.0; source USAID Ghana HPNO and Ghana Statistical Service)",

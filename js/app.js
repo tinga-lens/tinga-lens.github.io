@@ -2,6 +2,7 @@
 // A page chooses its layers with <html data-layers="drought,soil">; with no list, every layer is shown.
 document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Modules" id="mods" hidden></nav>
   <nav class="tabs" aria-label="Layers" id="tabs"></nav>
+  <div class="grp" id="grpwrap" hidden><label for="grp" id="grplab"></label><select class="big" id="grp"></select></div>
   <div id="demo"><strong>Demo data.</strong> These numbers are made up to preview the site. They are replaced with real data the first time the update runs.</div>
 
   <div class="grid">
@@ -152,12 +153,31 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   const order = Object.keys(TL.products), rank = k => (order.indexOf(k) + 1) || 99;       // modules and layers in the order of the product register
   if (grouped) man.layers.sort((a, b) => rank(a.key) - rank(b.key));
   const mods = [...new Set(man.layers.map(l => modOf(l.key)))];
+  const grp = k => (TL.products[k] || {}).group || null, lastIn = {};
   const drawTabs = key => {
     const list = grouped ? man.layers.filter(l => modOf(l.key) === modOf(key)) : man.layers;
-    $("tabs").innerHTML = list.map(l => `<button data-key="${esc(l.key)}">${esc(grouped && TL.products[l.key] ? TL.products[l.key].tab : tabName(l))}</button>`).join("");
-    $("tabs").hidden = list.length < 2;
+    const seen = new Set(), items = [];       // layers that share a group become one tab with a list under it
+    list.forEach(l => {
+      const g = grp(l.key);
+      if (!g) return items.push({ key: l.key, text: grouped && TL.products[l.key] ? TL.products[l.key].tab : tabName(l) });
+      if (seen.has(g)) return;
+      seen.add(g);
+      const keep = lastIn[g] && list.some(x => x.key === lastIn[g]) ? lastIn[g] : l.key;
+      items.push({ key: keep, group: g, text: TL.groups[g].tab });
+    });
+    $("tabs").innerHTML = items.map(i => `<button data-key="${esc(i.key)}"${i.group ? ` data-group="${esc(i.group)}"` : ""}>${esc(i.text)}</button>`).join("");
+    $("tabs").hidden = items.length < 2;
+    const g = grp(key);
+    $("grpwrap").hidden = !g;
+    if (g) {
+      lastIn[g] = key;
+      $("grplab").textContent = TL.groups[g].label;
+      $("grp").innerHTML = list.filter(l => grp(l.key) === g).map(l => `<option value="${esc(l.key)}">${esc(TL.products[l.key].option || TL.products[l.key].tab)}</option>`).join("");
+      $("grp").value = key;
+    }
     if (grouped) { $("mods").hidden = false; $("mods").innerHTML = mods.map(m => `<button data-mod="${esc(m)}" aria-current="${m === modOf(key)}">${esc(m)}</button>`).join(""); }
   };
+  $("grp").addEventListener("change", e => show(e.target.value));
   $("tabs").addEventListener("click", e => { const k = e.target.closest("button")?.dataset.key; if (k) show(k); });
   $("mods").addEventListener("click", e => { const m = e.target.closest("button")?.dataset.mod; if (m) show(man.layers.find(l => modOf(l.key) === m).key); });
   const show = key => {
@@ -495,7 +515,7 @@ function render(key, d) {
   $("time").hidden = !REC;
   $("download-all").hidden = !REC;
   history.replaceState(null, "", "#" + key);
-  document.querySelectorAll("#tabs button[data-key]").forEach(b => b.setAttribute("aria-current", b.dataset.key === key));
+  document.querySelectorAll("#tabs button[data-key]").forEach(b => b.setAttribute("aria-current", b.dataset.group ? b.dataset.group === (TL.products[key] || {}).group : b.dataset.key === key));
   $("demo").style.display = d.demo ? "block" : "none";
   color = Object.fromEntries(d.categories.map(c => [c.key, c.color]));
   label = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
