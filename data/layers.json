@@ -76,6 +76,31 @@
    "file": "data/soilk.json"
   },
   {
+   "key": "soilph",
+   "label": "Soil pH",
+   "file": "data/soilph.json"
+  },
+  {
+   "key": "soilom",
+   "label": "Organic matter",
+   "file": "data/soilom.json"
+  },
+  {
+   "key": "soilclay",
+   "label": "Clay",
+   "file": "data/soilclay.json"
+  },
+  {
+   "key": "soilsand",
+   "label": "Sand",
+   "file": "data/soilsand.json"
+  },
+  {
+   "key": "soilbd",
+   "label": "Bulk density",
+   "file": "data/soilbd.json"
+  },
+  {
    "key": "crops",
    "label": "Main crops",
    "file": "data/crops.json"
