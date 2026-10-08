@@ -56,6 +56,47 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
     <p>Tinga Lens is independent and uses only public datasets and its own code.
       Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0). Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
       <a href="${ROOT}pages/methods.html">Data and methods</a>, <a href="${ROOT}pages/brief.html">This month in Ghana</a>, <a href="${ROOT}pages/about.html">About</a>, <a href="${ROOT}pages/contact.html">Contact us</a>, <a href="${TL.repo}">Code</a></p>
+    <p class="sub">We count visits and map downloads with GoatCounter to see how Tinga Lens is used. It sets no cookies and stores no names, email addresses or IP addresses.</p>
   </div>`;
   document.body.append(foot);
+})();
+
+// ---- Visit and download counts (GoatCounter: no cookies, no personal data) ----
+// A download is counted as two events: "download/<page>/<item>" (what was taken) and "download-total" (shown on the home page).
+(function () {
+  const CODE = "tingalens";
+  const s = document.createElement("script");
+  s.async = true; s.src = "https://gc.zgo.at/count.js";
+  s.dataset.goatcounter = `https://${CODE}.goatcounter.com/count`;
+  document.head.append(s);
+
+  const slug = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  const send = name => {
+    let tries = 0;
+    const go = () => {
+      if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true, no_session: true });
+      else if (tries++ < 50) setTimeout(go, 100);
+    };
+    go();
+  };
+  // Count a click on a visible download button or link. Links the page builds for itself have no text, so one click is never counted twice.
+  document.addEventListener("click", e => {
+    const el = e.target.closest("a[download], button");
+    if (!el) return;
+    const label = (el.textContent || "").trim();
+    if (!label || !(/^download\b/i.test(label) || el.hasAttribute("download"))) return;
+    const where = slug(document.documentElement.dataset.page || "home") + (location.hash ? "-" + slug(location.hash) : "");
+    send(`download/${where}/${el.id || slug(label)}`);
+    send("download-total");
+  }, true);
+
+  // Home page: show the total, only when there is a real number.
+  const box = document.getElementById("dl-count");
+  if (box) {
+    const read = path => fetch(`https://${CODE}.goatcounter.com/counter/${encodeURIComponent(path)}.json`)
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(j => num(j.count));
+    read("download-total").catch(() => read("/download-total")).then(n => {
+      if (n > 0) { box.textContent = `Maps and tables downloaded so far: ${n.toLocaleString("en")}`; box.hidden = false; }
+    }).catch(() => {});
+  }
 })();

@@ -2,6 +2,10 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-08
+
+- Visit and download counts with GoatCounter (no cookies, no personal data). Each download is recorded by what was taken and as a total; the home page shows the total once there is a real number. A line in the footer says what is counted.
+
 ## 2026-10-07
 
 - New Agriculture module (version 0.1): cropland (ESA WorldCover 2021) and the average soil nitrogen, phosphorus and potassium on each district's cropland (iSDAsoil Africa, 30 m). Districts are shaded in fifths among Ghana's districts; there are no agronomic thresholds. Both sources are read through Google Earth Engine by `scripts/agriculture.py`, which has a trial mode that publishes nothing.
