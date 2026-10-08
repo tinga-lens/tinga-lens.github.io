@@ -83,6 +83,21 @@ def fetch(ee, key):
     return arr, Affine(CELL, 0, W, 0, -CELL, N)
 
 
+def write_png(path, a):
+    """Save an 8-bit grey image as a PNG using only the standard library (no Pillow needed)."""
+    import struct
+    import zlib
+    h, w = a.shape
+    raw = b"".join(b"\x00" + a[i].tobytes() for i in range(h))
+
+    def chunk(t, d):
+        c = struct.pack(">I", len(d)) + t + d
+        return c + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+
+    Path(path).write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 0, 0, 0, 0))
+                           + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+
+
 def inside_ghana(shape, tf):
     from rasterio.features import geometry_mask
     gdf = load_districts()
@@ -123,8 +138,7 @@ def main():
             continue
         idx = np.zeros(arr.shape, dtype=np.uint8)
         idx[mask] = 1 + np.rint(np.clip((arr[mask] - p2) / (p98 - p2), 0, 1) * 254).astype(np.uint8)
-        from PIL import Image
-        Image.fromarray(idx, mode="L").save(OUT / f"{key}.png", optimize=True)
+        write_png(OUT / f"{key}.png", idx)
         meta = {"key": key, "label": label, "short": short, "unit": unit, "dec": dec, "low": round(p2, 4), "high": round(p98, 4),
                 "median": round(med, 4), "width": arr.shape[1], "height": arr.shape[0], "bounds": BOUNDS, "cell_km": 1,
                 "source": "iSDAsoil Africa v1 (Hengl and others, 2021), 0 to 20 cm, averaged from 30 m to 1 km cells",
