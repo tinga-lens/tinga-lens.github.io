@@ -18,16 +18,13 @@ Run (SOILGRID=trial does pH only and publishes it; full does every property):
   SOILGRID=full python scripts/soilgrid.py
 """
 import datetime
-import io
 import json
 import os
 import sys
 import time
-import zipfile
 from pathlib import Path
 
 import numpy as np
-import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import agriculture as A  # noqa: E402  (soil properties, units and plausible ranges are defined there)
@@ -59,21 +56,30 @@ def band(ee, key):
     return v.multiply(scale).setDefaultProjection(native).rename("v")
 
 
+TILE = 200                                 # pixels per side of each request
+NODATA = -99999
+
+
 def fetch(ee, key):
+    """The 1 km grid, read in small tiles with sampleRectangle (an ordinary calculation request, so it needs no
+    download permission). Returns the grid (north at the top, nodata = nan) and its affine transform."""
+    from rasterio.transform import Affine
     img = band(ee, key).reduceResolution(reducer=ee.Reducer.mean(), maxPixels=4096).reproject(crs="EPSG:4326", crsTransform=TRANSFORM)
-    region = ee.Geometry.Rectangle([W, BOUNDS[0][0], BOUNDS[1][1], N], proj="EPSG:4326", geodesic=False)
-    url = retry(lambda: img.getDownloadURL({"region": region, "crs": "EPSG:4326", "crsTransform": TRANSFORM, "format": "GEO_TIFF"}))
-    r = requests.get(url, timeout=600)
-    r.raise_for_status()
-    data = r.content
-    if data[:2] == b"PK":                                   # a zip holding the image
-        z = zipfile.ZipFile(io.BytesIO(data))
-        data = z.read([n for n in z.namelist() if n.lower().endswith((".tif", ".tiff"))][0])
-    from rasterio.io import MemoryFile
-    with MemoryFile(data) as mf, mf.open() as src:
-        arr = src.read(1, masked=True).astype("float64").filled(np.nan)
-        tf = src.transform
-    return arr, tf
+    arr = np.full((HEIGHT, WIDTH), np.nan)
+    inset = CELL * 0.1
+    for r0 in range(0, HEIGHT, TILE):
+        for c0 in range(0, WIDTH, TILE):
+            h, w = min(TILE, HEIGHT - r0), min(TILE, WIDTH - c0)
+            west, north = W + c0 * CELL, N - r0 * CELL
+            east, south = west + w * CELL, north - h * CELL
+            geom = ee.Geometry.Rectangle([west + inset, south + inset, east - inset, north - inset], proj="EPSG:4326", geodesic=False)
+            out = retry(lambda: img.sampleRectangle(region=geom, defaultValue=NODATA).get("v").getInfo())
+            tile = np.array(out, dtype="float64")
+            if tile.shape != (h, w):
+                raise RuntimeError(f"tile at row {r0}, column {c0} came back as {tile.shape}, expected {(h, w)}")
+            tile[tile == NODATA] = np.nan
+            arr[r0:r0 + h, c0:c0 + w] = tile
+    return arr, Affine(CELL, 0, W, 0, -CELL, N)
 
 
 def inside_ghana(shape, tf):
