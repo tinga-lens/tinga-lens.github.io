@@ -1,0 +1,26 @@
+{
+ "key": "soilph",
+ "label": "Soil pH",
+ "short": "pH",
+ "unit": "",
+ "dec": 1,
+ "low": 4.9215,
+ "high": 6.1891,
+ "median": 5.8944,
+ "width": 556,
+ "height": 778,
+ "bounds": [
+  [
+   4.498,
+   -3.5
+  ],
+  [
+   11.5,
+   1.504
+  ]
+ ],
+ "cell_km": 1,
+ "source": "iSDAsoil Africa v1 (Hengl and others, 2021), 0 to 20 cm, averaged from 30 m to 1 km cells",
+ "updated": "2026-10-08",
+ "build": 1
+}
