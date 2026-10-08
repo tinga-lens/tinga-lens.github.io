@@ -65,6 +65,7 @@ def fetch(ee, key):
     download permission). Returns the grid (north at the top, nodata = nan) and its affine transform."""
     from rasterio.transform import Affine
     img = band(ee, key).reduceResolution(reducer=ee.Reducer.mean(), maxPixels=4096).reproject(crs="EPSG:4326", crsTransform=TRANSFORM)
+    img = img.toDouble().unmask(NODATA)               # empty cells get a plain number we can recognise
     arr = np.full((HEIGHT, WIDTH), np.nan)
     inset = CELL * 0.1
     for r0 in range(0, HEIGHT, TILE):
@@ -73,7 +74,7 @@ def fetch(ee, key):
             west, north = W + c0 * CELL, N - r0 * CELL
             east, south = west + w * CELL, north - h * CELL
             geom = ee.Geometry.Rectangle([west + inset, south + inset, east - inset, north - inset], proj="EPSG:4326", geodesic=False)
-            out = retry(lambda: img.sampleRectangle(region=geom, defaultValue=NODATA).get("v").getInfo())
+            out = retry(lambda: img.sampleRectangle(region=geom).get("v").getInfo())
             tile = np.array(out, dtype="float64")
             if tile.shape != (h, w):
                 raise RuntimeError(f"tile at row {r0}, column {c0} came back as {tile.shape}, expected {(h, w)}")
