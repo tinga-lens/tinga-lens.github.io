@@ -80,7 +80,7 @@
   // show the map and lists only once real data has been published
   fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
     const a = document.createElement("script"); a.src = "../js/app.js?v=20261007d";
-    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261008b"; document.body.append(b); };
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261009a"; document.body.append(b); };
     document.body.append(a); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>

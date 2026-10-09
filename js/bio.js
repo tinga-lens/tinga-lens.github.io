@@ -12,8 +12,8 @@
     a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
     a.download = name; document.body.append(a); a.click(); a.remove();
   };
-  const foot = extra => q(extra + "Each row is one recorded place. Positions are rounded to about 10 m"
-    + (PTS ? `; to protect sensitive species, every position is rounded to ${PTS.generalise_deg} degree (about 11 km), so exact sites are not published. ` : ". ")
+  const foot = extra => q(extra + "Each row is one recorded place. "
+    + (PTS ? `To protect sensitive species, every position is rounded to ${PTS.generalise_deg} degree (about 11 km), so exact sites are not published. ` : "")
     + "A place with no record does not mean the species is absent. " + $("cov-cite").textContent + " Tinga Lens, " + TL.site);
   let REGION = "", curSpecies = null, curRows = [];                         // region chosen on the map above; species open in the explorer
   const HINT = "Click a district on the map to list the species recorded there.";
