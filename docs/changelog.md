@@ -4,6 +4,10 @@ Every change to a method or product is recorded here. Product versions are shown
 
 ## 2026-10-08
 
+- Licence change before the first release: original data and text are now CC BY-NC 4.0 (non-commercial use; commercial use by permission). Code stays MIT. Added TRADEMARKS.md and a note in assets/logo/ stating that the name and logo are not licensed.
+- Biodiversity: IUCN Red List categories removed (their redistribution terms are not confirmed). The threatened-species counts, filter and list are gone; the species pages link to GBIF only. To protect sensitive species without those categories, every position in the record downloads is now rounded to 0.1 degree (about 11 km). Species counts and records are unchanged.
+- Licences added: MIT for the code, CC BY-NC 4.0 (non-commercial) for the original data and text to the extent Tinga Lens holds rights (the licence of each underlying data provider continues to apply), and a notice that the name and logo are not licensed. Species records use only GBIF records under CC0 or CC BY. The README no longer says "all rights reserved", that Google Earth Engine is not used, or that the biodiversity layer is non-commercial.
+- Platform release 1.0.0 is the first archived release (Zenodo). Product versions, shown on each map, are separate and are unchanged.
 - Visit and download counts with GoatCounter (no cookies, no personal data). Each download is recorded by what was taken and as a total; the home page shows the total once there is a real number. A line in the footer says what is counted.
 
 ## 2026-10-07

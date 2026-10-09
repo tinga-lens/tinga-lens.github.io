@@ -7,7 +7,7 @@ A record says that somebody saw or collected a species at a place and time. This
 asks GBIF for every usable record in Ghana, places each one in a district, and writes:
 
   data/biodiversity.json            the map layer: recorded species per district
-  data/bio/species.json             every recorded species (name, group, Red List category, totals)
+  data/bio/species.json             every recorded species (name, group, totals)
   data/bio/pairs.json               for each species, the districts it was recorded in
   data/bio/districts/<shapeID>.json for each district, the species recorded there
 
@@ -43,7 +43,6 @@ LICENSES = ["CC0_1_0", "CC_BY_4_0"] + (["CC_BY_NC_4_0"] if INCLUDE_NONCOMMERCIAL
 MAX_UNCERTAINTY_M = 25000               # records whose position is vaguer than this are left out
 SKIP_BASIS = {"FOSSIL_SPECIMEN", "LIVING_SPECIMEN"}   # fossils, and zoo or garden specimens
 WAIT_MINUTES = 180                      # how long to wait for GBIF to prepare the download
-THREATENED = {"CR": "Critically Endangered", "EN": "Endangered", "VU": "Vulnerable"}
 LOOKUP_WORKERS = 8
 # --------------------------------------------------------------------------
 
@@ -157,7 +156,7 @@ def read_records(path):
     return pd.concat(parts, ignore_index=True)
 
 
-# ---------- Red List category and English name for each species ----------
+# ---------- English name for each species (no conservation status is looked up or published) ----------
 def lookups(s, keys):
     cache_file = CACHE / "gbif_species_v2.json"
     known = json.loads(cache_file.read_text()) if cache_file.exists() else {}
@@ -167,11 +166,6 @@ def lookups(s, keys):
     def one(k):
         out = {}
         try:
-            r = s.get(f"{API}/species/{k}/iucnRedListCategory", timeout=30)
-            if r.status_code == 200:
-                out["iucn"] = (r.json() or {}).get("code") or ""
-            elif r.status_code in (204, 404):
-                out["iucn"] = ""
             r = s.get(f"{API}/species/{k}/vernacularNames", params={"limit": 100}, timeout=30)
             if r.status_code == 200:
                 names = [v.get("vernacularName", "").strip() for v in r.json().get("results", []) if v.get("language") == "eng"]
@@ -188,7 +182,7 @@ def lookups(s, keys):
     failed = 0
     with ThreadPoolExecutor(LOOKUP_WORKERS) as pool:
         for i, (k, out) in enumerate(pool.map(one, todo), 1):
-            if "iucn" in out and "common" in out:
+            if "common" in out:
                 known[k] = out
             else:
                 failed += 1
@@ -203,17 +197,16 @@ def lookups(s, keys):
 
 
 POINT_BUCKETS = 128          # species are spread over this many files of recorded places
-GENERALISE_DEG = 0.1         # threatened species: positions are rounded to this (about 11 km) so exact sites are not published
+GENERALISE_DEG = 0.1         # every published position is rounded to this (about 11 km) so exact sites of sensitive species are not published
 
 
-def write_points(df, ids, threatened, out):
+def write_points(df, ids, out):
     """Recorded places with coordinates, for downloads.
     df has s (species index), d (district index), lat, lon, year. Places are rounded to 4 decimals already.
     Writes out/points/<n>.json (by species) and out/dpoints/<district>.json (by district). Returns the number of places."""
     p = df[["s", "d", "lat", "lon", "year"]].copy()
-    hide = p["s"].isin(threatened)
-    p.loc[hide, "lat"] = (p.loc[hide, "lat"] / GENERALISE_DEG).round() * GENERALISE_DEG
-    p.loc[hide, "lon"] = (p.loc[hide, "lon"] / GENERALISE_DEG).round() * GENERALISE_DEG
+    p["lat"] = (p["lat"] / GENERALISE_DEG).round() * GENERALISE_DEG
+    p["lon"] = (p["lon"] / GENERALISE_DEG).round() * GENERALISE_DEG
     p["lat"], p["lon"] = p["lat"].round(4), p["lon"].round(4)
     g = p.groupby(["s", "d", "lat", "lon"]).agg(n=("s", "size"), first=("year", "min"), last=("year", "max")).reset_index()
     yr = lambda v: None if pd.isna(v) else int(v)  # noqa: E731
@@ -276,20 +269,18 @@ def main():
                                       nd=("d", "nunique"), first=("year", "min"), last=("year", "max")).reset_index()
     sp = sp.sort_values("name").reset_index(drop=True)
     info = lookups(s, list(sp["speciesKey"]))
-    sp["iucn"] = [info.get(k, {}).get("iucn", "") or "" for k in sp["speciesKey"]]
     sp["common"] = [info.get(k, {}).get("common", "") or "" for k in sp["speciesKey"]]
     sidx = {k: i for i, k in enumerate(sp["speciesKey"])}
     df["s"] = df["speciesKey"].map(sidx)
-    threatened = set(sp.index[sp["iucn"].isin(THREATENED)])
     yr = lambda v: None if pd.isna(v) else int(v)  # noqa: E731
 
     out = DATA / "bio"
     (out / "districts").mkdir(parents=True, exist_ok=True)
     (out / "species.json").write_text(json.dumps({
-        "fields": ["key", "name", "common", "group", "iucn", "records", "districts", "first", "last"],
+        "fields": ["key", "name", "common", "group", "records", "districts", "first", "last"],
         "groups": GROUPS,
         "points": {"buckets": POINT_BUCKETS, "generalise_deg": GENERALISE_DEG},
-        "rows": [[int(r.speciesKey), r.name_, r.common, GROUPS.index(r.group), r.iucn, int(r.n), int(r.nd), yr(r.first), yr(r.last)]
+        "rows": [[int(r.speciesKey), r.name_, r.common, GROUPS.index(r.group), int(r.n), int(r.nd), yr(r.first), yr(r.last)]
                  for r in sp.rename(columns={"name": "name_"}).itertuples()],
     }, separators=(",", ":"), ensure_ascii=False))
 
@@ -311,20 +302,13 @@ def main():
             "rows": [[int(r.s), int(r.n), int(r.places), yr(r.first), yr(r.last)] for r in g.itertuples()],
         }, separators=(",", ":")))
 
-    n_places = write_points(df, ids, threatened, out)
+    n_places = write_points(df, ids, out)
     print(f"{n_places:,} recorded places with coordinates written for downloads")
 
     # ---- the map layer ----
     per = df.groupby("d").agg(n=("gbifID", "size"), species=("s", "nunique"), datasets=("datasetKey", "nunique"),
                               y0=("year", "min"), y1=("year", "max"))
     grp = df.groupby(["d", "group"])["s"].nunique().unstack(fill_value=0).reindex(columns=GROUPS, fill_value=0)
-    thr = df[df["s"].isin(threatened)].groupby("d")["s"].nunique()
-    iucn_of = dict(zip(sp.index, sp["iucn"]))
-    thr_split = {}
-    for (d, s_), _ in df[df["s"].isin(threatened)].groupby(["d", "s"]).size().items():
-        thr_split.setdefault(d, {}).setdefault(iucn_of[s_], 0)
-        thr_split[d][iucn_of[s_]] += 1
-    have_iucn = bool((sp["iucn"] != "").any())
 
     districts = {}
     for i, row in gdf.iterrows():
@@ -337,10 +321,6 @@ def main():
         n_sp = int(p.species)
         cat = next(c["key"] for c in CATS if n_sp < c["max"])
         rows = [["Occurrence records", f"{int(p.n):,}"], ["Records per species", f"{p.n / n_sp:.1f}"]]
-        if have_iucn:
-            split = thr_split.get(i, {})
-            detail = ", ".join(f"{split[c]} {THREATENED[c].lower()}" for c in ("CR", "EN", "VU") if split.get(c))
-            rows.append(["Threatened species recorded", f"{int(thr.get(i, 0))}" + (f" ({detail})" if detail else "")])
         rows += [["Years represented", "–" if pd.isna(p.y0) else f"{int(p.y0)}–{int(p.y1)}"],
                  ["Contributing datasets", f"{int(p.datasets)}"]]
         districts[row.shapeID] = {
@@ -348,14 +328,14 @@ def main():
             "big_note": "species recorded in GBIF. This depends on how much the district has been surveyed.",
             "tip": f"{n_sp:,} species recorded", "rows": rows,
             "v": [int(x) for x in grp.loc[i]], "c": [cat] * len(GROUPS),
-            "records": int(p.n), "threatened": int(thr.get(i, 0)),
+            "records": int(p.n),
         }
 
     years = df["year"].dropna()
     doi = meta.get("doi", "")
     coverage = {"records": used, "records_in_download": total, "species": int(len(sp)), "datasets": int(df["datasetKey"].nunique()),
                 "first": int(years.min()), "last": int(years.max()), "districts_with_records": int(len(per)),
-                "threatened": int(len(threatened)), "has_iucn": have_iucn, "noncommercial": INCLUDE_NONCOMMERCIAL, "download_key": key, "doi": doi,
+                "noncommercial": INCLUDE_NONCOMMERCIAL, "download_key": key, "doi": doi,
                 "by_group": {g: int(n) for g, n in sp["group"].value_counts().reindex(GROUPS, fill_value=0).items()}}
     cite = f"GBIF.org ({dt.date.today():%d %B %Y}) GBIF Occurrence Download" + (f" https://doi.org/{doi}" if doi else "")
     print(f"{len(sp):,} species, {used:,} records, {coverage['datasets']} datasets, {len(per)} districts with records")
@@ -376,10 +356,9 @@ def main():
             ("This layer includes records published under a non-commercial licence (CC BY-NC). It may not be used for commercial purposes."
              if INCLUDE_NONCOMMERCIAL else
              "Records published under a non-commercial licence are left out, which removes a large share of citizen-science observations, including many mammal sightings."),
-            "Red List categories are the global ones from the IUCN Red List, as supplied by GBIF. They are not national assessments.",
+            "Conservation status is not shown. To protect sensitive species, positions in downloads are rounded to about 11 km.",
         ],
-        "credits": [{"text": cite, "url": f"https://doi.org/{doi}" if doi else "https://www.gbif.org"},
-                    {"text": "Conservation status: IUCN Red List of Threatened Species, via GBIF", "url": "https://www.iucnredlist.org"}],
+        "credits": [{"text": cite, "url": f"https://doi.org/{doi}" if doi else "https://www.gbif.org"}],
         "chart": {"kind": "bars", "unit": "", "x": GROUPS, "caption": "Recorded species in each group", "top": "", "bottom": ""},
         "districts": districts,
     })

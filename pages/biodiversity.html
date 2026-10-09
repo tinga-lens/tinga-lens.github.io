@@ -31,10 +31,9 @@
       <div class="bio-tools">
         <input type="search" id="bd-q" name="tl-species-here" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search this district by scientific or common name" aria-label="Search species in this district">
         <label>Group <select id="bd-group"></select></label>
-        <label id="bd-thr-wrap"><input type="checkbox" id="bd-thr"> Threatened only</label>
       </div>
       <p class="sub" id="bd-count"></p>
-      <div class="scroll"><table class="sp"><thead><tr><th>Species</th><th>Group</th><th>Red List</th><th class="num">Records</th><th class="num">Places</th><th class="num">First</th><th class="num">Latest</th></tr></thead><tbody id="bd-rows"></tbody></table></div>
+      <div class="scroll"><table class="sp"><thead><tr><th>Species</th><th>Group</th><th class="num">Records</th><th class="num">Places</th><th class="num">First</th><th class="num">Latest</th></tr></thead><tbody id="bd-rows"></tbody></table></div>
       <p><button class="btn" id="bd-more" type="button" hidden>Show more</button> <button class="btn" id="bd-csv" type="button">Download this list (CSV)</button>
         <button class="btn" id="bd-pts" type="button" hidden>Download every record here with coordinates (CSV)</button></p>
     </div>
@@ -43,7 +42,6 @@
     <p class="sub">Search for a species to see every district where it has been recorded.</p>
     <div class="bio-tools">
       <input type="search" id="sx-q" name="tl-species" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search Ghana's recorded species, for example shea or Vitellaria" aria-label="Search species">
-      <button class="btn" id="sx-thr" type="button">List threatened species</button>
     </div>
     <ul class="hits" id="sx-hits" hidden></ul>
     <div id="sx" hidden>
@@ -72,7 +70,7 @@
   <section class="notes prose">
     <h2>About this module</h2>
     <p><strong>Recorded species</strong> <span class="badge observed">Observed</span> are counted from GBIF, the international database where museums, researchers and citizen-science projects publish their records. Tinga Lens places each record in a district and counts the different species. <a href="methods.html#m-biodiversity">Read the methods</a>.</p>
-    <p><strong>Threatened species</strong> are those the IUCN Red List rates Critically Endangered, Endangered or Vulnerable worldwide. Tinga Lens does not assign these categories. To protect them, this site shows district counts only and does not map individual record locations.</p>
+    <p><strong>Conservation status.</strong> Tinga Lens does not publish conservation categories. For the status of a species, see the <a href="https://www.iucnredlist.org">IUCN Red List of Threatened Species</a>. To protect sensitive species, positions in downloads are rounded to about 11 km.</p>
     <p><strong>Habitat suitability</strong> <span class="badge dev">In development</span> would be a model estimate of where a species could live. Nothing is published for it yet.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
@@ -82,7 +80,7 @@
   // show the map and lists only once real data has been published
   fetch("../data/biodiversity.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0;
     const a = document.createElement("script"); a.src = "../js/app.js?v=20261007d";
-    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261007d"; document.body.append(b); };
+    a.onload = () => { const b = document.createElement("script"); b.src = "../js/bio.js?v=20261008b"; document.body.append(b); };
     document.body.append(a); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>

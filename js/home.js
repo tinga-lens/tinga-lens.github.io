@@ -58,8 +58,7 @@
         + `<div class="sub" style="margin:0">Exposure to flooding is not published yet.</div>`, ["observed"]));
     } else out.push(soon("Urban", "Urban exposure", "pages/pressure.html", "Where people and new development meet environmental hazards. No data is published yet."));
     if (bi && bi.coverage) out.push(card("Biodiversity", "Recorded species", "pages/biodiversity.html",
-      line(bi.coverage.species.toLocaleString(), `species recorded in Ghana, from ${bi.coverage.records.toLocaleString()} records`)
-      + (bi.coverage.has_iucn ? `<div class="sub" style="margin:0">${bi.coverage.threatened} of them globally threatened</div>` : ""), ["observed"]));
+      line(bi.coverage.species.toLocaleString(), `species recorded in Ghana, from ${bi.coverage.records.toLocaleString()} records`), ["observed"]));
     $("cards").innerHTML = out.join("");
   });
 
