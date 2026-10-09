@@ -108,6 +108,6 @@ These licences apply only to materials and rights that the project owner is auth
 
 ## How to cite
 
-Adekilae, F. A. (2026). *Tinga Lens: Environmental monitoring for Ghana*. https://tingalens.org
+Adekilae, F. A. (2026). *Tinga Lens: Environmental monitoring for Ghana* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23271190
 
-A DOI will be added here once the first release is archived.
+The DOI above is the permanent identifier for all archived versions; it always resolves to the latest release. The first release (v1.0.0) is also citable as https://doi.org/10.5281/zenodo.23271191. Weekly data updates on https://tingalens.org are not archived as separate versions.
