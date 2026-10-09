@@ -5,13 +5,19 @@ type: software
 authors:
   - family-names: Adekilae
     given-names: Frank Anyoka
+license:
+  - MIT
+  - CC-BY-NC-4.0
 url: "https://tingalens.org"
 repository-code: "https://github.com/tinga-lens/tinga-lens.github.io"
-abstract: "District-level environmental information for Ghana from public satellite, climate and biodiversity records: rainfall, soil moisture, vegetation, fires, fire probability, tree cover loss, observed flooding, built-up area and recorded species."
+abstract: "District-level environmental information for Ghana from public satellite, climate, soil and biodiversity records: rainfall, soil moisture, vegetation, fires, fire probability, tree cover loss, observed flooding, built-up area, recorded species, cropland, main crops and topsoil properties."
 keywords:
   - Ghana
   - remote sensing
   - drought
   - fire
   - biodiversity
-date-released: 2026-10-03
+  - agriculture
+  - soil
+version: 1.0.0
+date-released: 2026-10-08
