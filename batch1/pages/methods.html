@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Data & Methods">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data and methods | Tinga Lens</title>
+<meta name="description" content="Sources, methods, limits, versions and validation for every Tinga Lens product.">
+<link rel="canonical" href="https://tingalens.org/pages/methods.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tinga Lens">
+<meta property="og:title" content="Data and methods | Tinga Lens">
+<meta property="og:description" content="Sources, methods, limits, versions and validation for every Tinga Lens product.">
+<meta property="og:url" content="https://tingalens.org/pages/methods.html">
+<meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../css/main.css?v=20261007d">
+</head>
+<body>
+<main class="wrap prose">
+  <h1>Data &amp; methods</h1>
+  <p class="lead">Where each figure comes from, how it is worked out, what it cannot tell you and how it was tested.</p>
+  <div class="three">
+    <div class="card"><span class="badge observed">Observed</span><p class="sub" style="margin:8px 0 0">What a satellite recorded, such as a fire detection or tree cover loss.</p></div>
+    <div class="card"><span class="badge condition">Environmental condition</span><p class="sub" style="margin:8px 0 0">An observation compared with what is normal for that place and time of year.</p></div>
+    <div class="card"><span class="badge model">Modeled risk</span><p class="sub" style="margin:8px 0 0">A statistical estimate made by Tinga Lens. It is tested, but it is not an observation.</p></div>
+  </div>
+  <h2>Products</h2>
+  <div class="card scroll"><table class="t">
+    <thead><tr><th>Product</th><th>Module</th><th>Kind</th><th>Primary source</th><th>Resolution</th><th>Updates</th><th>Baseline</th><th>Version</th><th>Last updated</th></tr></thead>
+    <tbody id="products"><tr><td colspan="9">Loading…</td></tr></tbody>
+  </table></div>
+  <p class="sub">Results are averaged over Ghana's 260 districts (2019 boundaries from geoBoundaries, CC BY 4.0).</p>
+
+  <h2 id="methods">Method for each product</h2>
+  <div id="sections"></div>
+
+  <h2 id="validation">Validation</h2>
+  <div id="validation-body"><div id="validation"><p class="sub">Loading…</p></div></div>
+  <h3>Observed and condition products</h3>
+  <p>The rainfall, soil moisture, vegetation, fire detection and tree cover products come from published datasets that their producers have validated. Tinga Lens has not yet carried out its own systematic comparison against ground measurements in Ghana. Until it does, treat the maps as guides. Reports from the ground that agree or disagree with a map are welcome: see the <a href="about.html">About page</a>.</p>
+
+  <h2 id="versions">Versions and metadata</h2>
+  <p>Each product has a version number, shown on its map and in every download. A method never changes silently: changes are recorded in the <a href="https://github.com/tinga-lens/tinga-lens.github.io/blob/main/docs/changelog.md">changelog</a>.</p>
+  <p>Each product carries the same set of descriptive fields. For example:</p>
+  <div class="formula" id="meta">Loading…</div>
+
+  <h2 id="cite">How to cite</h2>
+  <p>To cite Tinga Lens as a whole:</p>
+  <p class="citebox">Adekilae, F. A. (2026). <em>Tinga Lens: Environmental monitoring for Ghana</em>. https://tingalens.org. Accessed [date].</p>
+  <p>To cite one map or figure, use the "Cite this map" text beside the map. It names the map, its period and version, the date you viewed it, and the original data source, for example:</p>
+  <p class="citebox">Adekilae, F. A. (2026). Rainfall compared with normal: Jun to Aug 2026, against 1991–2020. Tinga Lens, product version 1.1. https://tingalens.org/pages/drought.html#drought. Accessed 3 October 2026. Source data: CHIRPS v3.0.</p>
+  <p>Please also credit the original data provider named on each map. The maps change as new data arrive, so always give the date you viewed them.</p>
+  <h2 id="reuse">Terms of reuse</h2>
+  <p>Where Tinga Lens holds rights in its results and text, you may reuse them under <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> for non-commercial use (to use them commercially, write to contact@tingalens.org): credit Tinga Lens and the original data provider (whose own licence also applies), link to the licence, and say if you changed anything. Species records come from GBIF (only records under CC0 or CC BY are used; please credit GBIF and the download DOI). Tinga Lens does not publish IUCN Red List categories. The code is available under the MIT licence. The Tinga Lens name and logo are not licensed for reuse. Full notices are in the <a href="https://github.com/tinga-lens/tinga-lens.github.io/blob/main/NOTICE.md">repository</a>.</p>
+  <h2 id="precision">Precision, baselines and status of the results</h2>
+  <p><strong>Resolution.</strong> Most products average satellite data over each district. The resolution in the Products table (for example 1 km or 5 km) is the size of the source grid cells, not a claim of accuracy at that scale. A district value is an average over a large area and says little about a single field or village. Where a source is finer, for example 30 m soil maps or 10 m land cover, it is aggregated before it is shown, and the finer detail is not published.</p>
+  <p><strong>Baselines.</strong> Each product that is compared with normal names its baseline period on its own map and in the Products table (for example rainfall against 1991–2020). Compare a map only with the baseline shown for it.</p>
+  <p><strong>Experimental estimates.</strong> Fire-risk, flood-prone and similar classes are experimental estimates built from public data. They are not official forecasts or warnings. For warnings, follow the Ghana Meteorological Agency, the National Disaster Management Organisation and the Hydrological Authority.</p>
+  <p><strong>Encoding.</strong> Some map images are stored as small 8-bit files, so a value is held in one of 255 steps between a low and a high value (the 2nd and 98th percentiles) written beside the file. Extreme values beyond that range are shown as the end of the scale, and values are rounded to the nearest step.</p>
+  <p><strong>Failed updates.</strong> If a weekly update cannot reach a data source, the previous published version of that product stays online and its "last updated" date does not change.</p>
+  <p><strong>Species records.</strong> Positions in downloads are rounded to 0.1 degree (about 11 km) so that exact sites of sensitive species are not published. Conservation status is not shown.</p>
+  <h2 id="processing">How the data are processed</h2>
+  <p>Every Monday, programs in the public code repository download the newest data from each source, average it over each district, compare it with the record, and publish the results as small files that these pages read. The processing code is written for this project and uses only publicly available datasets.</p>
+  <p>Downloads are available as CSV from every map and district profile. Each file names its source, date and product version.</p>
+</main>
+<script src="../js/config.js?v=20261007d"></script>
+<script src="../js/site.js?v=20261008a"></script>
+<script src="../js/methods.js?v=20261007d"></script>
+</body>
+</html>
