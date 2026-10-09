@@ -1,0 +1,13 @@
+{
+  "title": "Tinga Lens: Environmental monitoring for Ghana",
+  "upload_type": "software",
+  "description": "<p>Tinga Lens turns public satellite, climate, soil and biodiversity records into district-level maps and figures for Ghana's 260 districts: rainfall, soil moisture, vegetation, fires, fire probability, tree cover loss, observed flooding, built-up area, recorded species, cropland, main crops and topsoil properties. This archive is the first public release (v1.0.0) of the website, the data-processing code and the published district results.</p><p>Licences: the source code is under the MIT licence; original data and text are under CC BY-NC 4.0 (non-commercial use, commercial use by permission); third-party data keep their own licences (see NOTICE.md); the Tinga Lens name and logo are not licensed (see TRADEMARKS.md). The weekly data updates published at https://tingalens.org are not archived as separate versions.</p><p>Website: https://tingalens.org</p>",
+  "creators": [
+    {"name": "Adekilae, Frank Anyoka"}
+  ],
+  "license": "cc-by-nc-4.0",
+  "access_right": "open",
+  "version": "1.0.0",
+  "language": "eng",
+  "keywords": ["Ghana", "remote sensing", "drought", "fire", "biodiversity", "agriculture", "soil"]
+}
