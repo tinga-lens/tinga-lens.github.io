@@ -1,0 +1,4 @@
+Upload these one batch at a time, in order (batch1, batch2, ...).
+For each batch: open the batch folder, select everything inside it (the folders and files, not the batch folder itself),
+drag them onto the repository page (Add file > Upload files), wait until the upload finishes, then Commit changes.
+Each batch has fewer than 100 files, which is GitHub's limit for one upload.
