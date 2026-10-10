@@ -4,6 +4,8 @@ Every change to a method or product is recorded here. Product versions are shown
 
 ## 2026-10-10
 
+- New experimental product: Start of the rainy season (version 0.1), a tab on the Drought page. It shows when the main rains began in each district compared with the usual date, from CHIRPS daily rainfall. The rules are candidate rules and have not yet been checked against rain-gauge records.
+
 - Home page: a clearer introduction, a shorter top section so the map starts higher, larger text in the map side panel, the latest figures shown as cards (topics without data are hidden), and the long limits list folded away. No change to any data or method.
 
 ## 2026-10-08
