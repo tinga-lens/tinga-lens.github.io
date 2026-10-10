@@ -8,6 +8,14 @@ document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Module
   <div class="grid">
     <div class="mapcol">
       <div id="map" role="application" aria-label="Map of Ghana districts"></div>
+    <div class="card rank-card">
+      <h2>Ranking</h2>
+      <p class="sub" style="margin-bottom:8px">Districts by their main figure on this map. Unrated districts are left out.</p>
+      <div class="seg" role="group" aria-label="Ranking order">
+        <button type="button" id="rk-hi" aria-pressed="true">Highest 10</button><button type="button" id="rk-lo" aria-pressed="false">Lowest 10</button>
+      </div>
+      <ol class="rank" id="rank"></ol>
+    </div>
       <section class="notes">
         <h2>How to read this map</h2>
         <p id="how"></p>
@@ -57,14 +65,6 @@ document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Module
         <input type="search" id="search" name="tl-district" autocomplete="off" autocorrect="off" spellcheck="false" list="names" placeholder="Find a district…" aria-label="Find a district">
         <datalist id="names"></datalist>
         <div id="detail"></div>
-      </div>
-      <div class="card">
-        <h2>Ranking</h2>
-        <p class="sub" style="margin-bottom:8px">Districts by their main figure on this map. Unrated districts are left out.</p>
-        <div class="seg" role="group" aria-label="Ranking order">
-          <button type="button" id="rk-hi" aria-pressed="true">Highest 10</button><button type="button" id="rk-lo" aria-pressed="false">Lowest 10</button>
-        </div>
-        <ol class="rank" id="rank"></ol>
       </div>
     </aside>
   </div>`;
