@@ -31,7 +31,7 @@ BBOX = (-3.5, 4.5, 1.5, 11.5)        # west, south, east, north (Ghana + margin)
 MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 # order of the tabs on the website; layers without a data file are left out
-ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("vegetation", "Vegetation"),
+ORDER = [("drought", "Drought"), ("soil", "Soil moisture"), ("rainseason", "Rainy season"), ("vegetation", "Vegetation"),
          ("fires", "Fires"), ("firerisk", "Fire risk"), ("forest", "Forest loss"), ("floodprone", "Flood-prone land"), ("floodhazard", "River flood hazard"), ("water", "Surface water change"), ("flood", "Flood 2023: lower Volta"), ("flood2020", "Flood 2020: northern Ghana"), ("cropland", "Cropland"), ("soiln", "Nitrogen"), ("soilp", "Phosphorus"), ("soilk", "Potassium"), ("soilph", "Soil pH"), ("soilom", "Organic matter"), ("soilclay", "Clay"), ("soilsand", "Sand"), ("soilbd", "Bulk density"), ("crops", "Main crops"), ("crop_maiz", "Maize"), ("crop_cass", "Cassava"), ("crop_yams", "Yam"), ("crop_rice", "Rice"), ("crop_plnt", "Plantain"), ("crop_coco", "Cocoa"), ("crop_sorg", "Sorghum"), ("crop_pmil", "Pearl millet"), ("crop_grou", "Groundnut"), ("pressure", "Human pressure"), ("pressurechange", "Pressure change"), ("urban", "Urban growth"), ("biodiversity", "Recorded species")]
 PLANNED = ["Mining"]
 

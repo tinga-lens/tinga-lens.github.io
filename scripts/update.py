@@ -7,6 +7,7 @@ Tinga Lens - run every layer that is due.
   vegetation : every run, if a NASA Earthdata login is available
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
+  rainy season: experimental; first build only when asked for (RAINSEASON=full, or trial = nothing published), then every run
   biodiversity: once a month, if a GBIF login is available
   pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
   flood-prone: only when it has never been built, its script has a newer BUILD number, or FLOODPRONE=true;
@@ -48,6 +49,8 @@ else:
     print("Skipping fires: no FIRMS_MAP_KEY set.")
 if earthdata and os.environ.get("FIRMS_MAP_KEY"):
     jobs.append(("fire risk", "fire_risk.py"))      # needs the soil moisture and fires records; downloads nothing
+if os.environ.get("RAINSEASON", "").lower() in ("true", "full", "trial") or (DATA / "rainseason.json").exists():
+    jobs.append(("rainy season (experimental)", "rainy_season.py"))   # first build only when asked for; afterwards it refreshes every run (downloads only new days)
 if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").exists():
     jobs.append(("forest", "forest.py"))
 else:
