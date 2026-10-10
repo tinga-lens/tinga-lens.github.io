@@ -40,7 +40,7 @@ const TL = {
     soil: { name: "Soil moisture anomaly", tab: "Soil moisture", module: "Drought", page: "pages/drought.html", status: "condition", version: "1.1",
             source: "NASA SMAP Level-4 (SPL4SMGP), NSIDC DAAC", type: "Satellite observations merged into a land model",
             resolution: "9 km", updates: "Every 5 days", baseline: "2015 onwards" },
-    rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
+    rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.2 (experimental)",
                   source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall using candidate rules",
                   resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
     fires: { name: "Active fire detections", tab: "Observed fire", module: "Fire", page: "pages/fire.html", status: "observed", version: "1.1",
