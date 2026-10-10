@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261007d">
+<link rel="stylesheet" href="../css/main.css?v=20261010b">
 </head>
 <body>
 <main class="wrap">
@@ -34,10 +34,10 @@
 </main>
 <script src="../vendor/leaflet.js"></script>
 <script src="../js/config.js?v=20261007d"></script>
-<script src="../js/site.js?v=20261008a"></script>
+<script src="../js/site.js?v=20261010b"></script>
 <script>
   // show the map only once real data has been published
-  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261007d"; document.body.append(s); })
+  fetch("../data/flood.json", { method: "HEAD" }).then(r => { if (!r.ok) throw 0; const s = document.createElement("script"); s.src = "../js/app.js?v=20261010b"; document.body.append(s); })
     .catch(() => { document.getElementById("wait").hidden = false; });
 </script>
 </body>

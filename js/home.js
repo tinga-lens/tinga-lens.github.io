@@ -39,8 +39,7 @@
     out.push(card("Vegetation", "Vegetation and forest change", "pages/vegetation.html", body || line("–", "No data yet"), ["condition", "observed"]));
 
     // planned modules: no numbers until there is real data
-    const soon = (k, title, href, text) => `<div class="stat"><h3><a href="${ROOT + href}">${k}</a></h3>
-      <div class="sub" style="margin:0">Not published yet.</div></div>`;
+    const soon = () => "";   // unpublished topics are left off the home page until they have data
     if (fl) {
       const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
       out.push(card("Flood", "Observed flooding", "pages/flood.html", line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts. Past event: ${fl.subtitle}`)
@@ -59,7 +58,7 @@
     } else out.push(soon("Urban", "Urban exposure", "pages/pressure.html", "Where people and new development meet environmental hazards. No data is published yet."));
     if (bi && bi.coverage) out.push(card("Biodiversity", "Recorded species", "pages/biodiversity.html",
       line(bi.coverage.species.toLocaleString(), `species recorded in Ghana, from ${bi.coverage.records.toLocaleString()} records`), ["observed"]));
-    $("cards").innerHTML = out.join("");
+    $("cards").innerHTML = out.filter(Boolean).join("");
   });
 
   getJSON("data/site.json").then(s => {

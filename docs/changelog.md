@@ -2,6 +2,10 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-10
+
+- Home page: a clearer introduction, a shorter top section so the map starts higher, larger text in the map side panel, the latest figures shown as cards (topics without data are hidden), and the long limits list folded away. No change to any data or method.
+
 ## 2026-10-08
 
 - Licence change before the first release: original data and text are now CC BY-NC 4.0 (non-commercial use; commercial use by permission). Code stays MIT. Added TRADEMARKS.md and a note in assets/logo/ stating that the name and logo are not licensed.

@@ -552,7 +552,11 @@ function render(key, d) {
     + (d.marks ? `<li><span class="sw" style="background:#111;border-radius:50%;width:9px;height:9px;margin:0 2.5px;border:1px solid #fff;outline:1px solid #111"></span>Dot: a fire was detected <b>${d.marks.length}</b></li>` : "");
   $("names").innerHTML = Object.values(d.districts).map(x => x.name).sort().map(n => `<option value="${esc(n)}">`).join("");
   $("how").textContent = d.how;
-  $("limits").innerHTML = d.limits.concat(["District boundaries are the 260 districts of 2019. Newer districts are not yet shown."]).map(t => `<li>${esc(t)}</li>`).join("");
+  { const all = d.limits.concat(["District boundaries are the 260 districts of 2019. Newer districts are not yet shown."]);
+    const li = t => `<li>${esc(t)}</li>`;
+    $("limits").innerHTML = document.documentElement.dataset.page === "Home" && all.length > 3
+      ? all.slice(0, 2).map(li).join("") + `<li style="list-style:none;margin-left:-20px"><details><summary>Read the full methodology and limits (${all.length - 2} more)</summary><ul>${all.slice(2).map(li).join("")}</ul></details></li>`
+      : all.map(li).join(""); }
   $("tables").innerHTML = (d.tables || []).map(t => `<h2>${esc(t.caption)}</h2><div class="card" style="max-width:640px;overflow-x:auto">
     <table class="mv" style="margin:0"><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
     <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
