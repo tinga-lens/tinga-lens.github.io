@@ -11,6 +11,11 @@
    "file": "data/soil.json"
   },
   {
+   "key": "rainseason",
+   "label": "Rainy season",
+   "file": "data/rainseason.json"
+  },
+  {
    "key": "vegetation",
    "label": "Vegetation",
    "file": "data/vegetation.json"
