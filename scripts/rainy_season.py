@@ -56,8 +56,8 @@ RAIN_MM = 20.0                   # mm needed in those days
 DRY_MM = 1.0                     # a day under this is a dry day
 DRY_RUN = 7                      # dry days in a row that make a dry spell
 CONFIRM_DAYS = 21                # days after the rain test that are checked for a dry spell
-USUAL_DAYS = 7                   # within this many days of the median counts as "about usual"
-MUCH_DAYS = 14                   # this many days or more counts as "much" earlier or later
+USUAL_DAYS = 14                  # within this many days of the median counts as "about usual" (the gauge check found typical errors of about 3 weeks)
+MUCH_DAYS = 28                   # this many days or more counts as "much" earlier or later
 MIN_BASELINE_YEARS = 20          # fewer years with an onset than this: the district is not rated
 FETCH_FROM = (3, 1)              # the cache holds these days of each year ...
 FETCH_TO = (9, 30)               # ... up to here (the north window ends 31 Aug, plus 21 days to confirm)
@@ -170,7 +170,7 @@ def self_test():
     r[11] = np.nan
     assert find_onset(r, 0, 30)[0] != "onset" or find_onset(r, 0, 30)[1] != 10
     # 7. categories
-    assert [classify(x) for x in (-20, -10, 0, 7, 8, 14, 30)] == ["much_early", "early", "usual", "usual", "late", "much_late", "much_late"]
+    assert [classify(x) for x in (-30, -20, 0, 14, 15, 28, 40)] == ["much_early", "early", "usual", "usual", "late", "much_late", "much_late"]
     # 8. dry run counting
     assert longest_dry_run(np.array([0, 0, 5, 0, 0, 0, np.nan, 0], "float32")) == 3
     print("self-test passed: 8 checks")
@@ -441,9 +441,10 @@ def render(districts, counts, labels, cur, demo, source):
                 f"{DRY_RUN} days or more follows in the next {CONFIRM_DAYS} days. \"Usual\" is the median start in "
                 f"{BASELINE[0]}–{BASELINE[1]}. Southern districts have two rainy seasons; this map shows the first (main) season only."),
         "limits": [
-            "Experimental, version 0.1. The rules have not yet been checked against rain-gauge records, so a date may differ from what people on the ground saw.",
+            "Experimental, version 0.2. Checked against 14 Ghana Meteorological Agency rain gauges (1991–2015): a satellite start date typically differs from the gauge by about 3 weeks, and in most places the year-to-year pattern matches weakly. It agreed well at Wa and within a week of the usual date at about half of the gauges, but was 2 to 3 weeks too early at Tamale, Techiman and Takoradi.",
+            "Because of this, treat the colours as a rough guide and the dates as satellite estimates. A difference of less than four weeks from usual is within the error, which is why \"about usual\" covers two weeks either side.",
             "This shows when rain started in satellite and rain-gauge data. It is not planting advice and not a forecast.",
-            "A different rule would give a different date. The rule used is stated above and may change after testing.",
+            "A different rule would give a different date. Trying eight variations of the rule did not make the match to the gauges clearly better, so the rule is unchanged for now.",
             "The rainfall estimate is on a grid of about 5 km and is averaged over each district, so it hides differences inside a district.",
             "Recent days use preliminary data that can be revised, so a possible or new start date can move by a few days.",
             "Districts near the boundary between the southern and northern rainfall zones may be assigned the wrong season window.",
