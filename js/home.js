@@ -4,6 +4,7 @@
   const n = o => Object.values(o).reduce((a, b) => a + b, 0);
   const card = (kicker, title, href, body, status) => `<div class="stat">
       <h3><a href="${ROOT + href}">${esc(kicker)}</a></h3>${body}</div>`;
+  const tag = (cls, label, text) => `<div class="sub lab"><span class="badge ${cls}">${esc(label)}</span> ${esc(text)}</div>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
   Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity", "pressure"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi, hp]) => {
@@ -15,21 +16,24 @@
     if (so) body += line(`${(so.counts.dry || 0) + (so.counts.very_dry || 0)} of ${n(so.counts)}`, `districts drier than normal for soil moisture, ${so.subtitle.split(",")[0]}`);
     out.push(card("Drought", "Rainfall and soil moisture", "pages/drought.html", body || line("–", "No data yet"), ["condition"]));
 
-    // Fire: detections, and the experimental estimate
+    // Fire: detections (observed) and the experimental estimate (modeled), kept apart
     body = "";
     if (fi) {
       const total = Object.values(fi.districts).reduce((a, x) => a + (num(x.big) || 0), 0);
+      body += tag("observed", "Observed", "Satellite fire detections");
       body += line(total.toLocaleString(), `fire detections, ${fi.subtitle.split(",")[0]}`);
-      body += `<div class="sub" style="margin:0">${(fi.counts.more || 0) + (fi.counts.far_more || 0)} districts above their normal for these dates</div>`;
+      body += `<div class="sub" style="margin:0">${(fi.counts.more || 0) + (fi.counts.far_more || 0)} districts above normal for the same dates in earlier years</div>`;
     }
-    if (fr) body += `<div class="sub" style="margin:0">Model: ${(fr.counts.p4 || 0) + (fr.counts.p5 || 0)} districts with a high estimated chance of fire, ${esc(fr.subtitle)}</div>`;
+    if (fr) body += tag("model", "Modeled risk", "Experimental estimate") + `<div class="sub" style="margin:0">${(fr.counts.p4 || 0) + (fr.counts.p5 || 0)} districts with a high estimated chance of fire, ${esc(fr.subtitle)}</div>`;
     out.push(card("Fire", "Active fires and fire probability", "pages/fire.html", body || line("–", "No data yet"), fr ? ["observed", "model"] : ["observed"]));
 
     // Vegetation and forest
     body = "";
     if (ve) {
-      const rated = n(ve.counts) - (ve.counts.cloud || 0);
-      body += line(`${(ve.counts.dry || 0) + (ve.counts.very_dry || 0)} of ${rated}`, `rated districts less green than normal, ${ve.subtitle.split(",")[0]} (${ve.counts.cloud || 0} too cloudy to rate)`);
+      const rated = n(ve.counts) - (ve.counts.cloud || 0), per = ve.subtitle.split(",")[0];
+      body += tag("condition", "Environmental condition", per);
+      body += line(`${(ve.counts.dry || 0) + (ve.counts.very_dry || 0)} of ${rated}`, "districts with below-normal greenness");
+      body += `<div class="sub" style="margin:0">${rated} districts assessed. ${ve.counts.cloud || 0} not rated because of cloud cover.</div>`;
     }
     if (fo) {
       const years = fo.chart.x, last = years[years.length - 1];
@@ -42,7 +46,8 @@
     const soon = () => "";   // unpublished topics are left off the home page until they have data
     if (fl) {
       const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
-      out.push(card("Flood", "Observed flooding", "pages/flood.html", line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts. Past event: ${fl.subtitle}`)
+      out.push(card("Flood", "Observed flooding", "pages/flood.html", tag("observed", "Historical event", fl.subtitle)
+        + line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts`)
         + `<div class="sub" style="margin:0">Not a live flood map.</div>`, ["observed"]));
     } else out.push(soon("Flood", "Flooding and susceptibility", "pages/flood.html", "Satellite-observed flooding and flood-prone landscapes. No data is published yet."));
     if (hp) {
