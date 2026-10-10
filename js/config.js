@@ -29,6 +29,7 @@ const TL = {
     index: { label: "Published index", text: "A combined index published by another research group, averaged here by district." },
     condition: { label: "Environmental condition", text: "An observation compared with what is normal for that place and time of year." },
     pubmodel: { label: "Published model", text: "A model result published by another research group, added up here by district. It is not an observation." },
+    experimental: { label: "Experimental", text: "Worked out by Tinga Lens from rainfall data using candidate rules that have not yet been checked against rain-gauge records. Treat it as a first look, not a finding." },
     model: { label: "Modeled risk", text: "A statistical estimate made by Tinga Lens. It is tested, but it is not an observation." },
   },
   // one entry per layer file in data/; `tab` is the name shown on module pages
@@ -39,6 +40,9 @@ const TL = {
     soil: { name: "Soil moisture anomaly", tab: "Soil moisture", module: "Drought", page: "pages/drought.html", status: "condition", version: "1.1",
             source: "NASA SMAP Level-4 (SPL4SMGP), NSIDC DAAC", type: "Satellite observations merged into a land model",
             resolution: "9 km", updates: "Every 5 days", baseline: "2015 onwards" },
+    rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
+                  source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall using candidate rules",
+                  resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
     fires: { name: "Active fire detections", tab: "Observed fire", module: "Fire", page: "pages/fire.html", status: "observed", version: "1.1",
              source: "NASA FIRMS, VIIRS (S-NPP) 375 m active fires", type: "Satellite observation",
              resolution: "375 m detections, summed by district", updates: "Weekly", baseline: "2012 onwards" },
