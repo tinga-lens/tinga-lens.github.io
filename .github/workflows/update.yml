@@ -87,8 +87,10 @@ jobs:
           CROPS: ${{ inputs.crops }}
           SOILGRID: ${{ inputs.soilgrid }}
           RAINSEASON: ${{ inputs.rainseason }}
+          PYTHONUNBUFFERED: "1"
         run: python scripts/update.py
       - name: Keep downloads for next time
+        if: always()
         uses: actions/cache/save@v4
         with:
           path: cache
