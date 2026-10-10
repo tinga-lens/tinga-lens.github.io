@@ -7,7 +7,7 @@ Tinga Lens - run every layer that is due.
   vegetation : every run, if a NASA Earthdata login is available
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
-  rainy season: experimental; first build only when asked for (RAINSEASON=full, or trial = nothing published), then every run
+  rainy season: experimental; rainseason=validate only checks it against rain gauges (publishes nothing); first build only when asked for (RAINSEASON=full, or trial = nothing published), then every run
   biodiversity: once a month, if a GBIF login is available
   pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
   flood-prone: only when it has never been built, its script has a newer BUILD number, or FLOODPRONE=true;
@@ -36,6 +36,10 @@ if os.environ.get("EE_CHECK", "").lower() == "true":      # only test the Google
 if os.environ.get("FLOODPRONE", "").lower() == "pilot":   # only run the flood-prone trial (publishes nothing), then stop
     print("===== flood-prone land (trial) =====", flush=True)
     sys.exit(subprocess.run([sys.executable, str(HERE / "floodprone.py")]).returncode)
+
+if os.environ.get("RAINSEASON", "").lower() == "validate":   # only compare the rainy-season layer with rain gauges, then stop
+    print("===== rainy season: check against rain gauges =====", flush=True)
+    sys.exit(subprocess.run([sys.executable, str(HERE / "validate_rainseason.py")]).returncode)
 
 earthdata = bool(os.environ.get("EARTHDATA_USERNAME") or os.environ.get("EARTHDATA_TOKEN"))
 jobs = [("drought", "drought.py")]
