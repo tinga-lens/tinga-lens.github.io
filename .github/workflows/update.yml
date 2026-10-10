@@ -41,9 +41,9 @@ on:
         default: "no"
 
       rainseason:
-        description: "Rainy season (experimental, CHIRPS daily files, no Earth Engine): trial = 5 years, nothing published; full = build and publish"
+        description: "Rainy season (experimental, CHIRPS daily files, no Earth Engine): trial = 5 years, nothing published; full = build and publish; validate = compare with rain gauges, nothing published"
         type: choice
-        options: ["no", "trial", "full"]
+        options: ["no", "trial", "full", "validate"]
         default: "no"
 
 permissions:
