@@ -261,7 +261,8 @@ def load_real(gdf, first_year, today):
     if cache_file.exists():
         z = np.load(cache_file, allow_pickle=False)
         if z["ids"].tolist() == sid.tolist():
-            have = {dt.date.fromordinal(int(o)): z["vals"][i] for i, o in enumerate(z["dates"])}
+            vals, dates = z["vals"], z["dates"]          # read each array once (reading z["vals"] inside the loop unpacks the whole file every time)
+            have = {dt.date.fromordinal(int(o)): vals[i] for i, o in enumerate(dates)}
     s = session()
     cur = today.year if today >= dt.date(today.year, *FETCH_FROM) else today.year - 1
     wanted = [d for y in range(first_year, cur + 1) for d in date_range(y) if d < today]
