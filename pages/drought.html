@@ -1,34 +1,35 @@
 <!doctype html>
-<html lang="en" data-root="../" data-page="Drought" data-layers="drought,soil">
+<html lang="en" data-root="../" data-page="Drought" data-layers="drought,soil,rainseason">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Drought | Tinga Lens</title>
-<meta name="description" content="Rainfall and soil moisture in each district, compared with what is usual for the season.">
+<meta name="description" content="Rainfall, soil moisture and the start of the rainy season in each district, compared with what is usual.">
 <link rel="canonical" href="https://tingalens.org/pages/drought.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Tinga Lens">
 <meta property="og:title" content="Drought | Tinga Lens">
-<meta property="og:description" content="Rainfall and soil moisture in each district, compared with what is usual for the season.">
+<meta property="og:description" content="Rainfall, soil moisture and the start of the rainy season in each district, compared with what is usual.">
 <meta property="og:url" content="https://tingalens.org/pages/drought.html">
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../vendor/leaflet.css">
-<link rel="stylesheet" href="../css/main.css?v=20261010b">
+<link rel="stylesheet" href="../css/main.css?v=20261010e">
 </head>
 <body>
 <main class="wrap">
   <h1>Drought</h1>
-  <p class="lead">Rainfall and soil moisture in each district, compared with what is usual for the season.</p>
+  <p class="lead">Rainfall, soil moisture and the start of the rainy season in each district, compared with what is usual.</p>
   <div id="app"></div>
   <section class="notes prose">
     <h2>About this module</h2>
     <p>Two products are shown. <strong>Rainfall</strong> compares the last three months with the same months in 1991–2020. <strong>Soil moisture</strong> compares the moisture in the top metre of soil with the same month in other years since 2015, and can be viewed every five days.</p>
+    <p><strong>Rainy season</strong> <span class="badge experimental">Experimental</span> shows when the main rains started this year in each district and whether that is earlier or later than usual. It uses candidate rules that have not yet been checked against rain-gauge records, so treat the dates as a first look. It is not planting advice.</p>
     <p>Rainfall and soil moisture do not always agree. Soil moisture responds within days, while the three-month rainfall total changes slowly. <a href="methods.html#m-drought">Read the methods</a>.</p></section>
 </main>
 <script src="../vendor/leaflet.js"></script>
-<script src="../js/config.js?v=20261007d"></script>
+<script src="../js/config.js?v=20261010e"></script>
 <script src="../js/site.js?v=20261010b"></script>
-<script src="../js/app.js?v=20261010b"></script>
+<script src="../js/app.js?v=20261010d"></script>
 </body>
 </html>
