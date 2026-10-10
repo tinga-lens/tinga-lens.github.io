@@ -412,7 +412,7 @@ def build(daily, gdf, cur, today, first_year, demo):
                 ["False starts this season", str(now["false_starts"])]]
         if now.get("longest_dry") is not None:
             rows.append(["Longest dry spell in the next 30 days", f"{now['longest_dry']} days"])
-        rows.append([f"Rain since {MON[WINDOW[zone[i]][0][0] - 1]} {WINDOW[zone[i]][0][1]}", f"{round(now['rain'])} mm"])
+        rows.append([f"Rain from {WINDOW[zone[i]][0][1]} {MON[WINDOW[zone[i]][0][0] - 1]} to the start date", f"{round(now['rain'])} mm"])
         v, c = [], []
         for y in years:
             p = py.get(y)
