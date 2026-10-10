@@ -2,6 +2,10 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-10 (later)
+
+- Rainy season, version 0.2 (still experimental). Checked against 14 Ghana Meteorological Agency rain gauges for 1991-2015: a satellite start date typically differs from the gauge by about three weeks, and the year-to-year pattern matches weakly (good at Wa, poor at Tamale, Techiman and Takoradi). Eight variations of the rule did not fit better, so the rule is unchanged. The colour classes are widened to match the error: "about usual" is within 14 days, "much earlier or later" is 28 days or more (was 7 and 14). The accuracy is stated on the map and on the Drought page.
+
 ## 2026-10-10
 
 - New experimental product: Start of the rainy season (version 0.1), a tab on the Drought page. It shows when the main rains began in each district compared with the usual date, from CHIRPS daily rainfall. The rules are candidate rules and have not yet been checked against rain-gauge records.
