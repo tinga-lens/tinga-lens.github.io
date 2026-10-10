@@ -126,10 +126,14 @@ nav.tabs button:disabled{color:var(--muted);cursor:default}
 nav.tabs button:disabled small{opacity:.75;margin-left:4px}
 #demo{display:none;background:#fff3cd;color:#5c4400;border:1px solid #e6cf85;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.92rem}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px}
-.mapcol{min-width:0}
-.mapcol section.notes{margin:18px 0 0}
+.mapcol{display:contents}
+#map{grid-column:1;grid-row:1}
+.grid > aside{grid-column:2;grid-row:1 / span 2;min-width:0}
+.mapcol section.notes{grid-column:1 / -1;grid-row:3;margin:10px 0 0}
+.mapcol .rank-card{grid-column:1;grid-row:2;margin:0;min-width:0}
+@media (min-width:600px){.rank-card ol.rank{column-count:2;column-gap:28px}.rank-card ol.rank li{break-inside:avoid}}
 @media (max-width:860px){.grid{grid-template-columns:1fr}
-  .mapcol{display:contents} #map{order:1} .grid > aside{order:2} .mapcol section.notes{order:3}}
+  #map,.grid > aside,.mapcol .rank-card,.mapcol section.notes{grid-column:auto;grid-row:auto} #map{order:1} .grid > aside{order:2} .mapcol .rank-card{order:3} .mapcol section.notes{order:4}}
 #map{height:640px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
 @media (max-width:860px){#map{height:440px}}
 .ctl{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;margin:0 0 6px;font-size:.84rem;color:var(--muted)}
