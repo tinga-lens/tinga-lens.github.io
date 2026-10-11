@@ -243,6 +243,8 @@ def main():
     valid = ~np.isnan(next(iter(have.values()))[0])
     cells = cells_per_district(gdf, lat, lon, valid)
     months, root, surf = monthly_district_means(have, cells, (today.year, today.month))
+    # rate the same numbers the website's history file holds (4 decimals), so the summary text and the map never disagree on ties
+    root, surf = np.round(root, 4), np.round(surf, 4)
     if not months:
         sys.exit("No complete month of SMAP data yet.")
     T = len(months) - 1
@@ -257,8 +259,8 @@ def main():
     label = f"{y}-{m:02d}"
     print(f"{len(months)} complete months, latest = {label}, compared with {n} earlier years, grid {len(lat)}x{len(lon)}")
 
-    notes = ["driest 10% of years", "driest 30% of years", "middle 40% of years",
-             "wettest 30% of years", "wettest 10% of years"]
+    notes = ["driest 10% of years", "driest 10 to 30% of years", "middle 40% of years",
+             "wettest 10 to 30% of years", "wettest 10% of years"]
     cats = [dict(c, note=t) for c, t in zip(WETNESS, notes)]
     names = {c["key"]: c["label"] for c in cats}
     districts = {}

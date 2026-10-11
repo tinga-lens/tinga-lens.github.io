@@ -39,7 +39,7 @@ from common import CACHE, DATA, load_districts, write_layer  # noqa: E402
 from ee_check import ee_login  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 2                               # raise this to make the weekly update rebuild the layer.
+BUILD = 3                               # raise this to make the weekly update rebuild the layer.
 # NOTE: one rebuild uses roughly a third of the free monthly Earth Engine allowance (150 EECU-hours).
 # The start year below changed to 2018 after the published build; it takes effect at the next rebuild
 # ("Rebuild flood-prone land" box). Do that when the monthly allowance has room.
@@ -72,7 +72,7 @@ VARIANTS = {
 CHOSEN = "E"     # the setting used for the published map; see docs/validation.md for why
 MIN_KM2 = 0.1    # less than this is shown as "none detected"
 CATS = [
-    {"key": "p0", "label": "None detected", "note": "", "color": "#f1eee6", "max": MIN_KM2},
+    {"key": "p0", "label": "None seen by radar", "note": "", "color": "#f1eee6", "max": MIN_KM2},
     {"key": "p1", "label": "Under 1 km²", "note": "", "color": "#bfd3e6", "max": 1},
     {"key": "p2", "label": "1 to 5 km²", "note": "", "color": "#8c96c6", "max": 5},
     {"key": "p3", "label": "5 to 20 km²", "note": "", "color": "#88419d", "max": 20},
@@ -252,12 +252,12 @@ def publish(results, v, counts):
         cat = next(c["key"] for c in CATS if km2 < c.get("max", -1))
         ys = [r[f"y{y}"] for y in YEARS]
         top = max(range(n), key=lambda k: ys[k])
-        show = lambda x: f"{x:,.1f} km²" if x >= MIN_KM2 else "None detected"
+        show = lambda x: f"{x:,.1f} km²" if x >= MIN_KM2 else "None seen by radar"
         districts[sid] = {
             "name": name, "cat": cat,
-            "big": f"{km2:,.1f} km²" if km2 >= MIN_KM2 else "None",
+            "big": f"{km2:,.1f} km²" if km2 >= MIN_KM2 else "None seen",
             "big_note": f"of land seen flooded in at least 2 of the {n} years {first} to {last}",
-            "tip": f"{km2:,.1f} km² flooded in 2 or more years" if km2 >= MIN_KM2 else "None detected",
+            "tip": f"{km2:,.1f} km² flooded in 2 or more years" if km2 >= MIN_KM2 else "None seen by radar",
             "rows": [
                 ["Share of the district's land", f"{km2 / r['land'] * 100:.1f}%"],
                 ["Flooded in at least 1 year", show(r["in1"])],
@@ -266,6 +266,7 @@ def publish(results, v, counts):
                 ["Largest flooded area in one year", f"{ys[top]:,.1f} km² ({YEARS[top]})" if ys[top] >= MIN_KM2 else "–"],
                 ["Along Lake Volta and large reservoirs, not counted above", show(r["shore2"])],
                 ["Radar images read", f"{int(r['images']):,}"],
+                ["Radar images a year (average)", f"{r['images'] / n:,.0f}"],
             ],
             "v": [round(x, 2) for x in ys], "c": [cat] * n,
         }
@@ -285,6 +286,7 @@ def publish(results, v, counts):
                 +
                 f"Click a district to see the flooded area in each year."),
         "limits": [
+            "'None seen by radar' means the radar did not see standing water on land here in at least 2 years. It does not prove the land never floods: under trees, in towns and in short floods the radar is blind.",
             "This is Tinga Lens's own reading of the radar images. It has been compared with one mapped flood (lower Volta, 2023) but not checked on the ground.",
             "Radar cannot see water under trees or between buildings, so flooding in forests and towns is mostly missed. City street flooding, as in Accra, does not appear.",
             f"A flood must be seen on at least {v['hits']} images in a year. Each place is imaged every few days, so floods lasting only a day or two are missed.",
@@ -293,6 +295,8 @@ def publish(results, v, counts):
             f"Only {season} is read, because dry bare soil in the dry season looks like water to radar. Flooding outside those months is not counted.",
             f"The record starts in {first}. In 2016 and 2017 the same method finds far less flooding, probably because the satellite images were processed differently then, so those years are left out.",
             "The satellite took about half as many images of Ghana in 2022, 2023 and 2024 as in other years, so short floods in those years are more likely to have been missed.",
+            "Land at the edge of Lake Volta and other large reservoirs is not in the figure or the ranking, so districts around the lake look less flood-prone than they may be. Their shore area is listed separately in the district panel.",
+            "Districts differ greatly in size, so the km² ranking favours big districts. Use the 'Share of land' view to compare districts fairly.",
             "The figure is land area. It says nothing about how deep the water was or how many people were affected, and it is not a forecast.",
         ],
         "credits": [{"text": "Radar images: Copernicus Sentinel-1, processed in Google Earth Engine", "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S1_GRD"},

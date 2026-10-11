@@ -15,6 +15,7 @@ document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Module
         <button type="button" id="rk-hi" aria-pressed="true">Highest 10</button><button type="button" id="rk-lo" aria-pressed="false">Lowest 10</button>
       </div>
       <ol class="rank" id="rank"></ol>
+      <p class="sub" id="rank-note" style="margin-top:8px"></p>
     </div>
       <section class="notes">
         <h2>How to read this map</h2>
@@ -34,13 +35,13 @@ document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Module
         </div>
         <div id="time" hidden>
           <div class="ctl">
-            <label>Year <select id="yr"></select></label>
+            <label id="yr-lab">Year <select id="yr"></select></label>
             <label id="mo-wrap">Month <select id="mo"></select></label>
             <label id="dy-wrap" hidden>Day <select id="dy"></select></label>
             <button class="btn" id="latest" type="button">Latest</button>
           </div>
           <div class="seg" id="mapmode" role="group" aria-label="What the map shows" hidden>
-            <button type="button" id="mm-est" aria-pressed="true">Estimated chance</button><button type="button" id="mm-hap" aria-pressed="false">What happened</button>
+            <button type="button" id="mm-est" aria-pressed="true">Estimated chance</button><button type="button" id="mm-use" aria-pressed="false">Compared with usual</button><button type="button" id="mm-hap" aria-pressed="false">What happened</button>
           </div>
           <p class="sub" id="time-note"></p>
         </div>
@@ -50,12 +51,15 @@ document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Module
           </div>
           <p class="sub" id="points-note"></p>
         </div>
+        <div id="measure-wrap" class="ctl" hidden><label>Colour and rank by <select id="measure"></select></label></div>
         <div class="bar" id="bar"></div>
         <ul class="legend" id="legend"></ul>
+        <ul class="lnotes" id="lnotes"></ul>
         <div class="btns">
           <button class="btn" id="download-img" type="button">Download map image (PNG)</button>
           <button class="btn" id="download" type="button">Download this map (CSV)</button>
           <button class="btn" id="download-all" type="button" hidden>Download full record (CSV)</button>
+          <button class="btn" id="download-days" type="button" hidden>Download recent days (CSV)</button>
         </div>
         <p class="sub" style="margin:12px 0 4px"><strong>Cite this map</strong></p>
         <p class="sub cite" id="cite"></p>
@@ -125,6 +129,7 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   geoLayer = L.geoJSON(geo, {
     style: { fillColor: "#999", fillOpacity: 0.9, color: "#55605c", weight: 0.6 },
     onEachFeature: (f, l) => {
+      f.properties.shapeName = TL.clean(f.properties.shapeName);
       shapes[f.properties.shapeID] = l;
       l.bindTooltip(() => tip(f.properties), { sticky: true });
       l.on("click", () => select(f.properties.shapeID));
@@ -184,7 +189,7 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
     const l = man.layers.find(x => x.key === key) || man.layers[0];
     drawTabs(l.key);
     document.dispatchEvent(new CustomEvent("tl:layer", { detail: { key: l.key } }));
-    (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => cache[l.key] = d)).then(d => {
+    (cache[l.key] ? Promise.resolve(cache[l.key]) : getJSON(l.file).then(d => loaded(l.key, d)).then(d => cache[l.key] = d)).then(d => {
       BASE = d; REC = null; VIEW = ""; DAYS = daysCache[l.key] || null;
       const yearly = d.yearly || (d.key === "forest" ? { base_label: "Latest average", breaks: [0.5, 1, 2, 3] } : null);
       if (yearly && d.chart && d.chart.kind === "bars") { REC = { kind: "yearly", years: d.chart.x, ...yearly }; return go(latestKey()); }
@@ -217,10 +222,19 @@ Promise.all([getJSON("data/districts.geojson"), getJSON("data/layers.json")]).th
   $("mo").addEventListener("change", pick);
   $("dy").addEventListener("change", pick);
   $("latest").addEventListener("click", () => go(latestKey()));
+  $("measure").addEventListener("change", e => { MEAS[FULL.key] = +e.target.value; render(FULL.key, FULL); });
+  $("download-days").addEventListener("click", downloadDays);
   $("mm-est").addEventListener("click", () => { MODE = "estimate"; go(VIEW); });
+  $("mm-use").addEventListener("click", () => { MODE = "usual"; go(VIEW); });
   $("mm-hap").addEventListener("click", () => { MODE = "happened"; go(VIEW); });
   show(location.hash.slice(1));
 }).catch(e => { $("title").textContent = "Could not load the data files"; $("subtitle").textContent = e.message; });
+
+// tidy a layer's file once, when it is loaded: clean names, then any layer-specific preparation
+function loaded(key, d) {
+  Object.values(d.districts).forEach(x => { x.name = TL.clean(x.name); });
+  return Promise.resolve(TL.pre && TL.pre[key] ? TL.pre[key](d) : d);
+}
 
 // individual satellite fire detections, drawn over the district map of the fires layer
 function drawPoints() {
@@ -278,7 +292,7 @@ function pick() {                       // the user changed Year, Month or Day
 function go(key) {                      // show one period ("" = the latest map as published)
   const daily = REC.kind === "anomaly" && key.length > 7;
   if (daily && !DAYS) {
-    $("time-note").textContent = "Loading the day-by-day record…";
+    setNote("Loading the day-by-day record…");
     return getJSON(REC.days_file).then(x => { DAYS = daysCache[BASE.key] = x; go(key); }).catch(() => go(key.slice(0, 7)));
   }
   if (daily && !DAYS.days.includes(key)) key = key.slice(0, 7);          // that day was not sampled
@@ -292,16 +306,18 @@ function go(key) {                      // show one period ("" = the latest map 
     v = probView(BASE, REC, t);
     note = scorecard(v, t);
     if (MODE === "happened") v = happenedView(v, t);
+    else if (MODE === "usual") v = usualView(v, t);
   } else if (key) {
     const axis = daily ? DAYS.days : REC.months;
     v = anomalyView(BASE, REC, axis, daily ? DAYS.values : REC.values, axis.indexOf(key));
   }
-  $("time-note").textContent = note;
+  setNote(note);
   render(BASE.key, v);
 }
 
 function fillSelects() {
   const key = VIEW, y = key.slice(0, 4), m = key.slice(5, 7), dd = key.slice(8), axis = axisOf();
+  $("yr-lab").firstChild.textContent = REC.base_label ? "Period " : "Year ";
   const years = [...new Set(axis.map(k => k.slice(0, 4)))];
   $("yr").innerHTML = (REC.base_label ? `<option value=""${key ? "" : " selected"}>${esc(REC.base_label)}</option>` : "")
     + years.map(v => `<option${v === y ? " selected" : ""}>${v}</option>`).join("");
@@ -320,6 +336,7 @@ function fillSelects() {
   $("latest").disabled = key === latestKey();
   $("mapmode").hidden = !prob;
   $("mm-est").setAttribute("aria-pressed", MODE === "estimate");
+  $("mm-use").setAttribute("aria-pressed", MODE === "usual");
   $("mm-hap").setAttribute("aria-pressed", MODE === "happened");
 }
 
@@ -328,20 +345,12 @@ const spanLabel = (y, m, win) => {      // "Jun to Aug 2026" for a 3-month windo
   return sy === y ? `${MONS[sm]} to ${MONS[m - 1]} ${y}` : `${MONS[sm]} ${sy} to ${MONS[m - 1]} ${y}`;
 };
 
-// ---- rainfall, soil moisture, vegetation: a value compared with the same time of year in other years ----
-function anomalyView(d, h, axis, vals, t) {
-  const key = axis[t], daily = key.length > 7, y = key.slice(0, 4), mi = +key.slice(5, 7), mon = MONS[mi - 1];
-  const P = h.series[0], S = h.series[1], win = h.window || 1, need = h.min_years || 5;
-  const fmt = (s, v) => v.toFixed(s.decimals ?? 2) + (s.unit ? " " + s.unit : "");
-  const lessWord = (h.words && h.words.less) || "drier";
-  const un = { key: "none", label: "Not rated", text: "", ...(h.unrated || {}) };
-  const base = Array.isArray(h.ref) ? h.ref : null;                    // fixed baseline years, or null = every other year
-  const when = daily ? `${+key.slice(8)} ${mon} ${y}` : win > 1 ? spanLabel(+y, mi, win) : `${mon} ${y}`;
-  const short = k => daily ? `${+k.slice(8)} ${MONS[+k.slice(5, 7) - 1]}` : MONS[+k.slice(5, 7) - 1];
-  const lab = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
-  const bySeason = {};
+// How one value ranks among the same season in other years. Returns null when there is no value,
+// {cur, n} when too few other years exist, {cur, n, mean, floor} when normal is too low to rate, else the full rating.
+function makeStat(h, axis) {
+  const need = h.min_years || 5, base = Array.isArray(h.ref) ? h.ref : null, bySeason = {};
   axis.forEach((k, i) => (bySeason[k.slice(5)] = bySeason[k.slice(5)] || []).push(i));
-  const stat = (arr, i) => {
+  return (arr, i) => {
     const cur = arr[i]; if (cur == null) return null;
     const refs = [];
     bySeason[axis[i].slice(5)].forEach(j => {
@@ -357,16 +366,31 @@ function anomalyView(d, h, axis, vals, t) {
     return { cur, n: refs.length, mean, pct: mean > 0 ? cur / mean * 100 : 0, less: Math.round(less),
              cat: p <= 10 ? "very_dry" : p <= 30 ? "dry" : p < 70 ? "normal" : p < 90 ? "wet" : "very_wet" };
   };
-  const catOf = q => q && q.cat ? q.cat : q && q.floor ? h.floor.key : un.key;
+}
+
+// ---- rainfall, soil moisture, vegetation: a value compared with the same time of year in other years ----
+function anomalyView(d, h, axis, vals, t) {
+  const key = axis[t], daily = key.length > 7, y = key.slice(0, 4), mi = +key.slice(5, 7), mon = MONS[mi - 1];
+  const P = h.series[0], S = h.series[1], win = h.window || 1, need = h.min_years || 5;
+  const fmt = (s, v) => v.toFixed(s.decimals ?? 2) + (s.unit ? " " + s.unit : "");
+  const lessWord = (h.words && h.words.less) || "drier";
+  const un = { key: "none", label: "Not rated", text: "", ...(h.unrated || {}) };
+  const base = Array.isArray(h.ref) ? h.ref : null;                    // fixed baseline years, or null = every other year
+  const when = daily ? `${+key.slice(8)} ${mon} ${y}` : win > 1 ? spanLabel(+y, mi, win) : `${mon} ${y}`;
+  const short = k => daily ? `${+k.slice(8)} ${MONS[+k.slice(5, 7) - 1]}` : MONS[+k.slice(5, 7) - 1];
+  const lab = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
+  lab.few = "Not enough years";
+  const stat = makeStat(h, axis);
+  const catOf = q => q && q.cat ? q.cat : q && q.floor ? h.floor.key : q ? "few" : un.key;      // "few": a value exists but fewer than the minimum number of other years
   const inYear = [], inTable = [];
   axis.forEach((k, i) => { if (k.startsWith(y)) { inYear.push(i); if (!daily || k.startsWith(key.slice(0, 7))) inTable.push(i); } });
   const districts = {}, counts = {};
-  let others = 0;
+  const nOthers = [];
   for (const [id, x] of Object.entries(d.districts)) {
     const a = vals[P.key][id]; if (!a) continue;
     const b = S ? vals[S.key][id] : null;
     const s = stat(a, t), ss = b ? stat(b, t) : null, rated = !!(s && s.cat), cat = catOf(s);
-    if (s) others = Math.max(others, s.n);
+    if (s && s.n) nOthers.push(s.n);
     const yr = inYear.map(i => stat(a, i));
     counts[cat] = (counts[cat] || 0) + 1;
     const rows = [];
@@ -374,6 +398,7 @@ function anomalyView(d, h, axis, vals, t) {
     if (s && s.mean != null) rows.push([base ? `Normal (${base[0]}–${base[1]})` : `Normal for ${daily ? "this date" : mon}`, fmt(P, s.mean)]);
     if (ss) rows.push([S.label, fmt(S, ss.cur) + (ss.cat ? ` (${Math.round(ss.pct)}% of normal)` : "")]);
     if (rated) rows.push([`${base ? "Baseline" : "Other"} years that were ${lessWord}`, s.less + " of " + s.n]);
+    if (s && !base) rows.push(["Other years in the comparison", String(s.n)]);
     districts[id] = {
       name: x.name, cat,
       big: rated ? Math.round(s.pct) + "%" : "–",
@@ -387,9 +412,12 @@ function anomalyView(d, h, axis, vals, t) {
                rows: inTable.map(i => { const q = yr[inYear.indexOf(i)]; return [short(axis[i]), q ? q.cur.toFixed(P.decimals ?? 2) : "–", q && q.cat ? Math.round(q.pct) + "%" : "–"]; }) },
     };
   }
-  const categories = counts[un.key] && !lab[un.key] ? d.categories.concat([{ key: un.key, label: un.label, note: "", color: "#bdbdbd" }]) : d.categories;
+  let categories = counts[un.key] && !lab[un.key] ? d.categories.concat([{ key: un.key, label: un.label, note: "", color: "#bdbdbd" }]) : d.categories;
+  if (counts.few) categories = categories.concat([{ key: "few", label: "Not enough years", note: `under ${need} other years`, color: "#dcd6c8" }]);
+  nOthers.sort((a, b) => a - b);
+  const med = nOthers.length ? nOthers[nOthers.length >> 1] : 0, spread = nOthers.length && nOthers[0] !== nOthers[nOthers.length - 1];
   return { ...d, districts, counts, categories,
-    subtitle: base ? `${when}, against ${base[0]}–${base[1]}` : `${when}, against the same ${daily ? "date" : "month"} in ${others} other years`,
+    subtitle: base ? `${when}, against ${base[0]}–${base[1]}` : `${when}, against the same ${daily ? "date" : "month"} in ${spread ? "a median of " : ""}${med} other years${spread ? " (it varies by district)" : ""}`,
     chart: { ...d.chart, x: inYear.map(i => short(axis[i])),
              caption: daily ? `Each sampled day of ${y}` : win > 1 ? `${win}-month periods ending in each month of ${y}` : `Each month of ${y}` } };
 }
@@ -400,9 +428,11 @@ function countView(d, h, t) {
   const lab = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
   const same = [], inYear = [];
   h.months.forEach((k, i) => { if (k.slice(5) === key.slice(5) && i !== t) same.push(i); if (k.startsWith(y)) inYear.push(i); });
+  const med = arr => { const s = arr.slice().sort((p, q) => p - q), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const Q = Math.max(h.quiet || 0, TL.minDetections);                  // "normal" is the median of the other years, so one extreme year does not lift it
   const stat = (a, i, refsIdx) => {
-    const refs = refsIdx.map(j => a[j]), n = refs.length, mean = n ? refs.reduce((p, q) => p + q, 0) / n : 0, c = a[i];
-    const quiet = n < need || (c < h.quiet && mean < h.quiet), pct = mean > 0 ? c / mean * 100 : Infinity;
+    const refs = refsIdx.map(j => a[j]), n = refs.length, mean = n ? med(refs) : 0, c = a[i];
+    const quiet = n < need || (c < Q && mean < Q), pct = mean > 0 ? c / mean * 100 : Infinity;
     const k = h.breaks.findIndex(b => pct < b);
     return { c, n, mean, pct, quiet, more: refs.filter(v => v > c).length, cat: quiet ? "quiet" : d.categories[k < 0 ? h.breaks.length : k].key };
   };
@@ -418,7 +448,7 @@ function countView(d, h, t) {
       name: x.name, cat: s.cat, big: s.c.toLocaleString(),
       big_note: `fire detections, ${mon} ${y}${share}`,
       tip: `${s.c.toLocaleString()} detections` + (share ? ` · ${Math.round(s.pct)}% of normal` : ""),
-      rows: [[`Normal for ${mon}`, Math.round(s.mean).toLocaleString()], ["Other years with more fires", `${s.more} of ${s.n}`],
+      rows: [[`Normal for ${mon} (median)`, Math.round(s.mean).toLocaleString()], ["Other years with more detections", `${s.more} of ${s.n}`],
              [`All of ${y}`, inYear.reduce((p, i) => p + a[i], 0).toLocaleString()]],
       v: inYear.map(i => a[i]), c: inYear.map(() => s.cat),
       table: { caption: `Detections in each month of ${y}`, head: ["Month", "Detections", "% of normal"],
@@ -496,6 +526,24 @@ function scorecard(v, t) {               // how the estimates for this period co
                : "What happened in this period is not known yet.";
 }
 
+function usualView(v, t) {               // the same period, coloured by how far the estimate is above or below the district's usual chance
+  const cats = [{ key: "u_hi", label: "10 or more points above usual", note: "", color: "#b2182b" },
+                { key: "u_up", label: "5 to 10 points above usual", note: "", color: "#ef8a62" },
+                { key: "u_same", label: "Within 5 points of usual", note: "", color: "#f3efe4" },
+                { key: "u_dn", label: "5 or more points below usual", note: "", color: "#67a9cf" },
+                { key: "unknown", label: "No usual value", note: "", color: "#bdbdbd" }];
+  const districts = {}, counts = {};
+  for (const [id, x] of Object.entries(v.districts)) {
+    const p = REC.p[id][t], u = REC.u[id][t];
+    if (p == null || u == null) { districts[id] = { ...x, cat: "unknown", big: "–", tip: "No usual value" }; counts.unknown = (counts.unknown || 0) + 1; continue; }
+    const diff = p - u, cat = diff >= 10 ? "u_hi" : diff >= 5 ? "u_up" : diff > -5 ? "u_same" : "u_dn";
+    counts[cat] = (counts[cat] || 0) + 1;
+    districts[id] = { ...x, cat, big: (diff > 0 ? "+" : "") + diff + " points", big_note: `points above (+) or below (−) the usual chance for these dates, which is ${u}%. The estimate is ${p}%.`,
+                      tip: `${(diff > 0 ? "+" : "") + diff} points vs usual (${p}% against ${u}%)` };
+  }
+  return { ...v, districts, counts, categories: cats.filter(c => counts[c.key]), marks: v.marks, rank_note: "Ranked by how far the estimate is above the district's usual chance for these dates." };
+}
+
 function happenedView(v, t) {            // the same period, coloured by what was observed
   const cats = [{ key: "fire", label: "Fire detected", note: "", color: "#b2182b" },
                 { key: "nofire", label: "No fire detected", note: "", color: "#f3efe4" },
@@ -510,16 +558,59 @@ function happenedView(v, t) {            // the same period, coloured by what wa
 }
 
 // ---------- drawing ----------
+const MEAS = {};                          // layer key -> chosen second figure (0 = the map as published)
+const UNRATED = ["cloud", "few", "dry_season", "low", "mnone"];
+
+// Wording, caveats and extra figures that apply to every layer as it is drawn (see TL.* in config.js)
+function presentable(key, d) {
+  const cf = TL.colorFix[key] || {};
+  d = { ...d,
+    title: TL.titleFix[key] || d.title,
+    categories: d.categories.map(c => ({ ...c, note: TL.noteFix[c.note] ?? c.note, label: TL.labelFix[c.label] ?? c.label, color: cf[c.key] || c.color })),
+    limits: d.limits.concat((TL.extralimits[key] || []).filter(s => !d.limits.includes(s))) };
+  if (key === "water") d = { ...d, subtitle: d.subtitle.replace(/1984 to (\d{4})/, "each place's first clear image to $1") };
+  if (TL.post[key]) d = TL.post[key](d);
+  return applyMeasure(key, d);
+}
+
+function applyMeasure(key, d) {
+  const defs = TL.measures[key], wrap = $("measure-wrap");
+  if (!defs || defs.length < 2 || !Object.keys(d.districts).length) { wrap.hidden = true; return d; }
+  wrap.hidden = false;
+  const i = Math.min(MEAS[key] || 0, defs.length - 1);
+  $("measure").innerHTML = defs.map((m, k) => `<option value="${k}"${k === i ? " selected" : ""}>${esc(m.label)}</option>`).join("");
+  if (i === 0) return d;
+  const m = defs[i], counts = {}, districts = {};
+  const categories = m.classes.map((c, k) => ({ key: "m" + k, label: c.label, note: "", color: c.color })).concat([{ key: "mnone", label: m.none || "Not rated", note: "", color: "#bdbdbd" }]);
+  for (const [id, x] of Object.entries(d.districts)) {
+    const v = m.val(x), ok = v != null && isFinite(v), k = ok ? m.breaks.findIndex(b => v < b) : -1;
+    const cat = ok ? "m" + (k < 0 ? m.breaks.length : k) : "mnone";
+    counts[cat] = (counts[cat] || 0) + 1;
+    districts[id] = { ...x, cat, big: ok ? m.fmt(v) : "–", big_note: ok ? m.note : m.none || "No value for this district.",
+                      tip: ok ? `${m.fmt(v)} · ${categories[cat === "mnone" ? categories.length - 1 : +cat.slice(1)].label}` : "No value", flag: x.flag };
+  }
+  return { ...d, categories, counts, districts, rank_note: `Ranked by ${m.label.toLowerCase()}.`, measure: m.label };
+}
+
+// a short note under the date boxes; long ones fold away so the legend stays in view
+function setNote(text) {
+  const el = $("time-note");
+  el.innerHTML = text && text.length > 120 ? `<details><summary>How the dates work</summary>${esc(text)}</details>` : esc(text || "");
+}
+
 function render(key, d) {
+  const orig = d;
+  d = presentable(key, d);
   D = d;
   $("time").hidden = !REC;
   $("download-all").hidden = !REC;
+  $("download-days").hidden = !(REC && REC.daily);
   history.replaceState(null, "", "#" + key);
   document.querySelectorAll("#tabs button[data-key]").forEach(b => b.setAttribute("aria-current", b.dataset.group ? b.dataset.group === (TL.products[key] || {}).group : b.dataset.key === key));
   $("demo").style.display = d.demo ? "block" : "none";
   color = Object.fromEntries(d.categories.map(c => [c.key, c.color]));
   label = Object.fromEntries(d.categories.map(c => [c.key, c.label]));
-  FULL = d;
+  FULL = orig;
   if (REGION) {                         // keep only the chosen region; the legend, ranking and downloads follow
     const districts = Object.fromEntries(Object.entries(d.districts).filter(([id]) => inRegion(id))), counts = {};
     Object.values(districts).forEach(x => counts[x.cat] = (counts[x.cat] || 0) + 1);
@@ -529,27 +620,31 @@ function render(key, d) {
   geoLayer.eachLayer(l => {
     const x = d.districts[l.feature.properties.shapeID];
     if (!x && REGION) return l.setStyle({ fillColor: "#999", fillOpacity: 0.08, color: SAT ? "#ffffff" : "#55605c", weight: 0.3 });
-    l.setStyle({ fillOpacity: 0.9 * FILL });
-    const fb = x && x.basis === "all_land_fallback";                  // district-wide estimate: dashed outline
-    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: fb ? 1.1 : 0.6, dashArray: fb ? "3 2" : null });
+    l.setStyle({ fillOpacity: 0.9 * FILL * (x && x.op != null ? x.op : 1) });
+    const dash = x && (x.basis === "all_land_fallback" || x.ol);         // district-wide estimate, or a caveat the legend explains: dashed outline
+    l.setStyle({ fillColor: x ? color[x.cat] : "#999", color: SAT ? "#ffffff" : "#55605c", weight: dash ? 1.4 : 0.6, dashArray: dash ? "3 2" : null });
   });
   dots.clearLayers();
   (d.marks || []).forEach(id => {
     if (shapes[id]) L.circleMarker(shapes[id].getCenter(), { radius: 3.2, color: "#fff", weight: 1, fillColor: "#111", fillOpacity: 1, interactive: false }).addTo(dots);
   });
   const total = Object.keys(d.districts).length;
+  const unrated = UNRATED.reduce((a, k) => a + (d.counts[k] || 0), 0);
   const prod = TL.products[key];
   $("status").innerHTML = prod ? `${badge(prod.status)} <span class="sub">${esc(prod.name)}, version ${esc(prod.version)}</span>` : "";
   $("title").textContent = d.title;
-  $("subtitle").textContent = d.subtitle + ". " + total + " districts" + (REGION ? ` in ${REGION} Region` : "");
+  $("subtitle").textContent = d.subtitle + ". " + total + " districts" + (REGION ? ` in ${REGION} Region` : "") + (unrated ? `, ${unrated} not rated` : "");
   $("bar").innerHTML = d.categories.map(c => {
     const n = d.counts[c.key] || 0;
     return n ? `<div title="${esc(c.label)}: ${n} districts" style="width:${n / total * 100}%;background:${c.color}"></div>` : "";
   }).join("");
-  $("legend").innerHTML = d.categories.map(c =>
+  const outlined = Object.values(d.districts).filter(q => q.ol).length, fallback = Object.values(d.districts).filter(q => q.basis === "all_land_fallback").length;
+  $("legend").innerHTML = d.categories.filter(c => (d.counts[c.key] || 0) || !TL.hideEmpty.has(c.key)).map(c =>
     `<li><span class="sw" style="background:${c.color}"></span>${esc(c.label)} <span class="n">${esc(c.note || "")}</span><b>${d.counts[c.key] || 0}</b></li>`).join("")
-    + (Object.values(d.districts).some(q => q.basis === "all_land_fallback") ? `<li><span class="sw" style="background:#fff;border:1.5px dashed #55605c"></span>Dashed outline: district-wide estimate <b>${Object.values(d.districts).filter(q => q.basis === "all_land_fallback").length}</b></li>` : "")
-    + (d.marks ? `<li><span class="sw" style="background:#111;border-radius:50%;width:9px;height:9px;margin:0 2.5px;border:1px solid #fff;outline:1px solid #111"></span>Dot: a fire was detected <b>${d.marks.length}</b></li>` : "");
+    + (fallback ? `<li><span class="sw" style="background:#fff;border:1.5px dashed #55605c"></span>Dashed outline: district-wide estimate <b>${fallback}</b></li>` : "")
+    + (outlined && d.outline_label ? `<li><span class="sw" style="background:#fff;border:1.5px dashed #55605c"></span>${esc(d.outline_label)} <b>${outlined}</b></li>` : "")
+    + (d.marks ? `<li><span class="sw" style="background:#111;border-radius:50%;width:9px;height:9px;margin:0 2.5px;border:1px solid #fff;outline:1px solid #111"></span>Dot: the district had at least one detection <b>${d.marks.length}</b></li>` : "");
+  $("lnotes").innerHTML = notesOf(key, d).map(t => `<li>${esc(t)}</li>`).join("");
   $("names").innerHTML = Object.values(d.districts).map(x => x.name).sort().map(n => `<option value="${esc(n)}">`).join("");
   $("how").textContent = d.how;
   { const all = d.limits.concat(["District boundaries are the 260 districts of 2019. Newer districts are not yet shown."]);
@@ -572,34 +667,161 @@ function render(key, d) {
   if (TL.afterRender) TL.afterRender(key, d);          // lets a page add to the map (the soil grid)
 }
 
+// warnings that belong with the map itself (shown under the legend and printed on the PNG)
+function notesOf(key, d) {
+  const prod = TL.products[key] || {}, out = (TL.caveats[key] || []).slice();
+  if (!out.length && prod.status === "pubmodel") out.push("Published model result, not an observation.");
+  return out.concat(d.legend_notes || [], d.flag_note ? [d.flag_note] : []);
+}
+
 function ranking() {
+  const names = TL.rankname[D.key] || ["Highest 10", "Lowest 10"];
+  $("rk-hi").textContent = names[0]; $("rk-lo").textContent = names[1];
   $("rk-hi").setAttribute("aria-pressed", rankHigh);
   $("rk-lo").setAttribute("aria-pressed", !rankHigh);
-  const rows = Object.entries(D.districts).map(([id, x]) => ({ id, x, v: num(x.big) })).filter(r => r.v !== null);
+  const rows = Object.entries(D.districts).map(([id, x]) => ({ id, x, v: num(x.big) })).filter(r => r.v !== null && r.x.cat !== "few");     // "too few records" districts are not ranked
   rows.sort((a, b) => (rankHigh ? b.v - a.v : a.v - b.v) || a.x.name.localeCompare(b.x.name));
-  $("rank").innerHTML = rows.slice(0, 10).map((r, i) =>
-    `<li data-id="${esc(r.id)}"><span class="i">${i + 1}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}</span><b>${esc(TL.relBig(r.x.big, r.x.big_note)[0])}</b></li>`).join("")
-    || '<li style="cursor:default;color:var(--muted)">No rated districts on this map.</li>';
+  const first = new Map(), size = new Map();
+  rows.forEach((r, i) => { if (!first.has(r.v)) first.set(r.v, i + 1); size.set(r.v, (size.get(r.v) || 0) + 1); });
+  document.querySelector(".rank-card").style.display = rows.length ? "" : "none";       // no ranking when the figure is not a number (a crop name)
+  $("rank").innerHTML = rows.slice(0, 10).map(r => {
+    const yrs = (r.x.rows || []).find(q => /years that were/.test(q[0])), word = yrs && /were (.+)$/.exec(yrs[0]);
+    return `<li data-id="${esc(r.id)}"><span class="i">${size.get(r.v) > 1 ? "=" : ""}${first.get(r.v)}</span><span class="sw" style="background:${color[r.x.cat]}"></span><span class="nm">${esc(r.x.name)}${r.x.flag ? " " + esc(r.x.flag) : ""}`
+      + (yrs ? `<span class="rk2">${esc(String(yrs[1]).replace(/^about /, ""))} years ${esc(word ? word[1] : "")}</span>` : "") + `</span><b>${esc(TL.relBig(r.x.big, r.x.big_note)[0])}</b></li>`;
+  }).join("") || '<li style="cursor:default;color:var(--muted)">No rated districts on this map.</li>';
+  $("rank-note").textContent = [D.rank_note || TL.ranknote[D.key] || "", D.flag_note && !/†/.test(TL.ranknote[D.key] || "") ? D.flag_note : ""].filter(Boolean).join(" ");
 }
 
 // ---------- downloads ----------
 const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-const credit = () => q("Source: " + BASE.source + ". Updated " + BASE.updated + ". Product version " + ((TL.products[BASE.key] || {}).version || "-") + ". Tinga Lens, " + TL.site);
+const EMOJI = /[\p{Extended_Pictographic}️‍]/gu;
 const byName = () => Object.entries(BASE.districts).sort((a, b) => a[1].name.localeCompare(b[1].name));
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const fileTag = () => `${D.key}${D.measure ? "-by-" + slug(D.measure).slice(0, 30) : ""}${REGION ? "-" + slug(REGION) : ""}`;
+// one text cell in each row of the CSV: where it names the source, version and date, so the file is understood without the page
+const shortSource = () => `tingalens.org, ${BASE.key}${(TL.products[BASE.key] || {}).version ? ", version " + (TL.products[BASE.key] || {}).version : ""}, updated ${BASE.updated}`;       // used in the very large files
+const sourceText = () => `${BASE.source}. Tinga Lens${(TL.products[BASE.key] || {}).version ? " product version " + (TL.products[BASE.key] || {}).version : ""}. Updated ${BASE.updated}. ${TL.site}`;
 
 function saveCSV(lines, name) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+  a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" }));
   a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---- turn the text in a pop-up row ("0.31 m³/m³ (+0.02 vs usual)") into separate numeric columns ----
+const NUMRE = "[+\\-−]?\\d[\\d,]*\\.?\\d*", UNITRE = "%|ha|km²|km2|mm|MW|g/kg|g/cm³|m³/m³|µg/m³|ppm|°C|points|species|records|people";
+const toNum = s => parseFloat(String(s).replace(/,/g, "").replace("−", "-"));
+const withUnit = (L, u) => !u ? L : /\)$/.test(L) ? `${L}, ${u}` : `${L} (${u})`;
+function paren(L, inner) {
+  let m;
+  if ((m = /^(\d+(?:\.\d+)?)% of normal$/.exec(inner))) return [[`${L} (% of normal)`, +m[1]]];
+  if ((m = /^(\d+(?:\.\d+)?)% of (?:the )?district$/.exec(inner))) return [[`${L} (% of district)`, +m[1]]];
+  if ((m = new RegExp(`^from (${NUMRE})$`).exec(inner))) return [[`${L} (starting value)`, toNum(m[1])]];
+  if ((m = new RegExp(`^(${NUMRE}) vs usual$`).exec(inner))) return [[`${L} (difference from usual)`, toNum(m[1])]];
+  if ((m = /^(\d{4})$/.exec(inner))) return [[`${L} (year)`, +m[1]]];
+  if ((m = /^(\d+)%$/.exec(inner))) return [[`${L} (share, %)`, +m[1]]];
+  if (/^1 = /.test(inner)) return [];                                   // "(1 = most modified)" explains the rank, it is not data
+  return [[`${L} (note)`, inner]];
+}
+function cells(label, text) {
+  text = String(text ?? "").replace(EMOJI, "").replace(/\s+/g, " ").trim();
+  let L = TL.clean(label).replace(EMOJI, "").trim();
+  const out = [], area = /\s*\((\d[\d,.]*) km²\)\s*$/.exec(L);
+  if (area) { L = L.replace(area[0], ""); out.push([L.split(",")[0] + " area (km²)", toNum(area[1])]); }   // an area folded into a heading becomes its own column
+  let m;
+  if (/^(?:none(?: detected)?)$/i.test(text)) return out.concat([[L, 0]]);
+  if (text === "" || /^[–-]$/.test(text)) return out.concat([[L, ""]]);
+  if ((m = /^None \((\d[\d,.]*) km² mapped\)$/.exec(text))) return out.concat([[L, ""], [L.split(",")[0] + " area (km²)", toNum(m[1])]]);
+  if (/^(?:fewer|under|less) than /.test(text)) return out.concat([[L, ""], [`${L} (note)`, text]]);
+  if ((m = /^(?:about )?(\d+) of (\d+)(?:\s*\((.*)\))?$/.exec(text))) return out.concat([[L, +m[1]], [`${L}, out of`, +m[2]]]);
+  if ((m = /^(?:about )?([\d,]+),\s*(\d+)% of the district$/.exec(text))) return out.concat([[L, toNum(m[1])], [`${L} (% of district)`, +m[2]]]);
+  if ((m = new RegExp(`^(?:about )?(${NUMRE})\\s*(${UNITRE})?\\s*(?:\\((.*)\\))?$`).exec(text)))
+    return out.concat([[withUnit(L, m[2] || ""), toNum(m[1])]], m[3] ? paren(L, m[3]) : []);
+  if ((m = /^(\d+)\s*\((.+)\)$/.exec(text))) return out.concat([[L, +m[1]], [`${L} (detail)`, m[2]]]);       // "2 (1 critically endangered, 1 vulnerable)"
+  return out.concat([[L, text]]);
+}
+function mainFigure(big) {
+  const t = String(big ?? "").replace(EMOJI, "").trim();
+  if (/^(?:none(?: detected)?)$/i.test(t)) return [0, ""];
+  if (t === "–" || t === "") return ["", ""];
+  const m = new RegExp(`^(${NUMRE})\\s*(${UNITRE})?$`).exec(t);
+  return m ? [toNum(m[1]), m[2] || ""] : [t, ""];
+}
+
+function download() {                  // the map as shown
+  const heads = [], index = new Map(), recs = [], src = sourceText();
+  const put = (rec, h, v) => { if (!index.has(h)) { index.set(h, heads.length); heads.push(h); } rec[index.get(h)] = v; };
+  const years = !REC && D.chart && D.chart.x && D.chart.x.length >= 3 && D.chart.x.every(v => /^\d{4}$/.test(v)) ? D.chart : null;
+  const series = years ? (years.series || D.title) : "";
+  Object.entries(D.districts).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([id, x]) => {
+    const rec = [], mf = mainFigure(x.big);
+    put(rec, "District", x.name); put(rec, "District ID", id); put(rec, LL[0], ll(id)[0]); put(rec, LL[1], ll(id)[1]);
+    put(rec, "Rating", label[x.cat]); put(rec, "Main figure", mf[0]); put(rec, "Main figure unit", mf[1]);
+    put(rec, "What the figure means", String(x.big_note ?? "").replace(EMOJI, "").trim());
+    (x.rows || []).forEach(r => { if (r[0] && r[1] !== "") cells(r[0], r[1]).forEach(([h, v]) => put(rec, h, v)); });
+    if (years && x.v) years.x.forEach((yr, i) => { if (x.v[i] != null) put(rec, `${series} ${yr}${years.unit ? " (" + years.unit + ")" : ""}`, x.v[i]); });
+    recs.push(rec);
+  });
+  // a heading that is empty everywhere while the same heading with a unit has the values ("Cropland, 0 to 20 cm" and "... (g/kg)") is dropped
+  const empty = heads.map((h, i) => recs.every(r => r[i] === undefined || r[i] === "") && heads.some(o => o !== h && (o.startsWith(h + " (") || o.startsWith(h + ", "))));
+  heads.push("Source and version"); empty.push(false);
+  recs.forEach(r => { r[heads.length - 1] = src; });
+  const keep = heads.map((_, i) => !empty[i]);
+  const lines = [heads.filter((_, i) => keep[i]).map(q).join(",")].concat(recs.map(r => heads.filter((_, i) => keep[i]).map(h => q(r[heads.indexOf(h)] ?? "")).join(",")));
+  saveCSV(lines, `tinga-lens-${fileTag()}-${REC && VIEW ? VIEW : D.updated}.csv`);
+}
+
+function downloadAll() {               // every district and every period on record
+  const name = extra => `tinga-lens-${BASE.key}-full-record${extra || ""}-${BASE.updated}.csv`, src = shortSource();
+  let lines;
+  if (REC.kind === "probability") {
+    lines = [["District", "District ID"].concat(LL, ["Five days from", "Estimated chance (%)", "Usual chance for these dates (%)", "Estimate minus usual (points)", "Fire detected (1 = yes, 0 = no, blank = not known yet)", "Source and version"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.days.forEach((k, i) => lines.push([x.name, id].concat(ll(id), [k, REC.p[id][i] ?? "", REC.u[id][i] ?? "", REC.p[id][i] == null || REC.u[id][i] == null ? "" : REC.p[id][i] - REC.u[id][i], REC.o[id][i] ?? "", src]).map(q).join(","))));
+  } else if (REC.kind === "count") {
+    lines = [["District", "District ID"].concat(LL, ["Month", "Fire detections", "Source and version"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.months.forEach((k, i) => lines.push([x.name, id].concat(ll(id), [k, REC.counts[id][i], src]).map(q).join(","))));
+  } else if (REC.kind === "yearly") {
+    lines = [["District", "District ID"].concat(LL, ["Year", "Tree cover lost (ha)", "Tree cover in 2000 (ha)", "Source and version"]).map(q).join(",")];
+    byName().forEach(([id, x]) => REC.years.forEach((k, i) => lines.push([x.name, id].concat(ll(id), [k, x.v[i], x.tc ?? num(x.rows[0][1]) ?? "", src]).map(q).join(","))));
+  } else {
+    const run = () => {
+      const source = DAYS || REC, axis = DAYS ? DAYS.days : REC.months, P = REC.series[0];
+      const stat = makeStat(REC, axis), cats = Object.fromEntries(BASE.categories.map(c => [c.key, c.label]));
+      const head = ["District", "District ID"].concat(LL, [DAYS ? "Sampled day" : "Month"], REC.series.map(s => s.label + (s.unit ? ` (${s.unit})` : "")),
+        [`Normal for the season, ${P.short.toLowerCase()}`, "Percent of normal", "Rating", "Other years in the comparison", "Short baseline (1 = under 15 years)", "Source and version"]);
+      const out = [head.map(q).join(",")];
+      byName().forEach(([id, x]) => axis.forEach((k, i) => {
+        const s = stat(source.values[P.key][id] || [], i), cat = !s ? "" : s.cat ? cats[s.cat] : s.floor ? "Not rated: normal too low" : "Not enough years";
+        out.push([x.name, id].concat(ll(id), [k], REC.series.map(sr => { const v = (source.values[sr.key][id] || [])[i]; return v == null ? "" : v; }),
+          [s && s.mean != null ? +s.mean.toFixed(P.decimals ?? 3) : "", s && s.pct != null ? Math.round(s.pct) : "", cat, s ? s.n : "", s ? (s.n < 15 ? 1 : 0) : "", src]).map(q).join(","));
+      }));
+      saveCSV(out, name(DAYS ? "-by-sampled-day" : "-by-month"));
+    };
+    return REC.days_file && !DAYS ? getJSON(REC.days_file).then(x => { DAYS = daysCache[BASE.key] = x; run(); }).catch(run) : run();
+  }
+  saveCSV(lines, name());
+}
+
+function downloadDays() {              // the most recent days, one row per district and day
+  const R = REC.daily; if (!R) return;
+  const lines = [["District", "District ID"].concat(LL, ["Date", "Fire detections", "Provisional (rapid-release) data (1 = yes)", "Source and version"]).map(q).join(",")], src = sourceText();
+  byName().forEach(([id, x]) => R.counts[id].forEach((c, i) => {
+    const day = new Date(Date.parse(R.from + "T00:00:00Z") + i * 864e5).toISOString().slice(0, 10);
+    lines.push([x.name, id].concat(ll(id), [day, c, R.final_through && day > R.final_through ? 1 : 0, src]).map(q).join(","));
+  }));
+  saveCSV(lines, `tinga-lens-${BASE.key}-recent-days-${BASE.updated}.csv`);
 }
 
 // The map as a picture. It is drawn fresh here (not copied from the screen), with the Tinga Lens
 // name printed across it, so the name is part of the picture itself.
 function downloadImage() {
   const W = 1600, rb = regionBounds(), aspect = (rb.getNorth() - rb.getSouth()) / ((rb.getEast() - rb.getWest()) * Math.cos((rb.getNorth() + rb.getSouth()) / 2 * Math.PI / 180));
-  const H = Math.round(260 + Math.max(Math.min(1060 * aspect, 1390), 80 + D.categories.length * 68) + 250);   // tall for Ghana, shorter for a wide region
+  const cats = D.categories.filter(c => (D.counts[c.key] || 0) || !TL.hideEmpty.has(c.key));
+  const outlined = Object.values(D.districts).filter(x => x.ol).length, notes = notesOf(D.key, D);
+  const NH = notes.length ? 30 * notes.reduce((a, s) => a + Math.ceil(s.length / 105), 0) + 30 : 0;       // room for the warnings printed under the map
+  const H = Math.round(260 + Math.max(Math.min(1060 * aspect, 1390), 80 + (cats.length + (outlined ? 1 : 0) + (D.marks ? 1 : 0)) * 68) + 250 + NH);   // tall for Ghana, shorter for a wide region
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d"), SERIF = '"Source Serif 4", Georgia, serif', SANS = '"Source Sans 3", Arial, sans-serif';
   g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
@@ -613,10 +835,11 @@ function downloadImage() {
   };
   g.fillStyle = "#1B2B24"; g.textBaseline = "top";
   g.font = `600 54px ${SERIF}`; let y = wrap(D.title, 70, 60, W - 140, 62);
-  g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(D.subtitle + (REGION ? `. ${REGION} Region` : ""), 70, y + 6, W - 140, 38);
+  const unrated = UNRATED.reduce((a, k) => a + (D.counts[k] || 0), 0);
+  g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(D.subtitle + (REGION ? `. ${REGION} Region` : "") + (unrated ? `. ${unrated} districts not rated` : ""), 70, y + 6, W - 140, 38);
 
   // map area
-  const top = y + 24, bottom = H - 250, left = 70, right = W - 470;
+  const top = y + 24, bottom = H - 250 - NH, left = 70, right = W - 470;
   const b = regionBounds(), k = Math.cos((b.getNorth() + b.getSouth()) / 2 * Math.PI / 180);
   const s = Math.min((right - left) / ((b.getEast() - b.getWest()) * k), (bottom - top) / (b.getNorth() - b.getSouth()));
   const ox = left + ((right - left) - (b.getEast() - b.getWest()) * k * s) / 2;
@@ -627,9 +850,10 @@ function downloadImage() {
     const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
     g.beginPath();
     polys.forEach(p => p.forEach(ring => { ring.forEach(([lon, lat], i) => i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat))); g.closePath(); }));
-    g.fillStyle = x ? color[x.cat] : "#999"; g.fill("evenodd");
-    g.strokeStyle = "#55605c"; g.lineWidth = 1; g.stroke();
+    g.fillStyle = x ? color[x.cat] : "#999"; g.globalAlpha = x && x.op != null ? x.op : 1; g.fill("evenodd"); g.globalAlpha = 1;
+    g.strokeStyle = "#55605c"; g.lineWidth = x && x.ol ? 2 : 1; g.setLineDash(x && x.ol ? [7, 5] : []); g.stroke(); g.setLineDash([]);
   });
+  (D.marks || []).forEach(id => { if (shapes[id]) { const c = shapes[id].getCenter(); g.beginPath(); g.arc(X(c.lng), Y(c.lat), 6, 0, 7); g.fillStyle = "#111"; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke(); } });
 
   // the name, repeated across the map so cropping does not remove it
   g.save(); g.beginPath(); g.rect(left - 30, top - 10, right - left + 60, bottom - top + 20); g.clip();
@@ -641,13 +865,28 @@ function downloadImage() {
   // legend
   let ly = top + 10; const lx = W - 430;
   g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `600 28px ${SANS}`; g.fillText("Districts", lx, ly); ly += 46;
-  D.categories.forEach(cat => {
+  cats.forEach(cat => {
     g.fillStyle = cat.color; g.fillRect(lx, ly, 34, 34); g.strokeStyle = "#8a948e"; g.lineWidth = 1; g.strokeRect(lx + .5, ly + .5, 33, 33);
     g.fillStyle = "#1B2B24"; g.font = `400 26px ${SANS}`; g.fillText(cat.label, lx + 48, ly + 2);
     g.textAlign = "right"; g.font = `600 26px ${SANS}`; g.fillText(String(D.counts[cat.key] || 0), W - 70, ly + 2); g.textAlign = "left";
     ly += 44;
     if (cat.note) { g.fillStyle = "#56655C"; g.font = `400 21px ${SANS}`; g.fillText(cat.note, lx + 48, ly - 8); ly += 22; }
   });
+  if (outlined && D.outline_label) {                  // dashed outline and dots, as on the screen
+    g.setLineDash([6, 4]); g.strokeStyle = "#55605c"; g.lineWidth = 2; g.strokeRect(lx + 1, ly + 1, 32, 32); g.setLineDash([]);
+    g.fillStyle = "#1B2B24"; g.font = `400 21px ${SANS}`; wrap(D.outline_label, lx + 48, ly + 2, 360, 25); ly += 74;
+  }
+  if (D.marks) {
+    g.beginPath(); g.arc(lx + 17, ly + 17, 8, 0, 7); g.fillStyle = "#111"; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke();
+    g.fillStyle = "#1B2B24"; g.font = `400 21px ${SANS}`; wrap("Dot: the district had at least one detection", lx + 48, ly + 2, 360, 25); ly += 60;
+  }
+
+  // warnings that belong with the map
+  if (notes.length) {
+    g.fillStyle = "#33433A"; g.font = `400 23px ${SANS}`; g.textBaseline = "top";
+    let ny = bottom + 22;
+    notes.forEach(s => { ny = wrap(s, 70, ny, W - 140, 30); });
+  }
 
   // footer: brand, source and terms
   const fy = H - 215;
@@ -667,49 +906,10 @@ function downloadImage() {
   c.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `tinga-lens-${BASE.key}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}${VIEW ? "-" + VIEW : ""}.png`;
+    a.download = `tinga-lens-${fileTag()}${VIEW ? "-" + VIEW : ""}.png`;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }, "image/png");
-}
-
-function download() {                  // the map as shown
-  const cols = [];
-  Object.values(D.districts).forEach(x => x.rows.forEach(r => { if (r[0] && r[1] !== "" && !cols.includes(r[0])) cols.push(r[0]); }));
-  const lines = [["District"].concat(LL, ["Rating", "Main figure", "What the figure means"], cols).map(q).join(",")];
-  Object.entries(D.districts).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([id, x]) => {
-    const m = Object.fromEntries(x.rows);
-    lines.push([x.name].concat(ll(id), [label[x.cat], x.big, x.big_note], cols.map(c => m[c] ?? "")).map(q).join(","));
-  });
-  lines.push("", credit());
-  saveCSV(lines, `tinga-lens-${D.key}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}-${REC && VIEW ? VIEW : D.updated}.csv`);
-}
-
-function downloadAll() {               // every district and every period on record
-  const name = extra => `tinga-lens-${BASE.key}-full-record${extra || ""}-${BASE.updated}.csv`;
-  let lines;
-  if (REC.kind === "probability") {
-    lines = [["District"].concat(LL, ["Five days from", "Estimated chance (%)", "Usual chance for these dates (%)", "Fire detected (1 = yes, 0 = no)"]).map(q).join(",")];
-    byName().forEach(([id, x]) => REC.days.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, REC.p[id][i] ?? "", REC.u[id][i] ?? "", REC.o[id][i] ?? ""]).map(q).join(","))));
-  } else if (REC.kind === "count") {
-    lines = [["District"].concat(LL, ["Month", "Fire detections"]).map(q).join(",")];
-    byName().forEach(([id, x]) => REC.months.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, REC.counts[id][i]]).map(q).join(","))));
-  } else if (REC.kind === "yearly") {
-    lines = [["District"].concat(LL, ["Year", "Tree cover lost (ha)", "Tree cover in 2000 (ha)"]).map(q).join(",")];
-    byName().forEach(([id, x]) => REC.years.forEach((k, i) => lines.push([x.name].concat(ll(id), [k, x.v[i], x.tc ?? num(x.rows[0][1]) ?? ""]).map(q).join(","))));
-  } else {
-    const run = () => {
-      const src = DAYS || REC, axis = DAYS ? DAYS.days : REC.months;
-      const out = [["District"].concat(LL, [DAYS ? "Date" : "Month"], REC.series.map(s => s.label + (s.unit ? ` (${s.unit})` : ""))).map(q).join(",")];
-      byName().forEach(([id, x]) => axis.forEach((k, i) =>
-        out.push([x.name].concat(ll(id), [k], REC.series.map(s => { const v = (src.values[s.key][id] || [])[i]; return v == null ? "" : v; })).map(q).join(","))));
-      out.push("", credit());
-      saveCSV(out, name(DAYS ? "-by-day" : "-by-month"));
-    };
-    return REC.days_file && !DAYS ? getJSON(REC.days_file).then(x => { DAYS = daysCache[BASE.key] = x; run(); }).catch(run) : run();
-  }
-  lines.push("", credit());
-  saveCSV(lines, name());
 }
 
 // ---------- district panel ----------

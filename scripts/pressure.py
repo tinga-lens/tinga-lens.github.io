@@ -111,7 +111,7 @@ def read(s, name, link, gdf, allow_download):
         return district_means(dest, gdf)
 
 
-BUILD = 2            # raise this number to make the weekly update rebuild the layer once
+BUILD = 3            # raise this number to make the weekly update rebuild the layer once
 
 
 def fifths(values, cats):
@@ -150,12 +150,15 @@ def main():
     cat_now, rank_now = fifths(now, LEVEL)
     cat_chg, rank_chg = fifths(change, CHANGE)
     n = len(gdf)
+    km2 = (gdf.to_crs(6933).geometry.area / 1e6).to_numpy()          # district land area, used for area-weighted national figures
+    print(f"Area-weighted Ghana average in {y1}: {np.average(now, weights=km2):.3f} (simple average of districts: {np.mean(now):.3f})")
     print(f"Ghana: {np.mean(series[:, 0]):.3f} in {y0}, {np.mean(now):.3f} in {y1}; change ranges {change.min():+.3f} to {change.max():+.3f}")
 
     def build(which):
         out = {}
         for i, row in gdf.iterrows():
             top = sorted(((lab, float(v[i])) for lab, v in parts.items()), key=lambda t: -t[1])[:3]
+            top = [t for t in top if t[1] >= 0.05]          # a pressure under 0.05 is not worth listing
             rows = [[f"Human modification in {y1}", f"{now[i]:.2f}"],
                     ["Rank in Ghana", f"{rank_now[i]} of {n} (1 = most modified)"],
                     [f"Change since {y0}", f"{change[i]:+.2f} (from {series[i, 0]:.2f})"],
@@ -168,14 +171,15 @@ def main():
             else:
                 d = {"cat": cat_chg[i], "big": f"{change[i]:+.2f}", "big_note": f"change in human modification, {y0} to {y1}",
                      "tip": f"{change[i]:+.2f} since {y0}, rank {rank_chg[i]} of {n}", "c": [cat_chg[i]] * len(YEARS)}
-            out[row.shapeID] = {"name": row.shapeName, "rows": rows, "v": [round(float(x), 3) for x in series[i]], **d}
+            out[row.shapeID] = {"name": row.shapeName, "km2": round(float(km2[i]), 1), "rows": rows, "v": [round(float(x), 3) for x in series[i]], **d}
         return out
 
     chart = {"kind": "bars", "unit": "", "x": [str(y) for y in YEARS], "caption": "Human modification at each date (0 to 1)", "top": "", "bottom": ""}
     shared = ["The source's own check against independent reference data gave a typical error of about 0.18 for a single cell. District averages are steadier than that, but small differences between districts should not be over-read.",
               "The figure is an index built from many datasets on farming, building, roads, mining, energy, logging and pollution. It is not a direct measurement.",
               "A district average hides variation inside the district. A district with a city and a forest reserve can score the same as one that is evenly farmed.",
-              "The classes are fifths of Ghana's 260 districts, so they show where a district stands within Ghana, not a fixed level of pressure.",
+              "The classes are cut from the rounded values and districts with equal values always share a class, so the classes are not exactly equal in size. The legend gives the value range of each class.",
+              "Ghana's national figure is the area-weighted average of districts; the simple average of the 260 districts is higher because small urban districts count as much as huge rural ones.",
               f"The latest date is {y1}. Change since then is not shown."]
     write_layer("pressure", {
         "build": BUILD, "label": "Human pressure", "title": "Human modification of the land", "source": "Global Human Modification v3 (TNC)", "demo": False,

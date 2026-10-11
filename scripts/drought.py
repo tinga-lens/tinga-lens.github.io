@@ -245,6 +245,7 @@ def main():
     roll = np.full_like(dm, np.nan)
     for t in range(WINDOW - 1, len(months)):
         roll[t] = dm[t - WINDOW + 1:t + 1].sum(axis=0)
+    roll = np.round(roll, 2)      # rate the same numbers the website's history file holds, so text and map agree on ties
 
     T = len(months) - 1
     cur, normal, pct, pctile = assess(months, roll, T)
@@ -306,10 +307,10 @@ def render(raw):
     """Turn the numbers into what the website shows."""
     n = raw["baseline"][1] - raw["baseline"][0] + 1
     period = f"{ym_text(raw['period']['from'])} to {ym_text(raw['period']['to'])}"
-    notes = ["driest 10% of years", "driest 30% of years", "middle 40% of years",
-             "wettest 30% of years", "wettest 10% of years"]
+    notes = ["driest 10% of years", "driest 10 to 30% of years", "middle 40% of years",
+             "wettest 10 to 30% of years", "wettest 10% of years"]
     cats = [dict(c, note=t) for c, t in zip(WETNESS, notes)]
-    cats.append({"key": "dry_season", "label": "Dry season", "note": "not rated", "color": "#bdbdbd"})
+    cats.append({"key": "dry_season", "label": "Dry season", "note": "not rated", "color": "#bdbdbd"})   # the website hides it when no district is in it
     names = {c["key"]: c["label"] for c in cats}
     districts, x = {}, None
     for sid, d in raw["districts"].items():

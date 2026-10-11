@@ -30,7 +30,8 @@ from common import CACHE, load_districts, write_layer  # noqa: E402
 from ee_check import ee_login  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 2                               # raise this to make the weekly update rebuild the layer
+BUILD = 3                               # raise this to make the weekly update rebuild the layer
+STORE_BUILD = 2                         # name of the saved Earth Engine results; unchanged, so a wording-only rebuild does not recompute them
 HAZARD = "JRC/CEMS_GLOFAS/FloodHazard/v2_1"
 POPULATION = "JRC/GHSL/P2023A/GHS_POP/2020"
 BUILT = "JRC/GHSL/P2023A/GHS_BUILT_S/2020"
@@ -42,7 +43,7 @@ WORKERS = 4
 # --------------------------------------------------------------------------
 
 CATS = [
-    {"key": "h0", "label": "None", "note": "", "color": "#f1eee6", "max": 0.1},
+    {"key": "h0", "label": "Under 0.1%", "note": "of the land", "color": "#f1eee6", "max": 0.1},
     {"key": "h1", "label": "Under 2% of the land", "note": "", "color": "#fed98e", "max": 2},
     {"key": "h2", "label": "2 to 5%", "note": "", "color": "#fe9929", "max": 5},
     {"key": "h3", "label": "5 to 10%", "note": "", "color": "#d95f0e", "max": 10},
@@ -92,7 +93,7 @@ def ask(shape):
 
 
 def one(row):
-    f = STORE / f"{row.shapeID}_b{BUILD}.json"
+    f = STORE / f"{row.shapeID}_b{STORE_BUILD}.json"
     if f.exists():
         return json.loads(f.read_text())
     res = ask(row.geometry.simplify(0.0003).buffer(0))
@@ -141,7 +142,7 @@ def main():
         pct = area / r["land"] * 100
         cat = next(c["key"] for c in CATS if pct < c["max"])
         tot["area"] += area
-        show = lambda x: f"{x:,.1f} km²" if x >= 0.05 else "None"
+        show = lambda x: f"{x:,.1f} km²" if x >= 0.05 else "Under 0.1 km²"
         detail = [
             ["Land inside that flood zone", show(area)],
             [f"Of which {DEEP_M:g} m deep or more", show(r["deep"])],
@@ -151,7 +152,8 @@ def main():
         if exposure:
             tot["pop"] += r["pop_in"]
             detail += [
-                ["People living inside the 1-in-100-year zone (2020)", people(r["pop_in"]) + (f", {r['pop_in'] / r['pop'] * 100:.0f}% of the district" if r["pop"] > 0 and r["pop_in"] >= 100 else "")],
+                ["People living inside the 1-in-100-year zone (2020)", people(r["pop_in"])],
+                ["Share of the district's people inside the zone (%)", f"{r['pop_in'] / r['pop'] * 100:.0f}%" if r["pop"] > 0 and r["pop_in"] >= 100 else "–"],
                 ["Built-up area inside the zone (2020)", f"{r['built_in'] / 1e6:,.2f} km²"],
             ]
         districts[sid] = {
@@ -175,6 +177,9 @@ def main():
                 f"Rivers and lakes themselves are not counted. Click a district for other flood sizes"
                 + (", and for the people and built-up area inside the zone." if exposure else ".")),
         "limits": [
+            "Districts below the Akosombo dam (Ada East, Anloga, South Tongu, Keta and neighbours) are marked † and outlined on the map: the model shows most of their land as flood zone because it ignores the dam. Do not read their figures as normal flood hazard.",
+            "'Under 0.1%' means less than a tenth of the land is in the modelled zone, not that flooding is impossible.",
+            "Districts differ in size, so the ranking by km² or by people favours big or crowded districts. Use the share views to compare them fairly.",
             "This is a model result. It shows where river water could reach in a flood of a given size, not where it has flooded or will flood next.",
             "Only larger rivers are modelled. Small streams, blocked drains and street flooding in towns are not included, so city flooding such as Accra's does not appear.",
             "Flooding from the sea is not included.",

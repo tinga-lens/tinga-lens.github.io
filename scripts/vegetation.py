@@ -246,6 +246,7 @@ def main():
     gdf = load_districts()
     have, total, source = (load_demo if args.demo else load_real)(gdf, today)
     months, ndvi, share = monthly(have, total)
+    ndvi = np.round(ndvi, 4)      # rate the same numbers the website's history file holds, so text and map agree on ties
     if not months:
         sys.exit("No complete month of vegetation data yet.")
     T = len(months) - 1
@@ -257,25 +258,29 @@ def main():
     print(f"{len(months)} complete months, latest = {label}, rated districts = {int((~np.isnan(pctile)).sum())} of {len(gdf)}")
 
     labels = ["Much less green", "Less green", "Near normal", "Greener", "Much greener"]
-    notes = ["lowest 10% of years", "lowest 30% of years", "middle 40% of years", "highest 30% of years", "highest 10% of years"]
+    notes = ["lowest 10% of years", "lowest 10 to 30% of years", "middle 40% of years", "highest 10 to 30% of years", "highest 10% of years"]
     cats = [dict(c, label=lab, note=t) for c, lab, t in zip(WETNESS, labels, notes)]
     cats.append({"key": "cloud", "label": "Too cloudy", "note": "not rated", "color": "#bdbdbd"})
+    cats.append({"key": "few", "label": "Not enough years", "note": f"under {MIN_REF_YEARS} other years", "color": "#dcd6c8"})
     names = {c["key"]: c["label"] for c in cats}
 
     districts = {}
     for i, row in gdf.iterrows():
         rated = not np.isnan(pctile[i])
-        cat = wetness_category(pctile[i]) if rated else "cloud"
+        has_value = not np.isnan(cur[i])
+        cat = wetness_category(pctile[i]) if rated else ("few" if has_value else "cloud")      # a value but too few other years, or no usable value
         rows = [["Usable pixels this month", f"{share[T][i] * 100:.0f}%"]]
         if rated:
             rows = [["Greenness (NDVI)", f"{cur[i]:.2f}"], [f"Normal for {MON[m - 1]}", f"{normal[i]:.2f}"],
-                    ["Earlier years that were less green", f"{round(pctile[i] / 100 * nref[i])} of {int(nref[i])}"]] + rows
+                    ["Earlier years that were less green", f"{round(pctile[i] / 100 * nref[i])} of {int(nref[i])}"],
+                    ["Earlier years in the comparison", f"{int(nref[i])}"]] + rows
         districts[row.shapeID] = {
             "name": row.shapeName, "cat": cat,
             "big": f"{pct[i]:.0f}%" if rated else "–",
             "big_note": (f"of normal greenness, {ym_text(label)}" if rated
+                         else f"Fewer than {MIN_REF_YEARS} other years with a value for this month, so it is not rated." if has_value
                          else "Too few cloud-free pixels this month to rate this district."),
-            "tip": f"{names[cat]} · {pct[i]:.0f}% of normal" if rated else "Too cloudy to rate",
+            "tip": f"{names[cat]} · {pct[i]:.0f}% of normal" if rated else ("Not enough years to rate" if has_value else "Too cloudy to rate"),
             "rows": rows,
             "v": [None if np.isnan(h[2][i]) else round(float(h[2][i] - 100), 1) for h in hist],
             "c": ["cloud" if np.isnan(h[3][i]) else wetness_category(h[3][i]) for h in hist],

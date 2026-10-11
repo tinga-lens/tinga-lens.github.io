@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import load_districts, write_layer  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 1                              # raise this to make the weekly update rebuild the layers
+BUILD = 2                              # raise this to make the weekly update rebuild the layers
 SOURCE = Path(__file__).resolve().parent.parent / "data" / "source" / "spam2020_ghana_physical_area.npz"   # Ghana extract of SPAM 2020 v2r2 physical area, all production systems
 TECH = "A"                             # all production systems together (rainfed and irrigated)
 MAIN = ["MAIZ", "CASS", "YAMS", "RICE", "PLNT", "COCO", "SORG", "PMIL", "GROU"]   # crops that get their own tab
@@ -153,6 +153,8 @@ def main():
         "Physical area is read from the SPAM 2020 files; Tinga Lens adds the 10 km cells up by district. The estimates are built mainly on statistics for 2019 to 2021 and show one typical year, not this season or a trend.",
         "Ghana's district crop statistics were not available to the model at district level, so the district pattern comes from the model, not from district records.",
         "The figures are physical area: the land a crop occupies, whatever the number of harvests in a year. Where two crops share a field, each is given its part. Rainfed and irrigated land are added together.",
+        "The main crop is simply the crop with the largest area. It can lead by a small margin: check its share in the panel, and the crop's own layer. Where it holds under half of the crop area, treat the colour as a rough guide.",
+        "Colours are grouped: crops that lead in fewer than 10 districts are shown as 'Other crops'. Tree crops and plantation crops are only partly captured.",
         "Crop groups such as 'other roots and tubers' hide individual crops. In SPAM, cocoyam is not a crop of its own.",
     ]
 
@@ -168,7 +170,10 @@ def main():
         t5 = [c for c in top[i] if ha[c][i] >= 1]
         rows = [["Main crop", label_of(t5[0])],
                 ["Other major crops", ", ".join(label_of(c) for c in t5[1:]) or "None other estimated"],
+                ["Main crop's share of mapped crop area", f"{ha[t5[0]][i] / total[i] * 100:.0f}%"],
                 ["All mapped crops", f"{total[i]:,.0f} ha"]]
+        if land_km2[i] < 85:
+            rows.append(["Note", "This district is smaller than one 10 km grid cell (about 85 km²), so these figures mostly describe the cells around it."])
         table = {"caption": f"Crop profile: {nm}", "head": ["Crop", "Estimated area", "Share"],
                  "rows": [[label_of(c), f"{ha[c][i]:,.0f} ha", f"{ha[c][i] / total[i] * 100:.0f}%"] for c in t5],
                  "note": "Source: SPAM 2020 (IFPRI). Interpretation: a model estimate of the usual crop distribution, not a current-year crop census. Shares are of the mapped crop area in the district."}
@@ -192,6 +197,21 @@ def main():
         "chart": {"kind": "bars", "unit": "ha", "x": chart_x, "caption": "Estimated crop area of the main crops in the district (hectares)", "top": "", "bottom": ""},
         "districts": districts,
     })
+
+    # ---- every district and crop, as a plain table ----
+    import csv
+    from common import DATA
+    with open(DATA / "crops-by-district.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["District ID", "District", "Crop code", "Crop", "Area (ha)", "Share of mapped crop area (%)", "Source and version"])
+        src = f"{version}, IFPRI 2025 (doi:10.7910/DVN/SWPENT), 10 km grid shared between districts by overlapping area by Tinga Lens (tingalens.org); model estimate, not a census"
+        for i, sid in enumerate(ids):
+            nm = gdf.loc[i, "shapeName"]
+            for c in sorted(ranked, key=lambda c: -ha[c][i]):
+                if ha[c][i] >= 1:
+                    w.writerow([sid, nm, c, name_of(c), round(float(ha[c][i]), 1),
+                                round(float(ha[c][i] / total[i] * 100), 1) if total[i] else "", src])
+    print("Wrote data/crops-by-district.csv")
 
     # ---- one layer for each main crop ----
     for c in mains:

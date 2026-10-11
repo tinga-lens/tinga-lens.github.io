@@ -74,7 +74,7 @@ h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.4rem;font-weight:600;l
 .card h2{font-size:1.05rem;margin:0 0 4px}
 .sub{color:var(--muted);font-size:.95rem;margin:0 0 10px}
 .badge{display:inline-block;font-size:.78rem;font-weight:600;padding:1px 8px;border-radius:4px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
-.badge.observed{color:var(--water)} .badge.index{color:var(--earth)} .badge.condition{color:var(--accent)} .badge.model{color:var(--hazard)} .badge.experimental{color:var(--hazard);border-style:dashed} .badge.pubmodel{color:var(--earth)} .badge.dev{color:var(--muted)}
+.badge.observed{color:var(--water)} .badge.index{color:var(--earth)} .badge.condition{color:var(--accent)} .badge.model{color:var(--hazard)} .badge.experimental{color:var(--hazard);border-style:dashed} .badge.pubmodel{color:var(--earth)} .badge.derived{color:var(--water);border-style:dotted} .badge.dev{color:var(--muted)}
 
 /* ---------- home ---------- */
 .hero{background:var(--head);color:var(--head-ink);padding:44px 0 48px}
@@ -241,3 +241,14 @@ dt.hd{grid-column:1/-1;margin-top:8px;font-weight:600;color:var(--ink,inherit)}d
 aside .card{font-size:1rem}
 section.notes details{margin:6px 0}
 section.notes summary{cursor:pointer;font-weight:600;color:var(--accent)}
+
+/* ---------- review fixes: ranking detail, warnings under the legend, second figure, folded date note ---------- */
+ol.rank .rk2{display:block;font-size:.78rem;color:var(--muted);white-space:normal}
+ol.rank .nm{white-space:normal}
+ol.rank .i{width:1.8em}
+ul.lnotes{list-style:none;margin:0 0 10px;padding:8px 10px;font-size:.84rem;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+ul.lnotes:empty{display:none}
+ul.lnotes li{padding:2px 0}
+#measure-wrap select{max-width:100%}
+#time-note details{font-size:.84rem}
+#time-note summary{cursor:pointer;color:var(--muted)}

@@ -2,6 +2,25 @@
 
 Every change to a method or product is recorded here. Product versions are shown on each map and in every download.
 
+## 2026-10-11 (review fixes)
+
+Changes made after a detailed review of every layer by the Director at the Forestry Commission, Ghana.
+
+- Legend and ranking: class definitions no longer overlap ("driest 10 to 30%" instead of "driest 30%"); empty classes are hidden; ties are shown with "="; the ranking says how many years a district was drier or wetter than; rankings can now be shown in hectares, square kilometres, share of land or relative change, so large districts do not win by size alone.
+- Headline numbers now agree with the map: soil moisture, rainfall and vegetation are rated on the same rounded numbers the history file holds, and the fire-probability class uses the rounded percent.
+- Warnings now appear under the legend and in the downloaded PNG, not only in the Limits text. Districts with a special caveat carry a † (Volta delta below the Akosombo dam; provisional fire data) or a dashed outline (cropland in the forest zone).
+- Labels: added "Published model", "Derived by Tinga Lens" and "Experimental" to the label key. Flood-prone land is now "Derived", not "Observed". Version 0.x layers are marked experimental.
+- Fires: "detections" instead of "fires"; the normal is the median of earlier years, not the mean; districts with under 10 detections now and normally are shown pale grey as "few detections"; provisional days are flagged; the download holds 90 days of day-by-day counts.
+- Fire probability: renamed "Estimated chance of a fire detection"; new "Compared with usual" view; limits explain that the dots are not fire locations and that windows start on fixed days.
+- Vegetation: districts with a value but under 5 earlier years are "Not enough years", no longer "Too cloudy".
+- Flood-prone land: "None seen by radar" instead of "None detected"; radar images a year are shown; lake-shore and ranking caveats added.
+- River flood hazard: the Volta delta caveat is on the map; "Under 0.1%" replaces "None"; the people column is split into a number and a share.
+- Surface water: two decimals under 1 km²; the record's end (2021) and the mixed causes of new water are stated.
+- Crops: classes with fewer than 10 districts are merged into "Other crops"; a colour-blind-safe palette; small districts and weak leaders are flagged; a new download, crops-by-district.csv.
+- Soil nutrients: classes cut on rounded values with value ranges in the legend; a neutral palette (higher is not better); one tidy CSV row per district and property.
+- Human pressure and urban: area-weighted national averages; fixed classes for change; only pressures of 0.05 or more are listed; the built-up threshold is 1 km².
+- Downloads: no source line inside the data (a "Source and version" column instead), numbers and units in separate columns, no emoji, one district ID per row, double-space names fixed, and a day-by-day soil moisture file.
+
 ## 2026-10-10 (later)
 
 - Rainy season, version 0.2 (still experimental). Checked against 14 Ghana Meteorological Agency rain gauges for 1991-2015: a satellite start date typically differs from the gauge by about three weeks, and the year-to-year pattern matches weakly (good at Wa, poor at Tamale, Techiman and Takoradi). Eight variations of the rule did not fit better, so the rule is unchanged. The colour classes are widened to match the error: "about usual" is within 14 days, "much earlier or later" is 28 days or more (was 7 and 14). The accuracy is stated on the map and on the Drought page.

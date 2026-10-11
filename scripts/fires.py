@@ -37,22 +37,24 @@ SENSOR = "VIIRS_SNPP"            # FIRMS source; "_SP" (final) and "_NRT" (recen
 START = dt.date(2012, 1, 20)     # first day of the VIIRS record
 WINDOW = 30                      # days compared
 CHUNK = 5                        # days per request (FIRMS allows at most 5)
-QUIET = 3                        # under this many detections now and normally, a district is "quiet"
+QUIET = 10                       # under this many detections now and normally, a district is "quiet" (small counts make loud percentages)
 MIN_REF_YEARS = 5
 SAVE_EVERY = 50                  # save progress after this many requests
 POINT_DAYS = 7                   # individual detections are published for this many recent days
+DAILY_DAYS = 90                  # days of day-by-day counts kept, so the 30-day page can be rebuilt from the download
 POINT_LIMIT = 15000              # most detections published (the strongest are kept if there are more)
 API = os.environ.get("TINGA_FIRMS_BASE", "https://firms.modaps.eosdis.nasa.gov/api")
 # --------------------------------------------------------------------------
 CACHE_FILE = CACHE / "fires.npz"
+STATE = {}                       # filled by load_real: the last day of final (not provisional) data
 
 CATS = [
-    {"key": "far_fewer", "label": "Far fewer fires", "note": "under half of normal", "color": "#4575b4", "max": 50},
+    {"key": "far_fewer", "label": "Far fewer detections", "note": "under half of normal", "color": "#4575b4", "max": 50},
     {"key": "fewer", "label": "Fewer", "note": "50 to 80%", "color": "#abd9e9", "max": 80},
     {"key": "normal", "label": "Near normal", "note": "80 to 125%", "color": "#f3efe4", "max": 125},
     {"key": "more", "label": "More", "note": "125 to 200%", "color": "#fdae61", "max": 200},
-    {"key": "far_more", "label": "Far more fires", "note": "over double normal", "color": "#d73027", "max": 1e12},
-    {"key": "quiet", "label": "Quiet", "note": "few fires now or normally", "color": "#bdbdbd"},
+    {"key": "far_more", "label": "Far more detections", "note": "over double normal", "color": "#d73027", "max": 1e12},
+    {"key": "quiet", "label": "Few detections", "note": f"under {QUIET} now and normally", "color": "#e4e4e4"},
 ]
 
 
@@ -177,6 +179,7 @@ def load_real(gdf, today):
 
     d = final_through + dt.timedelta(days=1)
     total_chunks = max(0, ((last_day - d).days + CHUNK) // CHUNK)
+    STATE["sp_last"] = sp_last
     print(f"Reading {d} to {last_day}: about {total_chunks} request(s)")
     done, failed, stalled, in_a_row, first_gap = 0, 0, False, 0, None
     recent, first_recent = [], last_day - dt.timedelta(days=POINT_DAYS - 1)
@@ -231,6 +234,7 @@ def load_real(gdf, today):
         save()
         print(f"{failed} request(s) failed. Publishing fire data up to {last_day}; the missing days will be read next run. "
               "The detection points were left as they were.")
+    STATE["final_through"] = final_through
     return counts, last_day, f"NASA FIRMS {SENSOR.replace('_', ' ')}"
 
 
@@ -274,8 +278,11 @@ def main():
     if cur is None or len(refs) < MIN_REF_YEARS:
         sys.exit("Not enough fire data to compare with earlier years.")
     refs = np.array(refs)
-    normal = refs.mean(axis=0)
+    normal = np.median(refs, axis=0)       # the median, so one extreme year does not drag "normal" upwards
     n = len(refs)
+    prov_from = STATE.get("final_through")                       # days after this are rapid-release (provisional) data
+    provisional = prov_from is not None and last_day > prov_from
+    prov_days = (last_day - prov_from).days if provisional else 0
     first = last_day - dt.timedelta(days=WINDOW - 1)
     period = f"{first.day} {MON[first.month - 1]} to {last_day.day} {MON[last_day.month - 1]} {last_day.year}"
 
@@ -300,19 +307,26 @@ def main():
         pct = c / nm * 100 if nm > 0 else float("inf")
         cat = "quiet" if quiet else next(k["key"] for k in CATS if pct < k.get("max", -1))
         more = int((refs[:, i] > c).sum())
+        tied = int((refs[:, i] == c).sum())
         districts[row.shapeID] = {
             "name": row.shapeName, "cat": cat,
             "big": f"{c:,}",
-            "big_note": f"fire detections, {period}" + ("" if quiet or nm == 0 else f" ({pct:.0f}% of normal)"),
+            "big_note": f"fire detections, {period}" + ("" if quiet or nm == 0 else f" ({pct:.0f}% of the usual)"),
             "tip": f"{c:,} detections" + ("" if quiet or nm == 0 else f" · {pct:.0f}% of normal"),
             "rows": [
-                ["Normal for these dates", f"{nm:,.0f}"],
-                ["Earlier years with more fires", f"{more} of {n}"],
+                ["Normal for these dates (median)", f"{nm:,.0f}"],
+                ["Earlier years with more detections", f"{more} of {n}"],
+                ["Earlier years with the same number", f"{tied} of {n}"],
                 ["Past 12 months", f"{int(monthly[:, i].sum()):,}"],
             ],
             "v": [int(x) for x in monthly[:, i]],
             "c": [cat] * 12,
         }
+        if provisional:
+            districts[row.shapeID]["rows"].append(["Days still provisional", f"{prov_days} of the last {WINDOW}"])
+            share_prov = counts[-prov_days:, i].sum() / c if c else 0
+            if c >= QUIET and share_prov >= 0.25:               # flag only where provisional days carry a real part of the count
+                districts[row.shapeID]["flag"] = True
     print(f"Fires through {last_day}: {int(cur.sum()):,} detections in the last {WINDOW} days (normal {normal.sum():,.0f}), {n} earlier years")
 
     # every complete month on record, for looking back
@@ -325,6 +339,9 @@ def main():
     (DATA / "fires_history.json").write_text(json.dumps({
         "kind": "count", "months": [f"{a}-{b:02d}" for (a, b) in all_months], "base_label": f"Last {WINDOW} days",
         "breaks": [c["max"] for c in CATS[:4]], "quiet": QUIET, "min_years": MIN_REF_YEARS,
+        "daily": {"from": (last_day - dt.timedelta(days=DAILY_DAYS - 1)).isoformat(),
+                  "final_through": (prov_from.isoformat() if prov_from is not None else None),
+                  "counts": {row.shapeID: [int(v) for v in counts[-DAILY_DAYS:, i]] for i, row in gdf.iterrows()}},
         "note": "Pick a year and month to see the detections in that month, compared with the same month in other years.",
         "counts": {row.shapeID: [int(v) for v in per_month[:, i]] for i, row in gdf.iterrows()},
     }, separators=(",", ":")))
@@ -340,11 +357,13 @@ def main():
                 f"the average for the same dates in {n} earlier years. A detection is one satellite overpass seeing a hot spot "
                 "about 375 metres across, so one fire can be counted several times."),
         "limits": [
+            "A detection is one satellite overpass seeing a hot spot, not one fire. The map counts detections.",
             "Satellites pass over a few times a day and cannot see through thick cloud or smoke, so short or small fires are missed.",
             "Detections are not burned area. A district with many detections may have had a few long-lasting fires.",
             "Most fires in Ghana's savanna are seasonal bush and farm fires. The map does not say whether a fire was planned or harmful.",
-            f"Districts with fewer than {QUIET} detections both now and normally are shown as quiet. The main fire season runs from about November to April.",
-            "The most recent weeks use rapid-release data that NASA later revises.",
+            f"Districts with fewer than {QUIET} detections both now and normally are shown pale grey as 'few detections'. Grey does not mean no data. In the low season (about May to October) small counts can swing the percentages, so read the number, not just the colour. The main fire season runs from about November to April.",
+            "'Normal' is the median of the same 30 days in earlier years, so one extreme year does not pull it up.",
+            ("The most recent days use rapid-release data that NASA later revises" + (f" ({prov_days} of the last {WINDOW} days in this view)" if provisional else "") + ". A district marked † includes these provisional days, so its count and its place in the ranking can still change."),
         ],
         "credits": [{"text": "Fires: NASA FIRMS, VIIRS 375 m active fire detections", "url": "https://firms.modaps.eosdis.nasa.gov/"}],
         "chart": {"kind": "bars", "unit": "detections", "x": [MON[mm - 1] for (_, mm) in months],

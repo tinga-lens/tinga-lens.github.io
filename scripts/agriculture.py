@@ -37,7 +37,7 @@ from ee_check import ee_login  # noqa: E402
 from floodhazard import retry  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 2                               # raise this to make the weekly update rebuild the layers
+BUILD = 3                               # raise this to make the weekly update rebuild the layers
 WORLDCOVER = "ESA/WorldCover/v200"
 CROPLAND_CLASS = 40
 SOIL = "ISDASOIL/Africa/v1/"
@@ -63,7 +63,7 @@ TRIAL_COUNT = 8
 STORE = CACHE / "agriculture"
 ee = None
 
-GREENS = ["#eef4e6", "#cfe3bd", "#9ccb88", "#56a05f", "#1f6b43"]
+GREENS = ["#f1ece3", "#d8c9b4", "#bda389", "#8f6e56", "#5d3f2d"]      # neutral browns: the top fifth is not "better"
 FIFTHS = ["Lowest fifth", "Lower fifth", "Middle fifth", "Higher fifth", "Highest fifth"]
 CROP_CATS = [
     {"key": "c0", "label": "Under 1%", "note": "", "color": "#f4efe1", "max": 1},
@@ -107,8 +107,11 @@ def ask(shape):
     return res
 
 
+STORE_BUILD = 2                         # name of the saved Earth Engine results; unchanged, so a wording-only rebuild does not recompute them
+
+
 def one(row):
-    f = STORE / f"{row.shapeID}_b{BUILD}.json"
+    f = STORE / f"{row.shapeID}_b{STORE_BUILD}.json"
     if f.exists():
         return json.loads(f.read_text())
     res = ask(row.geometry.simplify(0.0003).buffer(0))
@@ -163,7 +166,7 @@ def main():
     crop = {s: results[s][1]["crop_km2"] for s in ids}
     total_crop = sum(crop.values())
     order = sorted(ids, key=lambda s: -crop[s])
-    rank_crop = {s: i + 1 for i, s in enumerate(order)}
+    rank_crop = {s: 1 + sum(1 for o in ids if round(crop[o], 1) > round(crop[s], 1)) for s in ids}      # equal areas share a rank
 
     # ---- cropland layer ----
     districts = {}
@@ -192,6 +195,7 @@ def main():
         "limits": [
             "This is a satellite classification, not a farm census. It tells you where land looks like cropland, not who farms it, which crop is grown or whether it is in use this year.",
             "Small farms mixed with trees and fallow land are hard to separate. Tree crops such as cocoa, and farms under scattered trees, are often classed as tree cover, and resting fields can be classed as grass. Cropland is therefore likely to be under-counted, most of all in the forest and transition zones.",
+            "In the forest zone this map shows far less cropland than the Crops and Human Pressure tabs, because cocoa, oil palm and other tree crops are classed as tree cover. Districts where that is likely are outlined with a dashed line. Read this layer as open-field cropland only.",
             "The map shows 2021 only. It does not show change.",
             "It is not a map of individual fields. Field boundaries are not available for Ghana.",
         ],
@@ -218,10 +222,11 @@ def main():
         if not (lo <= med <= hi):
             print(f"WARNING {label}: median {med:.3g} {unit} is outside the plausible range {lo} to {hi}. The units may be wrong, so this layer is NOT published.")
             continue
-        cuts = np.percentile(vals, [20, 40, 60, 80])
+        vals_r = np.round(vals, dec)                 # classes are cut on the numbers people see, so equal printed values never fall in different classes
+        cuts = np.percentile(vals_r, [20, 40, 60, 80])
         national = float(np.average(vals, weights=[land[s] for s in have]))
         order_v = sorted(have, key=lambda s: -results[s][1][allv])
-        rank = {s: i + 1 for i, s in enumerate(order_v)}
+        rank = {s: 1 + sum(1 for o in have if round(results[o][1][allv], dec) > round(results[s][1][allv], dec)) for s in have}      # ties share a rank
         print(f"{label}: {len(have)} districts. Lowest {vals.min():.2f}, median {med:.2f}, highest {vals.max():.2f} {unit}; Ghana (area-weighted) {national:.2f}")
         cats = [{"key": f"n{i}", "label": FIFTHS[i], "note": "", "color": GREENS[i]} for i in range(5)] + \
                [{"key": "none", "label": "No estimate", "note": "", "color": "#bdbdbd"}]
@@ -234,20 +239,22 @@ def main():
                 districts[s] = {"name": r.shapeName, "cat": "none", "basis": "none", "big": "–", "big_note": "No soil estimate available for this district.",
                                 "tip": "No estimate", "rows": [], "v": [None, None, None], "c": ["none"] * 3}
                 continue
-            i = int(np.searchsorted(cuts, v[allv], side="right"))
+            i = int(np.searchsorted(cuts, round(v[allv], dec), side="right"))
             cat = f"n{i}"
             has_crop = crop[s] >= MIN_CROP_KM2 and v.get(top) is not None
             det = [["All land, 0 to 20 cm", f"{fmt(v[allv], dec)}{unit_s}"]]
             if key == "soilom":
                 det.append(["Organic carbon, all land", f"{v[allv] / OM_FROM_OC:,.1f} g/kg"])
             if has_crop:
-                det.append([f"Cropland, 0 to 20 cm ({crop[s]:,.0f} km²)", f"{fmt(v[top], dec)}{unit_s}"])
+                det.append(["Cropland, 0 to 20 cm", f"{fmt(v[top], dec)}{unit_s}"])
                 if v.get(sub) is not None:
                     det.append(["Cropland, 20 to 50 cm", f"{fmt(v[sub], dec)}{unit_s}"])
+                det.append(["Mapped cropland area", f"{crop[s]:,.1f} km²"])
             else:
-                det.append(["Cropland, 0 to 20 cm", f"None ({crop[s]:,.1f} km² mapped)"])
+                det.append(["Cropland, 0 to 20 cm", "Not enough mapped cropland"])
+            det.append(["Mapped cropland area", f"{crop[s]:,.1f} km²"])
             det += [["Ghana average, all land", f"{fmt(national, dec)}{unit_s}"],
-                    ["Rank (1 = highest)", f"{rank[s]} of {len(have)}"]]
+                    ["Rank (1 = highest; equal values share a rank)", f"{rank[s]} of {len(have)}"]]
             districts[s] = {"name": r.shapeName, "cat": cat, "basis": "all_land", "crop_km2": round(crop[s], 1),
                             "big": f"{fmt(v[allv], dec)}{unit_s}",
                             "big_note": f"{lc} in the topsoil, averaged over all land in the district; {FIFTHS[i].lower()} of Ghana's districts",
@@ -255,10 +262,10 @@ def main():
                             "rows": det,
                             "v": [round(v[allv], 3), round(v[top], 3) if has_crop else None, round(v[sub], 3) if has_crop and v.get(sub) is not None else None],
                             "c": [cat] * 3}
-            table.setdefault(s, {"District": r.shapeName, "Region": regions.get(s, ""), "Land km2": round(land[s]), "Mapped cropland km2": round(crop[s], 1)})
-            table[s][f"{short}: all land, 0-20 cm ({unit})" if unit else f"{short}: all land, 0-20 cm"] = round(v[allv], 3)
-            table[s][f"{short}: cropland, 0-20 cm ({unit})" if unit else f"{short}: cropland, 0-20 cm"] = round(v[top], 3) if has_crop else ""
-            table[s][f"{short}: cropland, 20-50 cm ({unit})" if unit else f"{short}: cropland, 20-50 cm"] = round(v[sub], 3) if has_crop and v.get(sub) is not None else ""
+            tb = table.setdefault(s, {"District": r.shapeName, "Region": regions.get(s, ""), "Land km2": round(land[s]), "Mapped cropland km2": round(crop[s], 1), "props": {}})
+            tb["props"][short] = {"unit": unit, "all": round(v[allv], 3),
+                                  "top": round(v[top], 3) if has_crop else "",
+                                  "sub": round(v[sub], 3) if has_crop and v.get(sub) is not None else ""}
         write_layer(key, {
             "label": short, "title": f"Soil {short if short == 'pH' else short.lower()}", "source": "iSDAsoil Africa v1 (Hengl and others, 2021)", "demo": False,
             "subtitle": f"Average {lc}{f' ({unit})' if unit else ''} in the topsoil of each district, over all its land",
@@ -270,6 +277,7 @@ def main():
                     f"Click a district for the exact figure, the average over mapped cropland and the subsoil where there is enough cropland, and the Ghana average. "
                     f"All soil values for every district can be downloaded as one table."),
             "limits": [
+                "Districts are grouped by where their rounded value falls among all districts. Each class has about a fifth of the districts, but equal values always sit in the same class, so class sizes are not exactly equal. The legend lists the value range of each class.",
                 "These are model predictions, not measurements. They show broad patterns and can be wrong for a single farm or field. They are not a substitute for a soil test on the site.",
                 "The shading is relative. 'Highest fifth' means higher than most other districts, not high enough for a crop, and it does not mean better land. Tinga Lens does not give fertiliser or investment advice.",
                 "The district value averages all land, including forest, wetlands and settlements, so it can differ from the soil under farms. The cropland-only value is shown in the panel where the district has at least 1 km² of mapped cropland.",
@@ -292,19 +300,18 @@ def main():
             "districts": districts,
         })
     if table:
-        cols = list(next(iter(table.values())).keys())
-        for row in table.values():
-            for c in row:
-                if c not in cols:
-                    cols.append(c)
+        # one row per district and soil property: every row has the same columns, numbers are plain numbers, units are in their own column
+        cols = ["District ID", "District", "Region", "Land area (km2)", "Mapped cropland area (km2)", "Soil property", "Unit",
+                "All land 0-20 cm", "Cropland 0-20 cm", "Cropland 20-50 cm", "Source and version"]
+        src = "iSDAsoil Africa v1 (Hengl and others 2021, CC BY 4.0) averaged by district by Tinga Lens (tingalens.org); model predictions, not soil tests; cropland from ESA WorldCover 2021"
         with open(DATA / "soil-by-district.csv", "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=cols)
-            w.writeheader()
-            for row in sorted(table.values(), key=lambda r: r["District"]):
-                w.writerow(row)
-            f.write("\n")
-            f.write('"Source: iSDAsoil Africa v1 (Hengl and others, 2021, CC BY 4.0), averaged by district by Tinga Lens (tingalens.org). Model predictions, not soil tests. Cropland: ESA WorldCover 2021."\n')
-        print(f"Wrote data/soil-by-district.csv: {len(table)} districts, {len(cols)} columns")
+            w = csv.writer(f)
+            w.writerow(cols)
+            for sid, rowd in sorted(table.items(), key=lambda kv: (kv[1]["District"], kv[0])):
+                for prop, p in rowd["props"].items():
+                    w.writerow([sid, rowd["District"], rowd["Region"], rowd["Land km2"], rowd["Mapped cropland km2"], prop, p["unit"],
+                                p["all"], p["top"], p["sub"], src])
+        print(f"Wrote data/soil-by-district.csv: {len(table)} districts, {len(cols)} columns, one row per district and property")
 
 
 if __name__ == "__main__":

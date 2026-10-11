@@ -7,7 +7,7 @@
   const tag = (cls, label, text) => `<div class="sub lab"><span class="badge ${cls}">${esc(label)}</span> ${esc(text)}</div>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
-  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity", "pressure"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi, hp]) => {
+  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity", "pressure", "floodprone"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi, hp, fp]) => {
     const out = [];
 
     // Drought: rainfall and soil moisture, districts drier than normal
@@ -24,21 +24,23 @@
       body += line(total.toLocaleString(), `fire detections, ${fi.subtitle.split(",")[0]}`);
       body += `<div class="sub" style="margin:0">${(fi.counts.more || 0) + (fi.counts.far_more || 0)} districts above normal for the same dates in earlier years</div>`;
     }
-    if (fr) body += tag("model", "Modeled risk", "Experimental estimate") + `<div class="sub" style="margin:0">${(fr.counts.p4 || 0) + (fr.counts.p5 || 0)} districts with a high estimated chance of fire, ${esc(fr.subtitle)}</div>`;
+    if (fr) body += tag("model", "Modeled risk", "Experimental estimate") + `<div class="sub" style="margin:0">${(fr.counts.p4 || 0) + (fr.counts.p5 || 0)} districts with a high estimated chance of a fire detection, ${esc(fr.subtitle)} (experimental)</div>`;
     out.push(card("Fire", "Active fires and fire probability", "pages/fire.html", body || line("–", "No data yet"), fr ? ["observed", "model"] : ["observed"]));
 
     // Vegetation and forest
     body = "";
     if (ve) {
-      const rated = n(ve.counts) - (ve.counts.cloud || 0), per = ve.subtitle.split(",")[0];
+      const unrated = (ve.counts.cloud || 0) + (ve.counts.few || 0), rated = n(ve.counts) - unrated, per = ve.subtitle.split(",")[0];
       body += tag("condition", "Environmental condition", per);
       body += line(`${(ve.counts.dry || 0) + (ve.counts.very_dry || 0)} of ${rated}`, "districts with below-normal greenness");
-      body += `<div class="sub" style="margin:0">${rated} districts assessed. ${ve.counts.cloud || 0} not rated because of cloud cover.</div>`;
+      body += `<div class="sub" style="margin:0">${rated} districts assessed. ${unrated} not rated (too cloudy, or too few earlier years).</div>`;
     }
     if (fo) {
       const years = fo.chart.x, last = years[years.length - 1];
       const ha = Object.values(fo.districts).reduce((a, x) => a + (x.v[x.v.length - 1] || 0), 0);
-      body += line(Math.round(ha).toLocaleString() + " ha", `tree cover lost across Ghana in ${last}`);
+      const ys = fo.districts ? Object.values(fo.districts) : [], tot = j => ys.reduce((a, x) => a + (x.v[j] || 0), 0);
+      const k = Math.min(3, years.length), avg = Array.from({ length: k }, (_, q) => tot(years.length - 1 - q)).reduce((a, b) => a + b, 0) / k;
+      body += line(Math.round(ha).toLocaleString() + " ha", `tree cover lost across Ghana in ${last}; the average of the last ${k} years is ${Math.round(avg).toLocaleString()} ha a year`);
     }
     out.push(card("Vegetation", "Vegetation and forest change", "pages/vegetation.html", body || line("–", "No data yet"), ["condition", "observed"]));
 
@@ -47,12 +49,14 @@
     if (fl) {
       const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
       out.push(card("Flood", "Observed flooding", "pages/flood.html", tag("observed", "Historical event", fl.subtitle)
-        + line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts`)
+        + line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts in this one event`)
+        + (fp ? line(Math.round(Object.values(fp.districts).reduce((a, x) => a + (x.cat === "out" ? 0 : (num(x.big) || 0)), 0)).toLocaleString() + " km²", `of land flood-prone, seen under water in at least 2 years (derived by Tinga Lens): a different measure from the single event`) : "")
         + `<div class="sub" style="margin:0">Not a live flood map.</div>`, ["observed"]));
     } else out.push(soon("Flood", "Flooding and susceptibility", "pages/flood.html", "Satellite-observed flooding and flood-prone landscapes. No data is published yet."));
     if (hp) {
-      const v = Object.values(hp.districts), xs = hp.chart.x, mean = j => v.reduce((a, x) => a + x.v[j], 0) / v.length;
-      let b = line(mean(xs.length - 1).toFixed(2), `average human modification across districts in ${xs[xs.length - 1]} (0 to 1), up from ${mean(0).toFixed(2)} in ${xs[0]}`);
+      const v = Object.values(hp.districts), xs = hp.chart.x, weighted = v.every(x => x.km2 > 0);
+      const mean = j => weighted ? v.reduce((a, x) => a + x.v[j] * x.km2, 0) / v.reduce((a, x) => a + x.km2, 0) : v.reduce((a, x) => a + x.v[j], 0) / v.length;
+      let b = line(mean(xs.length - 1).toFixed(2), `${weighted ? "average human modification over Ghana's land, weighted by area" : "simple average of the districts (each district counts the same, so it is higher than the area-weighted figure)"} in ${xs[xs.length - 1]} (0 to 1), up from ${mean(0).toFixed(2)} in ${xs[0]}`);
       if (ur) { const us = ur.chart.x, sum = j => Object.values(ur.districts).reduce((a, x) => a + (x.v[j] || 0), 0);
         b += line(Math.round(sum(us.length - 1)).toLocaleString() + " km²", `built-up area in ${us[us.length - 1]}, up ${Math.round((sum(us.length - 1) / sum(0) - 1) * 100)}% since ${us[0]}`); }
       out.push(card("Human pressure", "Human pressure", "pages/pressure.html", b, ["index"]));

@@ -29,7 +29,7 @@ from ee_check import ee_login  # noqa: E402
 from floodhazard import retry  # noqa: E402
 
 # ---- settings you may want to change -------------------------------------
-BUILD = 2                               # raise this to make the weekly update rebuild the layer
+BUILD = 3                               # raise this to make the weekly update rebuild the layer
 SOURCE = "JRC/GSW1_4/GlobalSurfaceWater"
 PERIOD = (1984, 2021)
 SCALE_M = 30
@@ -62,8 +62,11 @@ def ask(shape):
     return {k: float(v or 0) for k, v in out.items()}
 
 
+STORE_BUILD = 2                         # name of the saved Earth Engine results; unchanged, so a wording-only rebuild does not recompute them
+
+
 def one(row):
-    f = STORE / f"{row.shapeID}_b{BUILD}.json"
+    f = STORE / f"{row.shapeID}_b{STORE_BUILD}.json"
     if f.exists():
         return json.loads(f.read_text())
     res = ask(row.geometry.simplify(0.0003).buffer(0))
@@ -72,7 +75,9 @@ def one(row):
 
 
 def signed(x):
-    return f"{x:+,.1f} km²" if abs(x) >= 0.05 else "0.0 km²"
+    if abs(x) < 0.005:
+        return "0 km²"
+    return f"{x:+,.2f} km²" if abs(x) < 1 else f"{x:+,.1f} km²"      # two decimals under 1 km², so +0.1 is not a rounded +0.05 or +0.14
 
 
 def main():
@@ -115,7 +120,7 @@ def main():
             "big_note": f"net change in permanent water between the first and last years seen, {first} to {last}",
             "tip": f"Permanent water {signed(net)}",
             "rows": [
-                ["Permanent water, first years", f"{then:,.1f} km²"],
+                ["Permanent water, early years (1984 at the earliest)", f"{then:,.1f} km²"],
                 [f"Permanent water, {last}", f"{now:,.1f} km²"],
                 ["New permanent water", f"{gain:,.1f} km²"],
                 ["Permanent water lost", f"{loss:,.1f} km²"],
@@ -138,9 +143,11 @@ def main():
                 f"permanent water, meaning water present all year: new permanent water minus permanent water lost. "
                 f"Click a district for the amounts gained and lost, and for seasonal water."),
         "limits": [
+            "Blue means a net gain of permanent water, and gains come from different causes: new reservoirs, a lake refilling after its mid-1980s low, and water-filled mining pits all look the same here. The map cannot tell them apart.",
+            "Big districts show big km² changes simply because they hold more land. The 'Change as a share of earlier water' view puts districts on a fairer footing.",
             "New water is not always natural. Reservoirs such as Bui, small dams and dugouts, and water-filled mining pits all count as new permanent water.",
             "Clear Landsat images of Ghana are scarce before about 2000, so the \"first year\" differs from place to place and is often later than 1984.",
-            f"The record ends in {last}. Changes since then are not shown.",
+            f"The record ends in {last}, a gap of several years. The source has not been updated, so recent dams, pits and droughts are not shown.",
             "Water narrower than about 30 m, and water under trees or floating plants, is missed.",
             "Lake Volta was unusually low in the mid-1980s after the drought of 1983, when this record begins. Much of the water \"gained\" along its shore is the lake returning to its usual level, not new water.",
             "The figure is surface area. It says nothing about depth, volume or water quality.",

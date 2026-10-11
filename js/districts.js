@@ -77,7 +77,7 @@
       soil: (x, lab, when) => `Soil moisture in ${when} was ${lab} (${rel(x)}${rank(x, "wetter", "drier")}).`,
       vegetation: (x, lab, when) => `Vegetation in ${when} was ${lab} (greenness ${rel(x)}${rank(x, "greener", "less green")}).`,
       fires: (x, lab, when) => `${x.big} fire detection${x.big === "1" ? "" : "s"}, ${when}; ${lab} for these dates.`,
-      firerisk: (x, lab, when) => `Estimated chance of fire, ${when}: ${x.big} (${lab}). This is a model estimate.`,
+      firerisk: (x, lab, when) => `Estimated chance of a fire detection (experimental), ${when}: ${x.big} (${lab}). This is a model estimate.`,
       forest: x => `Tree cover: ${x.big} ${x.big_note}.`,
       flood: x => `Flooding, 2023 lower Volta event: ${x.big} ${x.big_note.split(",")[0]}.`,
       flood2020: x => `Flooding, 2020 northern event: ${x.big} ${x.big_note.split(",")[0]}.`,

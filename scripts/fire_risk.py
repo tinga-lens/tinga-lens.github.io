@@ -361,7 +361,7 @@ def main():
 
     districts = {}
     for i, row in gdf.iterrows():
-        p = float(P[-1, i]) * 100
+        p = float(int(round(float(P[-1, i]) * 100)))      # whole percent: the category and the headline use the same number
         cat = next(c["key"] for c in CATS if p < c["max"])
         districts[row.shapeID] = {
             "name": row.shapeName, "cat": cat,
@@ -423,7 +423,7 @@ def main():
             "note": ("AUC is 0.5 for guessing and 1 for a perfect ranking of districts. 'Season alone' uses only how often each "
                      "district usually burns on those dates."),
         }],
-        "label": "Fire risk", "title": "Estimated chance of fire (experimental)",
+        "label": "Fire risk", "title": "Estimated chance of a fire detection (experimental)",
         "subtitle": f"{period}", "source": "Tinga Lens model on NASA SMAP, FIRMS, VIIRS and CHIRPS data", "demo": False,
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
         "how": (f"Each district shows the estimated chance that satellites record at least one fire in it during the {HORIZON} days shown. "
@@ -433,6 +433,9 @@ def main():
                 "Use the Year, Month and Day boxes to see any past period and whether a fire was then detected."),
         "limits": [
             "This is an experimental model, not a fire warning. Do not use it for safety decisions.",
+            "The chance is for the whole district, not for any place in it. It says nothing about where a fire would start, and the dots on the map are not fire locations.",
+            "Most of the pattern is the season: districts that burn every dry season score high every dry season. 'Usual chance for these dates' shows that part, and 'Compared with usual' shows how far today's estimate is above or below it.",
+            "Windows are five-day periods that start on fixed days of the month, so a fire just outside a window falls in the next one. Estimates are whole percents and are not more exact than that.",
             f"Tested on years it was not trained on, the model scored AUC {best['auc']:.2f} (0.5 is chance, 1 is perfect) and "
             f"improved on the seasonal pattern alone by {best['skill_vs_season'] * 100:.0f}% (Brier skill).",
             root_text,

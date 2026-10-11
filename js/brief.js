@@ -35,19 +35,19 @@ window.TLbrief = (function () {
     const E = Object.entries(d.districts), total = E.reduce((a, [, x]) => a + (num(x.big) || 0), 0);
     const normal = E.reduce((a, [, x]) => a + (num(((x.rows || []).find(r => /^Normal/.test(r[0])) || [])[1]) || 0), 0);
     const far = E.filter(([, x]) => x.cat === "far_more").sort((a, b) => num(b[1].big) - num(a[1].big));
-    const paras = [`Satellites recorded ${plural(Math.round(total), "fire", "fires")} across Ghana, against about ${Math.round(normal).toLocaleString()} usually seen on these dates.`];
-    paras.push(far.length ? `${plural(far.length, "district", "districts")} had far more fires than usual, mostly in ${list(where(far, REG))}.`
-      : "No district had far more fires than usual.");
-    return { key: "fires", title: "Fires", when: d.subtitle, paras, head: "Most fires among them",
+    const paras = [`Satellites recorded ${plural(Math.round(total), "fire detection", "fire detections")} across Ghana, against about ${Math.round(normal).toLocaleString()} when each district's usual count for these dates is added up. The latest days use provisional data that NASA may revise.`];
+    paras.push(far.length ? `${plural(far.length, "district", "districts")} had far more detections than usual, mostly in ${list(where(far, REG))}.`
+      : "No district had far more detections than usual.");
+    return { key: "fires", title: "Fires", when: d.subtitle, paras, head: "Most detections among them",
              items: far.slice(0, 5).map(([id, x]) => [x.name, REG[id] || "", plural(num(x.big), "detection", "detections")]) };
   }
 
   function risk(d, REG) {
     if (!d) return null;
     const E = Object.entries(d.districts), high = E.filter(([, x]) => ["p4", "p5"].includes(x.cat)).sort((a, b) => num(b[1].big) - num(a[1].big));
-    const paras = [high.length ? `The model put the chance of at least one fire at "high" or "very high" in ${plural(high.length, "district", "districts")}, mostly in ${list(where(high, REG))}.`
+    const paras = [high.length ? `The model put the chance of at least one fire detection at "high" or "very high" in ${plural(high.length, "district", "districts")}, mostly in ${list(where(high, REG))}.`
       : "The model did not put any district in the \"high\" or \"very high\" class.", "This is a statistical estimate, not an observation."];
-    return { key: "firerisk", title: "Chance of fire", when: d.subtitle, paras, head: "Highest estimates",
+    return { key: "firerisk", title: "Chance of a fire detection", when: d.subtitle, paras, head: "Highest estimates",
              items: high.slice(0, 5).map(([id, x]) => [x.name, REG[id] || "", x.big]) };
   }
 

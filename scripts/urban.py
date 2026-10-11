@@ -35,7 +35,7 @@ EPOCHS = [2000, 2005, 2010, 2015, 2020]   # dates built from satellite images (2
 RELEASE = "R2023A"
 BASE = os.environ.get("TINGA_GHSL_BASE", "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_BUILT_S_GLOBE_R2023A")
 FINE = 10              # each 1 km cell is split into FINE x FINE pieces when it is shared between districts
-MIN_BUILT_KM2 = 0.5    # districts with less built-up area than this at the first date are not given a growth rating
+MIN_BUILT_KM2 = 1.0    # districts with less built-up area than this at the first date are not given a growth rating
 # --------------------------------------------------------------------------
 
 CATS = [
@@ -142,6 +142,8 @@ def main():
                 f"Settlement Layer. Click a district to see its built-up area at each date."),
         "limits": [
             "Built-up area counts buildings only. Roads, bare plots and open spaces between buildings are not included, so it is smaller than the area people would call a town.",
+            "Districts that were already almost fully built in the first year, such as central Accra, cannot grow much, so they show little or no percent growth even though people live there at high density.",
+            "'Built-up' here is the share of ground covered by building footprints in 1 km cells, at a low threshold, so scattered small settlements count. Treat very small areas as approximate.",
             "Percent growth is large where there was little to begin with. Read it together with the square kilometres added.",
             f"The source data are in 1 km cells. Cells shared between districts are split by area, so figures for very small districts are approximate. Districts with under {MIN_BUILT_KM2} km² built on in {y0} are not rated.",
             f"The latest date built from satellite images is {y1}. Building since then is not shown.",
