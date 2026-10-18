@@ -16,6 +16,11 @@
    "file": "data/rainseason.json"
   },
   {
+   "key": "dryspell",
+   "label": "Dry spells",
+   "file": "data/dryspell.json"
+  },
+  {
    "key": "vegetation",
    "label": "Vegetation",
    "file": "data/vegetation.json"
