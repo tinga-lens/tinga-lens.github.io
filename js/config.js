@@ -41,6 +41,9 @@ const TL = {
     soil: { name: "Soil moisture anomaly", tab: "Soil moisture", module: "Drought", page: "pages/drought.html", status: "condition", version: "1.1",
             source: "NASA SMAP Level-4 (SPL4SMGP), NSIDC DAAC", type: "Satellite observations merged into a land model",
             resolution: "9 km", updates: "Every 5 days", baseline: "2015 onwards" },
+    mismatch: { name: "Rain and soil moisture compared", tab: "Rain and soil (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
+                source: "CHIRPS rainfall and NASA SMAP L4 soil moisture, compared by Tinga Lens", type: "Derived by Tinga Lens from two published datasets",
+                resolution: "about 5 km rainfall and 9 km soil moisture, averaged by district", updates: "Monthly", baseline: "2015 to last year (both measures)" },
     rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.2 (experimental)",
                   source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall using candidate rules",
                   resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
@@ -176,11 +179,13 @@ TL.minDetections = 10;                      // fires: under this many detections
 TL.rankname = {
   fires: ["Most detections", "Fewest detections"], biodiversity: ["Most species recorded", "Fewest recorded"],
   forest: ["Fastest loss", "Slowest loss"], urban: ["Fastest growth", "Slowest growth"], dryspell: ["Longest spell", "Shortest spell"],
+  mismatch: ["Soil wetter than rain suggests", "Soil drier than rain suggests"],
 };
 
 // one line under the ranking that says what it is ranked by
 TL.ranknote = {
   drought: "Ranked by percent of normal rainfall. The colours show where this period ranks among the 30 baseline years, so two districts with the same percentage can have different colours. Open a district for “x of 30 years drier”.",
+  mismatch: "Ranked by the gap between soil moisture and rainfall, after taking away the national pattern for the month. A positive gap means soil is wetter than the rainfall suggests. Open a district for both ranks.",
   dryspell: "Ranked by the length of the longest dry spell, in days; equal lengths are marked =. The colours compare each district with its own history, so a longer spell can have a milder colour where long spells are normal.",
   soil: "Ranked by percent of normal. Districts in the same 9 km grid cell have identical values, so they tie; tied values are marked =.",
   vegetation: "Ranked by percent of the district's own average greenness. Tied classes are marked =.",
@@ -202,6 +207,7 @@ TL.caveats = {
   drought: ["Colours show where this period's rainfall ranks among the 30 baseline years; the ranking uses percent of normal."],
   soil: ["Modelled soil moisture (NASA SMAP L4), not a measurement. Normal rests on about a dozen years, and districts in one 9 km grid cell share a value."],
   rainseason: ["Experimental: checked against rain gauges and typically about three weeks out. A rough guide only."],
+  mismatch: ["Experimental: not checked against field soil moisture. SMAP is a model driven partly by its own rainfall, so some gaps are two rainfall estimates differing. A flag is a lead, not proof of drought."],
   dryspell: ["Experimental: dry-spell lengths have not been checked against rain gauges. Rain is averaged over each district, so one farm can have a longer spell than shown."],
   vegetation: ["Districts are not rated when clouds hide the ground or fewer than five other years exist for the month."],
   fires: ["A detection is one satellite overpass, so one fire can be counted more than once. The latest days are rapid-release data that NASA later revises."],

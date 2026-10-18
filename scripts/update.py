@@ -8,6 +8,7 @@ Tinga Lens - run every layer that is due.
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
   rainy season: experimental; rainseason=validate only checks it against rain gauges (publishes nothing); first build only when asked for (RAINSEASON=full, or trial = nothing published), then every run
+  rain and soil: experimental; compares the saved rainfall and soil moisture histories, every run (no download)
   dry spells : experimental; runs after the rainy season, from the daily rainfall it saved (no download, no Earth Engine)
   air quality: only when asked (AIRQUALITY=full; probe only checks the files); the source publishes once a year
   biodiversity: once a month, if a GBIF login is available
@@ -63,6 +64,8 @@ if os.environ.get("RAINSEASON", "").lower() in ("true", "full", "trial") or (DAT
     jobs.append(("rainy season (experimental)", "rainy_season.py"))   # first build only when asked for; afterwards it refreshes every run (downloads only new days)
 if os.environ.get("RAINSEASON", "").lower() in ("true", "full") or (DATA / "rainseason.json").exists():
     jobs.append(("dry spells (experimental)", "dryspell.py"))   # reads the daily rainfall the rainy-season job just saved; no download, no Earth Engine
+if (DATA / "drought_history.json").exists() and (DATA / "soil_history.json").exists():
+    jobs.append(("rain and soil (experimental)", "mismatch.py"))   # compares the two histories just saved above; no download, no Earth Engine
 if os.environ.get("AIRQUALITY", "").lower() in ("true", "full"):     # yearly source: only when asked for
     jobs.append(("air quality (PM2.5)", "airquality.py"))
 if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").exists():
