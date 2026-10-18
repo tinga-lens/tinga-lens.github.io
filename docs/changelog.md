@@ -4,6 +4,8 @@ Every change to a method or product is recorded here. Product versions are shown
 
 ## 2026-10-18
 
+- New download file data/rain_monthly.json: rainfall in each calendar month for every district, 1981 onwards (CHIRPS). It is the one-month series the 3-month Rainfall map is built from, saved so that rainfall can be compared with soil moisture over the same month. No change to any map.
+
 - New experimental product: Dry spells (version 0.1), a tab on the Drought page. It shows the longest run of days under 1 mm of rain in each district during the main rainy season (90 days from the usual start of the rains), compared with the same dates in 1991-2020. It uses the daily CHIRPS rainfall already saved for the Rainy season tab, so it needs no new download and no Google Earth Engine. The lengths have not yet been checked against rain gauges, and the district average makes them shorter than a single farm would see. A spell within 2 days of the usual is always shown as about usual, because in districts where spells are all short one day can move the rank a long way.
 
 ## 2026-10-11 (review fixes)

@@ -230,6 +230,17 @@ def assess(months, roll, t):
     return cur, normal, pct, pctile
 
 
+def write_monthly(months, dm, gdf, path):
+    """Save the one-month district rainfall totals (mm) that the 3-month figures are built from. Needed to compare rainfall
+    with soil moisture over the same period, and useful as a download in its own right."""
+    ids = gdf.reset_index(drop=True).shapeID.tolist()
+    path.write_text(json.dumps({
+        "kind": "monthly", "unit": "mm", "months": [f"{y}-{m:02d}" for y, m in months],
+        "note": "Rainfall in each calendar month, averaged over each district (CHIRPS). The latest month can be revised.",
+        "values": {sid: [None if np.isnan(v) else round(float(v), 2) for v in dm[:, i]] for i, sid in enumerate(ids)},
+    }, separators=(",", ":")))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", action="store_true", help="use made-up data (site preview only)")
@@ -299,6 +310,9 @@ def main():
                             for i, row in gdf.reset_index(drop=True).iterrows()}},
     }, separators=(",", ":")))
     print(f"Wrote data/drought_history.json: {len(labels)} months")
+    if not args.demo:
+        write_monthly(months, dm, gdf, ROOT / "data" / "rain_monthly.json")
+        print(f"Wrote data/rain_monthly.json: {len(months)} months of one-month totals")
     payload["history"] = "data/drought_history.json"
     write_layer("drought", payload)
 
