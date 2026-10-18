@@ -12,7 +12,8 @@ Rules (all settings are at the top of this file):
   Same period     soil moisture of a month is paired with the rainfall of the 3 months ending that month. Windows of
                   1, 2 and 3 months were tested against root-zone and surface soil moisture; 3 months matched best
                   from June to November (median correlation about 0.7, against about 0.35 for one month).
-  Dry             in the driest 30% of the reference years (the rule used by the Rainfall and Soil tabs)
+  Dry             as on the two tabs: rainfall in the driest 30% of 1991-2020 (the Rainfall tab), soil moisture in the
+                  driest 30% of 2015 to last year (the Soil tab). The gap, below, uses the same years for both.
   Gap             soil z-score minus rainfall z-score, minus the national median gap that month
                   (the national median is the shared timing effect: soil lags the rain at the start of the season)
   Classes         dry on both; soil drier than rainfall suggests (gap <= -1.5 after the national pattern, and at
@@ -52,7 +53,7 @@ NATIONAL_MIN = 50            # districts needed to work out a national pattern
 # --------------------------------------------------------------------------
 
 CATEGORIES = [
-    {"key": "both_dry", "label": "Dry on both", "note": "rainfall and soil in the driest 30% of years", "color": "#8c510a"},
+    {"key": "both_dry", "label": "Dry on both", "note": "dry on the Rainfall tab and on the Soil tab", "color": "#8c510a"},
     {"key": "soil_drier", "label": "Soil drier than rain suggests", "note": "a large gap, beyond the national pattern", "color": "#e66101"},
     {"key": "soil_wetter", "label": "Soil wetter than rain suggests", "note": "a large gap, beyond the national pattern", "color": "#4393c3"},
     {"key": "agree", "label": "No unusual gap", "note": "not dry on both, and no flagged gap", "color": "#f3efe4"},
@@ -245,8 +246,11 @@ def build(rain, soil, ids, names, regions):
               for m in range(1, 13)}
     floor = np.stack([normal[m] < FLOOR_MM for m in mo], axis=1)
     zR, zS = zscores(R, yr, mo, ref), zscores(S, yr, mo, ref)
-    pR, pS = pct_ranks(R, yr, mo, ref), pct_ranks(S, yr, mo, ref)
-    for A in (zR, pR):
+    pS = pct_ranks(S, yr, mo, ref)
+    pR_all = pct_ranks(full, fy, fm, tuple(rain["ref"]))                     # rainfall rank among 1991-2020, as on the Rainfall tab
+    pR = pR_all[:, [rmonths.index(m) for m in common]]
+    pR_ref = pct_ranks(R, yr, mo, ref)                                       # rainfall rank among the same years as the soil, for the pop-up
+    for A in (zR, pR, pR_ref):
         A[floor] = np.nan
     coupling = coupling_by_month(zR, zS, mo)
     rated_m = {m: (not np.isnan(c)) and c >= MIN_COUPLING for m, c in coupling.items()}
@@ -266,6 +270,7 @@ def build(rain, soil, ids, names, regions):
     label = common[t]
     n_ref = len(range(ref[0], ref[1] + 1))
     n_ref_m = {m: int(((mo == m) & (yr >= ref[0]) & (yr <= ref[1])).sum()) for m in range(1, 13)}       # reference years that have this month
+    n_long = {m: int(((fm == m) & (fy >= rain["ref"][0]) & (fy <= rain["ref"][1])).sum()) for m in range(1, 13)}
     districts = {}
     for i, sid in enumerate(ids):
         c = cls[i, t]
@@ -283,12 +288,14 @@ def build(rain, soil, ids, names, regions):
             districts[sid] = {**base, "big": "–", "big_note": note, "tip": "Not rated", "rows": []}
             continue
         gv = float(d[i, t])
-        words = {"both_dry": "Rainfall and soil moisture are both low for the time of year.",
+        words = {"both_dry": "Dry on the Rainfall tab and on the Soil tab.",
                  "soil_drier": "Soil is drier than the rainfall suggests, more than the national pattern this month.",
                  "soil_wetter": "Soil is wetter than the rainfall suggests, more than the national pattern this month.",
                  "agree": "No unusual gap between rainfall and soil moisture."}[c]
-        rows = [["Rainfall", f"{round(float(R[i, t]))} mm over {span_text(label)}, {rank_words(pR[i, t], n_ref_m[mo[t]])}"],
-                ["Soil moisture", f"{float(S[i, t]):.3f} m³/m³ in {month_text(label)}, {rank_words(pS[i, t], n_ref_m[mo[t]])}"],
+        rows = [["Rainfall", f"{round(float(R[i, t]))} mm over {span_text(label)}"],
+                [f"Rainfall rank, {rain['ref'][0]}–{rain['ref'][1]}", rank_words(pR[i, t], n_long[mo[t]])],
+                [f"Rainfall rank, {ref[0]}–{ref[1]}", rank_words(pR_ref[i, t], n_ref_m[mo[t]])],
+                ["Soil moisture", f"{float(S[i, t]):.3f} m³/m³ in {month_text(label)}, {rank_words(pS[i, t], n_ref_m[mo[t]])} ({ref[0]}–{ref[1]})"],
                 ["Gap, soil minus rain", f"{float(e[i, t]):+.1f}"],
                 ["National gap", f"{float(nat[t]):+.1f}"],
                 ["Gap after the national gap", f"{gv:+.1f}"],
@@ -302,7 +309,7 @@ def build(rain, soil, ids, names, regions):
     for i, sid in enumerate(ids):
         if districts[sid]["rows"] and groups[i] in rg:
             districts[sid]["rows"].append([f"Typical gap, {groups[i]}", f"{rg[groups[i]]:+.1f}"])
-    info = dict(regional=rg, label=label, ref=ref, n_ref=n_ref, coupling=coupling, rated_m=rated_m, nat=float(nat[t]) if not np.isnan(nat[t]) else None,
+    info = dict(rain_ref=tuple(rain["ref"]), regional=rg, label=label, ref=ref, n_ref=n_ref, coupling=coupling, rated_m=rated_m, nat=float(nat[t]) if not np.isnan(nat[t]) else None,
                 chance=chance, common=common)
     return districts, info
 
@@ -324,17 +331,17 @@ def render(districts, info):
                      + ("soil wetter in " + ", ".join(wetter) if wetter else "") + ".")
     return {
         "label": "Rain and soil", "title": f"Where rainfall and soil moisture disagree, {month_text(label)} (experimental)",
-        "subtitle": f"Rainfall of the 3 months to {month_text(label)} against root-zone soil moisture of {month_text(label)}, both compared with {ref[0]}–{ref[1]}",
+        "subtitle": f"Rainfall of the 3 months to {month_text(label)} against root-zone soil moisture of {month_text(label)}; the gap compares both with {ref[0]}–{ref[1]}",
         "source": "CHIRPS rainfall (Climate Hazards Center) and NASA SMAP L4 soil moisture, compared by Tinga Lens", "demo": False,
         "categories": CATEGORIES,
         "how": ("EXPERIMENTAL. Rainfall and soil moisture usually move together, but not always. This map shows the districts where they "
-                f"do not, and the districts where both are low. Both are ranked against the same years, {ref[0]}–{ref[1]}. A measure is "
-                f"\"dry\" when it is in the driest {DRY_PCT}% of those years. The gap is soil minus rainfall, in standard deviations, after taking "
+                f"do not, and the districts where both are low. \"Dry on both\" means dry on the Rainfall tab (the driest {DRY_PCT}% of {info['rain_ref'][0]}–{info['rain_ref'][1]}) "
+                f"and on the Soil tab (the driest {DRY_PCT}% of {ref[0]}–{ref[1]}). The gap compares both measures with the same years, {ref[0]}–{ref[1]}: it is soil minus rainfall, in standard deviations, after taking "
                 "away the national pattern for the month (soil lags the rain at the start of the season, so most of Ghana shifts together). "
                 f"A district is flagged when its gap is {FLAG:g} or more after that, and at least {MIN_RAW:g} before it. The pop-up shows both ranks and the gap."),
         "limits": [
             "Experimental, version 0.1. It has not been checked against field soil moisture or crop records. A flag is a lead to look into, not evidence of drought or crop stress.",
-            f"Both measures use the same reference years, {ref[0]}–{ref[1]}, because the soil record starts in 2015. This map can therefore differ from the Rainfall tab, which compares with 1991–2020.",
+            f"The gap uses the same reference years for both measures, {ref[0]}–{ref[1]}, because the soil record starts in 2015. Rainfall in those years can differ from its longer record, so a district can have a gap even when its rainfall is normal on the Rainfall tab. \"Dry on both\" uses each tab's own rule.",
             "Soil moisture is a NASA model product (SMAP Level-4) that is driven partly by its own rainfall estimate. Some disagreement with CHIRPS rainfall reflects two rainfall estimates differing, not the land itself.",
             "Rainfall over the 3 months is paired with soil moisture of the last month because that pairing matched best in tests of 1 to 3 months.",
             (f"{', '.join(skipped)} {'is' if len(skipped) == 1 else 'are'} not rated: in those months rainfall and soil moisture do not track each other well (the soil lags the rain at the start of the season)."
