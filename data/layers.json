@@ -11,6 +11,11 @@
    "file": "data/soil.json"
   },
   {
+   "key": "mismatch",
+   "label": "Rain and soil",
+   "file": "data/mismatch.json"
+  },
+  {
    "key": "rainseason",
    "label": "Rainy season",
    "file": "data/rainseason.json"
