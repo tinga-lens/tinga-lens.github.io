@@ -16,7 +16,9 @@ Rules (all settings are at the top of this file):
   Why not the year's own start?  The rainy-season tracker only confirms a start when no 7-day dry spell
                  follows it, so measuring dry spells after the year's own start would hide them.
   Usual          the median of the longest dry spell in the baseline years (1991-2020)
-  Colour         where this year's longest spell ranks among the baseline years (ties count half)
+  Colour         where this year's longest spell ranks among the baseline years (ties count half), except that a
+                 spell within 2 days of the usual is always "about usual": in a district whose spells are all
+                 short, one day more or less can move the rank a long way and means nothing
 
 Run:
   python scripts/dryspell.py               # real data (reads the saved daily rainfall)
@@ -49,6 +51,7 @@ BASELINE = rs.BASELINE           # years that define "usual"
 DRY_MM = rs.DRY_MM               # a day under this is a dry day
 SPAN = 90                        # days measured, from the usual start of the rains
 LONG_SPELL = 10                  # a spell this long or longer is counted separately
+MIN_DIFF = 2                     # a spell within this many days of the usual (median) counts as "about usual", whatever its rank
 MIN_MEASURED = 7                 # fewer days than this have passed: too early to say
 MIN_DATA = 0.8                   # a year needs at least this share of the days to have data
 CACHE_FILE = CACHE / "rainy_season_daily.npz"
@@ -57,7 +60,7 @@ CACHE_FILE = CACHE / "rainy_season_daily.npz"
 CATEGORIES = [
     {"key": "much_long", "label": "Much longer than usual", "note": "longest 10% of years", "color": "#8c510a"},
     {"key": "long", "label": "Longer than usual", "note": "longest 10 to 30%", "color": "#d8b365"},
-    {"key": "usual", "label": "About usual", "note": "middle 40%", "color": "#f3efe4"},
+    {"key": "usual", "label": "About usual", "note": "middle 40%, or within 2 days of usual", "color": "#f3efe4"},
     {"key": "short", "label": "Shorter than usual", "note": "shortest 10 to 30%", "color": "#5ab4ac"},
     {"key": "much_short", "label": "Much shorter than usual", "note": "shortest 10% of years", "color": "#01665e"},
     {"key": "not_yet", "label": "Too early", "note": f"under {MIN_MEASURED} days of the period have passed", "color": "#d9d9d9"},
@@ -110,6 +113,13 @@ def classify(pct):
     return "usual"
 
 
+def rate(length, base):
+    """Category for a longest spell, given the baseline values: its rank, unless it is within MIN_DIFF days of the median."""
+    if abs(length - float(np.median(base))) <= MIN_DIFF:
+        return "usual"
+    return classify(pct_rank(length, base))
+
+
 def window(med_doy, year, n_days, span=SPAN):
     """(first index, number of days) of the period in a year whose rainfall starts on 1 March (index 0)."""
     day = dt.date(2001, 1, 1) + dt.timedelta(int(round(med_doy)) - 1)
@@ -142,7 +152,11 @@ def self_test():
     # 7. categories, including the boundaries
     assert [classify(p) for p in (100, 90, 89.9, 70, 69.9, 50, 30.1, 30, 10.1, 10, 0)] == \
         ["much_long", "much_long", "long", "long", "usual", "usual", "usual", "short", "short", "much_short", "much_short"]
-    # 8. windows: a late-March start gives a 90-day period that begins on that date; it is cut at the end of the saved days
+    # 8. a spell within 2 days of the median is "about usual" even when its rank is extreme
+    b = [3] * 5 + [4] * 10 + [5] * 8 + [6] * 4 + [8] * 3                      # median 4
+    assert rate(3, b) == "usual" and rate(6, b) == "usual" and classify(pct_rank(3, b)) == "much_short"
+    assert rate(7, b) == "much_long" and rate(1, b) == "much_short"
+    # 9. windows: a late-March start gives a 90-day period that begins on that date; it is cut at the end of the saved days
     n = len(rs.date_range(2001))
     a, k = window(79, 2001, n)                       # day 79 = 20 March
     assert (a, k) == (19, 90), (a, k)
@@ -150,7 +164,7 @@ def self_test():
     assert window(150, 2001, n) == (rs.date_range(2001).index(dt.date(2001, 5, 30)), 90)     # day 150 = 30 May
     a, k = window(250, 2001, n)                      # a start so late the period would run past 30 September
     assert a + k == n and k < 90, (a, k)
-    print("self-test passed: 8 checks")
+    print("self-test passed: 9 checks")
 
 
 # ============================================================ data
@@ -229,8 +243,7 @@ def build(daily, gdf, cur, today, demo):
             districts[row.shapeID] = not_rated(row, "Rainfall days are missing for this period, so the longest spell cannot be worked out.")
             continue
         L, s, c10, rain = now
-        pct = pct_rank(L, base)
-        cat = classify(pct)
+        cat = rate(L, base)
         med_len = float(np.median(base))
         longest = max(base)
         longest_year = [y for y in base_years if per.get(y) and per[y][0] == longest][0]
@@ -254,7 +267,7 @@ def build(daily, gdf, cur, today, demo):
         for y in years:
             p = per.get(y)
             v.append(int(p[0]) if p else None)
-            c.append(classify(pct_rank(p[0], base)) if p else "not_rated")
+            c.append(rate(p[0], base) if p else "not_rated")
         districts[row.shapeID] = {
             "name": row.shapeName, "cat": cat, "big": plural(L), "big_note": note,
             "tip": f"{NAMES[cat]} · {plural(L)}", "rows": rows, "v": v, "c": c,
@@ -272,7 +285,7 @@ def render(districts, labels, cur, demo, source):
                 f"compared with the same dates in {BASELINE[0]}–{BASELINE[1]}. A dry day is a day with under {DRY_MM:g} mm of rain. "
                 f"The period starts on the district's usual start of the rains (see the Rainy season tab) and lasts {SPAN} days, "
                 "the same dates in every year. The colour shows where this year's longest spell ranks among those years in the same "
-                "district, so a 10-day spell can be about usual in one district and much longer than usual in another. "
+                f"district, so a 10-day spell can be about usual in one district and much longer than usual in another. A spell within {MIN_DIFF} days of the usual is always shown as about usual. "
                 "The number in the pop-up is the length in days. Southern districts have two rainy seasons; this map covers the first (main) season only."),
         "limits": [
             "Experimental, version 0.1. The dry-spell lengths have not been checked against rain-gauge records. The start dates that place the period were checked against 14 Ghana Meteorological Agency rain gauges and typically differ from the gauges by about three weeks.",
