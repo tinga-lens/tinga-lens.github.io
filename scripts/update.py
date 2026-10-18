@@ -8,6 +8,8 @@ Tinga Lens - run every layer that is due.
   fires      : every run, if a FIRMS map key is available
   fire risk  : every run, after soil moisture and fires (it reads what they saved)
   rainy season: experimental; rainseason=validate only checks it against rain gauges (publishes nothing); first build only when asked for (RAINSEASON=full, or trial = nothing published), then every run
+  dry spells : experimental; runs after the rainy season, from the daily rainfall it saved (no download, no Earth Engine)
+  air quality: only when asked (AIRQUALITY=full; probe only checks the files); the source publishes once a year
   biodiversity: once a month, if a GBIF login is available
   pressure   : only when it has never been built (or PRESSURE=true); the source is a fixed published dataset
   flood-prone: only when it has never been built, its script has a newer BUILD number, or FLOODPRONE=true;
@@ -37,6 +39,10 @@ if os.environ.get("FLOODPRONE", "").lower() == "pilot":   # only run the flood-p
     print("===== flood-prone land (trial) =====", flush=True)
     sys.exit(subprocess.run([sys.executable, str(HERE / "floodprone.py")]).returncode)
 
+if os.environ.get("AIRQUALITY", "").lower() == "probe":      # only list the PM2.5 files and look inside one, then stop
+    print("===== air quality: probe =====", flush=True)
+    sys.exit(subprocess.run([sys.executable, str(HERE / "airquality.py"), "--probe"]).returncode)
+
 if os.environ.get("RAINSEASON", "").lower() == "validate":   # only compare the rainy-season layer with rain gauges, then stop
     print("===== rainy season: check against rain gauges =====", flush=True)
     sys.exit(subprocess.run([sys.executable, str(HERE / "validate_rainseason.py")]).returncode)
@@ -55,6 +61,10 @@ if earthdata and os.environ.get("FIRMS_MAP_KEY"):
     jobs.append(("fire risk", "fire_risk.py"))      # needs the soil moisture and fires records; downloads nothing
 if os.environ.get("RAINSEASON", "").lower() in ("true", "full", "trial") or (DATA / "rainseason.json").exists():
     jobs.append(("rainy season (experimental)", "rainy_season.py"))   # first build only when asked for; afterwards it refreshes every run (downloads only new days)
+if os.environ.get("RAINSEASON", "").lower() in ("true", "full") or (DATA / "rainseason.json").exists():
+    jobs.append(("dry spells (experimental)", "dryspell.py"))   # reads the daily rainfall the rainy-season job just saved; no download, no Earth Engine
+if os.environ.get("AIRQUALITY", "").lower() in ("true", "full"):     # yearly source: only when asked for
+    jobs.append(("air quality (PM2.5)", "airquality.py"))
 if os.environ.get("FOREST", "").lower() == "true" or not (DATA / "forest.json").exists():
     jobs.append(("forest", "forest.py"))
 else:

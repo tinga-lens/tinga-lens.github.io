@@ -44,6 +44,9 @@ const TL = {
     rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.2 (experimental)",
                   source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall using candidate rules",
                   resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
+    dryspell: { name: "Longest dry spell", tab: "Dry spells (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
+                source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; dry spells counted by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall",
+                resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
     fires: { name: "Active fire detections", tab: "Observed fire", module: "Fire", page: "pages/fire.html", status: "observed", version: "1.1",
              source: "NASA FIRMS, VIIRS (S-NPP) 375 m active fires", type: "Satellite observation",
              resolution: "375 m detections, summed by district", updates: "Weekly", baseline: "2012 onwards" },
@@ -164,7 +167,7 @@ TL.colorFix = {
   fires: { quiet: "#e4e4e4" },                                               // pale grey for "quiet": darker grey is kept for "no data"
 };
 TL.soilRamp = { n0: "#f1ece3", n1: "#d8c9b4", n2: "#bda389", n3: "#8f6e56", n4: "#5d3f2d" };   // neutral: the top fifth is not "better"
-TL.hideEmpty = new Set(["dry_season", "cloud", "few", "low", "unknown", "mnone", "small", "s0", "none"]);   // classes left out of the legend when no district is in them
+TL.hideEmpty = new Set(["not_yet", "dry_season", "cloud", "few", "low", "unknown", "mnone", "small", "s0", "none"]);   // classes left out of the legend when no district is in them
 TL.titleFix = { forest: "Tree cover loss rate", cropland: "Open-field cropland" };
 TL.minForestHa = 100;                       // under this much tree cover in 2000 a percentage is not meaningful
 TL.minDetections = 10;                      // fires: under this many detections now and normally a district is "quiet"
@@ -172,12 +175,13 @@ TL.minDetections = 10;                      // fires: under this many detections
 // names for the two ranking buttons
 TL.rankname = {
   fires: ["Most detections", "Fewest detections"], biodiversity: ["Most species recorded", "Fewest recorded"],
-  forest: ["Fastest loss", "Slowest loss"], urban: ["Fastest growth", "Slowest growth"],
+  forest: ["Fastest loss", "Slowest loss"], urban: ["Fastest growth", "Slowest growth"], dryspell: ["Longest spell", "Shortest spell"],
 };
 
 // one line under the ranking that says what it is ranked by
 TL.ranknote = {
   drought: "Ranked by percent of normal rainfall. The colours show where this period ranks among the 30 baseline years, so two districts with the same percentage can have different colours. Open a district for “x of 30 years drier”.",
+  dryspell: "Ranked by the length of the longest dry spell, in days; equal lengths are marked =. The colours compare each district with its own history, so a longer spell can have a milder colour where long spells are normal.",
   soil: "Ranked by percent of normal. Districts in the same 9 km grid cell have identical values, so they tie; tied values are marked =.",
   vegetation: "Ranked by percent of the district's own average greenness. Tied classes are marked =.",
   fires: "Ranked by number of detections, not by change from normal, so large districts rank high even when they are coloured blue.",
@@ -198,6 +202,7 @@ TL.caveats = {
   drought: ["Colours show where this period's rainfall ranks among the 30 baseline years; the ranking uses percent of normal."],
   soil: ["Modelled soil moisture (NASA SMAP L4), not a measurement. Normal rests on about a dozen years, and districts in one 9 km grid cell share a value."],
   rainseason: ["Experimental: checked against rain gauges and typically about three weeks out. A rough guide only."],
+  dryspell: ["Experimental: dry-spell lengths have not been checked against rain gauges. Rain is averaged over each district, so one farm can have a longer spell than shown."],
   vegetation: ["Districts are not rated when clouds hide the ground or fewer than five other years exist for the month."],
   fires: ["A detection is one satellite overpass, so one fire can be counted more than once. The latest days are rapid-release data that NASA later revises."],
   firerisk: ["Experimental estimate of the chance of at least one satellite fire detection in the district in five days. Not a fire warning."],
@@ -340,10 +345,11 @@ TL.post = {
   },
   floodhazard: d => {
     const districts = {}, counts = {};
+    const built = d.categories.some(c => c.key === "h0" && /^Under 0\.1%/.test(c.label));          // newer data files already carry the "Under 0.1%" class
     for (const [id, x] of Object.entries(d.districts)) {
       const area = TL.n0(TL.row(x, /^Land inside that flood zone/)), r10 = TL.n0(TL.row(x, /^In a 1-in-10-year/)), pct = TL.n(x.big);
       let cat = x.cat, flag = "";
-      if (x.cat === "h0" && area > 0) cat = "small";                                         // a little land is inside the zone: not "None"
+      if (!built && x.cat === "h0" && area > 0) cat = "small";                                         // a little land is inside the zone: not "None"
       if (pct >= 20 && area > 0 && r10 >= 0.85 * area) flag = "†";                           // the Volta delta: the zone is as large in a 1-in-10 flood as in a 1-in-100 flood
       districts[id] = { ...x, cat, flag, ol: flag ? 1 : 0, rows: flag ? (x.rows || []).concat([["Dam caveat", "Modelled without the Akosombo dam's control"]]) : x.rows };
       counts[cat] = (counts[cat] || 0) + 1;
