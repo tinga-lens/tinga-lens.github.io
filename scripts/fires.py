@@ -305,7 +305,7 @@ def main():
         c, nm = int(cur[i]), float(normal[i])
         quiet = c < QUIET and nm < QUIET
         pct = c / nm * 100 if nm > 0 else float("inf")
-        cat = "quiet" if quiet else next(k["key"] for k in CATS if pct < k.get("max", -1))
+        cat = "quiet" if quiet else next((k["key"] for k in CATS if pct < k.get("max", -1)), "far_more")   # no normal fires (pct is infinite) but at least QUIET detections now: far more than normal
         more = int((refs[:, i] > c).sum())
         tied = int((refs[:, i] == c).sum())
         districts[row.shapeID] = {
