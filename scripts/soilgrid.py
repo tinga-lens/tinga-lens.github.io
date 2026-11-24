@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - soil properties across Ghana on a 1 km grid (not averaged by district).
+TingaLens - soil properties across Ghana on a 1 km grid (not averaged by district).
 
 Source: iSDAsoil, 30 m maps of Africa (Hengl et al. 2021, CC BY 4.0), read through Google Earth Engine.
 For each property the 30 m topsoil (0-20 cm) values are averaged into 1 km cells (0.009 degrees) and

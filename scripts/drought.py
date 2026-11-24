@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - drought layer.
+TingaLens - drought layer.
 
 Turns CHIRPS monthly rainfall into a district-level drought indicator for Ghana.
 

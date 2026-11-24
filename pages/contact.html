@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contact us | Tinga Lens</title>
-<meta name="description" content="How to reach Tinga Lens with a question, a correction or a report from the ground.">
+<title>Contact us | TingaLens</title>
+<meta name="description" content="How to reach TingaLens with a question, a correction or a report from the ground.">
 <link rel="canonical" href="https://tingalens.org/pages/contact.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Tinga Lens">
-<meta property="og:title" content="Contact us | Tinga Lens">
-<meta property="og:description" content="How to reach Tinga Lens with a question, a correction or a report from the ground.">
+<meta property="og:site_name" content="TingaLens">
+<meta property="og:title" content="Contact us | TingaLens">
+<meta property="og:description" content="How to reach TingaLens with a question, a correction or a report from the ground.">
 <meta property="og:url" content="https://tingalens.org/pages/contact.html">
 <meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -22,7 +22,7 @@
 
   <h2>Write to us</h2>
   <p id="contact">Contact details are loading.</p>
-  <p>Messages are read by the person who runs Tinga Lens. Replies usually take a few days.</p>
+  <p>Messages are read by the person who runs TingaLens. Replies usually take a few days.</p>
 
   <h2>What helps most</h2>
   <ul>
@@ -33,7 +33,7 @@
   </ul>
 
   <h2>In an emergency</h2>
-  <p>Tinga Lens is not a warning or emergency service and cannot respond to emergencies. For forecasts and warnings, contact the Ghana Meteorological Agency. For disasters, contact the National Disaster Management Organisation (NADMO).</p>
+  <p>TingaLens is not a warning or emergency service and cannot respond to emergencies. For forecasts and warnings, contact the Ghana Meteorological Agency. For disasters, contact the National Disaster Management Organisation (NADMO).</p>
 
   <div id="signup-block" hidden>
     <h2>Get updates</h2>
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   getJSON("data/site.json").then(s => {
     const parts = [];
     if (s.contact_email) parts.push(`Email: <a href="mailto:${esc(s.contact_email)}?subject=Tinga%20Lens">${esc(s.contact_email)}</a>`);
-    if (s.linkedin_url) parts.push(`LinkedIn: <a href="${esc(s.linkedin_url)}">${esc(s.founder_name || "Tinga Lens")}</a>`);
+    if (s.linkedin_url) parts.push(`LinkedIn: <a href="${esc(s.linkedin_url)}">${esc(s.founder_name || "TingaLens")}</a>`);
     $("contact").innerHTML = parts.length ? parts.join("<br>") : "Contact details are not published yet.";
     if (s.signup_url) { $("signup").href = s.signup_url; $("signup-block").hidden = false; }
   }).catch(() => { $("contact").textContent = "Contact details could not be loaded. Please try again later."; });

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - which crops are grown where (model estimate), by district.
+TingaLens - which crops are grown where (model estimate), by district.
 
 Source: SPAM 2020, the Spatial Production Allocation Model of the International Food Policy Research
 Institute (IFPRI) and partners. SPAM shares national and regional crop statistics out over a 10 km grid,
@@ -150,7 +150,7 @@ def main():
     limits = [
         "This is a model estimate, not a record of what each farmer planted. SPAM shares national and regional crop statistics out over a 10 km grid, using satellite cropland maps and the suitability of the land for each crop.",
         "The grid cells are about 85 km², similar in size to many districts. Each cell is shared between the districts it overlaps by area, so figures for small districts mostly reflect the surrounding cells. Differences between neighbouring districts can be an artefact of the grid.",
-        "Physical area is read from the SPAM 2020 files; Tinga Lens adds the 10 km cells up by district. The estimates are built mainly on statistics for 2019 to 2021 and show one typical year, not this season or a trend.",
+        "Physical area is read from the SPAM 2020 files; TingaLens adds the 10 km cells up by district. The estimates are built mainly on statistics for 2019 to 2021 and show one typical year, not this season or a trend.",
         "Ghana's district crop statistics were not available to the model at district level, so the district pattern comes from the model, not from district records.",
         "The figures are physical area: the land a crop occupies, whatever the number of harvests in a year. Where two crops share a field, each is given its part. Rainfed and irrigated land are added together.",
         "The main crop is simply the crop with the largest area. It can lead by a small margin: check its share in the panel, and the crop's own layer. Where it holds under half of the crop area, treat the colour as a rough guide.",
@@ -204,7 +204,7 @@ def main():
     with open(DATA / "crops-by-district.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["District ID", "District", "Crop code", "Crop", "Area (ha)", "Share of mapped crop area (%)", "Source and version"])
-        src = f"{version}, IFPRI 2025 (doi:10.7910/DVN/SWPENT), 10 km grid shared between districts by overlapping area by Tinga Lens (tingalens.org); model estimate, not a census"
+        src = f"{version}, IFPRI 2025 (doi:10.7910/DVN/SWPENT), 10 km grid shared between districts by overlapping area by TingaLens (tingalens.org); model estimate, not a census"
         for i, sid in enumerate(ids):
             nm = gdf.loc[i, "shapeName"]
             for c in sorted(ranked, key=lambda c: -ha[c][i]):

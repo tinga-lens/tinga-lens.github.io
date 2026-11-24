@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - run every layer that is due.
+TingaLens - run every layer that is due.
 
   drought    : every run
   soil       : every run, if a NASA Earthdata login is available

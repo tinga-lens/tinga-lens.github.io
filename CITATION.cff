@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use Tinga Lens, please cite it as below, and also credit the original data provider named on each map."
-title: "Tinga Lens: Environmental monitoring for Ghana"
+message: "If you use TingaLens, please cite it as below, and also credit the original data provider named on each map."
+title: "TingaLens: Environmental monitoring for Ghana"
 type: software
 authors:
   - family-names: Adekilae

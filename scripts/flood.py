@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - observed flooding layer.
+TingaLens - observed flooding layer.
 
 Source: Copernicus Emergency Management Service, Global Flood Monitoring (GFM).
 GFM maps flooded land from Sentinel-1 radar images at 20 m. Radar sees through cloud.

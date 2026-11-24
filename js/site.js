@@ -1,4 +1,4 @@
-// Tinga Lens - shared header, navigation, footer and small helpers used on every page.
+// TingaLens - shared header, navigation, footer and small helpers used on every page.
 const ROOT = document.documentElement.dataset.root || "";       // "" on the home page, "../" inside pages/
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -53,10 +53,10 @@ const badge = status => `<span class="badge ${status}" title="${esc((TL.status[s
   foot.innerHTML = `<div class="wrap">
     <p id="foot-layer"></p>
     <p class="disclaimer"><strong>Important:</strong> ${esc(TL.disclaimer)}</p>
-    <p>Tinga Lens is independent and uses only public datasets and its own code.
+    <p>TingaLens is independent and uses only public datasets and its own code.
       Boundaries: <a href="https://www.geoboundaries.org">geoBoundaries</a> (CC BY 4.0). Basemap © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
       <a href="${ROOT}pages/methods.html">Data and methods</a>, <a href="${ROOT}pages/brief.html">This month in Ghana</a>, <a href="${ROOT}pages/about.html">About</a>, <a href="${ROOT}pages/contact.html">Contact us</a>, <a href="${TL.repo}">Code</a></p>
-    <p class="sub">We count visits and map downloads with GoatCounter to see how Tinga Lens is used. It sets no cookies and stores no names, email addresses or IP addresses.</p>
+    <p class="sub">We count visits and map downloads with GoatCounter to see how TingaLens is used. It sets no cookies and stores no names, email addresses or IP addresses.</p>
   </div>`;
   document.body.append(foot);
 })();

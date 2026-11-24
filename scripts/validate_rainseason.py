@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - check the rainy-season layer against rain gauges.
+TingaLens - check the rainy-season layer against rain gauges.
 
 For each gauge in data/source/station_onsets.json (start of the rains found from gauge records, 1991-2015),
 this takes the CHIRPS daily rainfall already saved for the district that contains the gauge, finds the start

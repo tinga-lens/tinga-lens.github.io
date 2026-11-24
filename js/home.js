@@ -1,4 +1,4 @@
-// Tinga Lens - home page: current-conditions cards. Every number comes from the published layer files.
+// TingaLens - home page: current-conditions cards. Every number comes from the published layer files.
 (function () {
   const load = k => getJSON(`data/${k}.json`).catch(() => null);
   const n = o => Object.values(o).reduce((a, b) => a + b, 0);
@@ -50,7 +50,7 @@
       const hit = Object.values(fl.districts).filter(x => !["out", "f0"].includes(x.cat)), km = hit.reduce((a, x) => a + (num(x.big) || 0), 0);
       out.push(card("Flood", "Observed flooding", "pages/flood.html", tag("observed", "Historical event", fl.subtitle)
         + line(Math.round(km).toLocaleString() + " km²", `of land seen flooded in ${hit.length} districts in this one event`)
-        + (fp ? line(Math.round(Object.values(fp.districts).reduce((a, x) => a + (x.cat === "out" ? 0 : (num(x.big) || 0)), 0)).toLocaleString() + " km²", `of land flood-prone, seen under water in at least 2 years (derived by Tinga Lens): a different measure from the single event`) : "")
+        + (fp ? line(Math.round(Object.values(fp.districts).reduce((a, x) => a + (x.cat === "out" ? 0 : (num(x.big) || 0)), 0)).toLocaleString() + " km²", `of land flood-prone, seen under water in at least 2 years (derived by TingaLens): a different measure from the single event`) : "")
         + `<div class="sub" style="margin:0">Not a live flood map.</div>`, ["observed"]));
     } else out.push(soon("Flood", "Flooding and susceptibility", "pages/flood.html", "Satellite-observed flooding and flood-prone landscapes. No data is published yet."));
     if (hp) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - cropland and soil properties by district (nitrogen, phosphorus, potassium, pH, organic matter, sand, clay, bulk density).
+TingaLens - cropland and soil properties by district (nitrogen, phosphorus, potassium, pH, organic matter, sand, clay, bulk density).
 
 Sources, both read through Google Earth Engine:
   * Cropland: ESA WorldCover 10 m v200 (2021), class 40 "Cropland".
@@ -191,7 +191,7 @@ def main():
         "build": BUILD,
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CROP_CATS],
         "how": ("Each district shows the share of its land that satellites saw as cropland in 2021. The map is the European Space Agency's WorldCover, "
-                "made from Sentinel-1 radar and Sentinel-2 images at 10 m. Tinga Lens adds up the cropland cells in each district. Click a district for the area in square kilometres."),
+                "made from Sentinel-1 radar and Sentinel-2 images at 10 m. TingaLens adds up the cropland cells in each district. Click a district for the area in square kilometres."),
         "limits": [
             "This is a satellite classification, not a farm census. It tells you where land looks like cropland, not who farms it, which crop is grown or whether it is in use this year.",
             "Small farms mixed with trees and fallow land are hard to separate. Tree crops such as cocoa, and farms under scattered trees, are often classed as tree cover, and resting fields can be classed as grass. Cropland is therefore likely to be under-counted, most of all in the forest and transition zones.",
@@ -279,7 +279,7 @@ def main():
             "limits": [
                 "Districts are grouped by where their rounded value falls among all districts. Each class has about a fifth of the districts, but equal values always sit in the same class, so class sizes are not exactly equal. The legend lists the value range of each class.",
                 "These are model predictions, not measurements. They show broad patterns and can be wrong for a single farm or field. They are not a substitute for a soil test on the site.",
-                "The shading is relative. 'Highest fifth' means higher than most other districts, not high enough for a crop, and it does not mean better land. Tinga Lens does not give fertiliser or investment advice.",
+                "The shading is relative. 'Highest fifth' means higher than most other districts, not high enough for a crop, and it does not mean better land. TingaLens does not give fertiliser or investment advice.",
                 "The district value averages all land, including forest, wetlands and settlements, so it can differ from the soil under farms. The cropland-only value is shown in the panel where the district has at least 1 km² of mapped cropland.",
                 "Cropland comes from ESA WorldCover, which often classes tree crops such as cocoa and oil palm as tree cover. In the forest belt the cropland-only value is therefore missing or covers only part of the farmland.",
                 "The maps describe conditions as predicted from samples and satellite data of about 2001 to 2017. Fertiliser use, erosion and changes in farming since then are not shown.",
@@ -303,7 +303,7 @@ def main():
         # one row per district and soil property: every row has the same columns, numbers are plain numbers, units are in their own column
         cols = ["District ID", "District", "Region", "Land area (km2)", "Mapped cropland area (km2)", "Soil property", "Unit",
                 "All land 0-20 cm", "Cropland 0-20 cm", "Cropland 20-50 cm", "Source and version"]
-        src = "iSDAsoil Africa v1 (Hengl and others 2021, CC BY 4.0) averaged by district by Tinga Lens (tingalens.org); model predictions, not soil tests; cropland from ESA WorldCover 2021"
+        src = "iSDAsoil Africa v1 (Hengl and others 2021, CC BY 4.0) averaged by district by TingaLens (tingalens.org); model predictions, not soil tests; cropland from ESA WorldCover 2021"
         with open(DATA / "soil-by-district.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(cols)

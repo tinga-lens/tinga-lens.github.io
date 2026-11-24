@@ -1,4 +1,4 @@
-// Tinga Lens - district profiles: every product for one district on one page.
+// TingaLens - district profiles: every product for one district on one page.
 (function () {
   const keys = Object.keys(TL.products);
   let layers = {}, geo = null, map = null, shapes = {}, current = null, REG = {}, all = null, CEN = {};
@@ -210,7 +210,7 @@
         if (!share || !blob) return save(blob);
         const file = new File([blob], name, { type: "image/png" });
         const link = `${TL.site}/pages/districts.html#${encodeURIComponent(current.name)}`;
-        navigator.share({ files: [file], title: `${current.name}, Tinga Lens`, text: `${current.name}: environmental conditions from Tinga Lens. ${link}` })
+        navigator.share({ files: [file], title: `${current.name}, TingaLens`, text: `${current.name}: environmental conditions from TingaLens. ${link}` })
           .catch(e => { if (e && e.name !== "AbortError") save(blob); });      // if sharing fails, fall back to a download
       }, "image/png");
     }).catch(() => alert("The image could not be made on this device. Please try another browser."));
@@ -227,7 +227,7 @@
       const tail = [e.d.source, e.d.updated, p.version];
       (e.x.rows.length ? e.x.rows : [["", ""]]).forEach(r => lines.push(head.concat(r, tail).map(q).join(",")));
     });
-    lines.push("", q("Tinga Lens, " + TL.site + ". Estimates from satellite, climate and model data; not official warnings."));
+    lines.push("", q("TingaLens, " + TL.site + ". Estimates from satellite, climate and model data; not official warnings."));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
     a.download = `tinga-lens-${current.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;

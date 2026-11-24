@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - Dry Spells (EXPERIMENTAL, version 0.1).
+TingaLens - Dry Spells (EXPERIMENTAL, version 0.1).
 
 For every district: what was the longest run of dry days during the main rainy season, and is that longer
 or shorter than usual?  It uses the daily CHIRPS rainfall that the rainy-season tracker has already saved

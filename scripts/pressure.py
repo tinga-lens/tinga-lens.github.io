@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - human pressure layer.
+TingaLens - human pressure layer.
 
 Source: Global Human Modification v3 (Theobald and others, 2025; The Nature Conservancy), CC BY 4.0.
 It gives, for every 300 m cell, how far the land has been altered by people, from 0 (not modified)

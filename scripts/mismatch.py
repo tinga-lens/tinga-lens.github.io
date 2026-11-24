@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - Rain and Soil (EXPERIMENTAL, version 0.1).
+TingaLens - Rain and Soil (EXPERIMENTAL, version 0.1).
 
 Where do rainfall and soil moisture disagree, and where are both dry?  It compares two things the site already holds:
 the 3-month rainfall total (data/drought_history.json) and the monthly root-zone soil moisture (data/soil_history.json).
@@ -332,7 +332,7 @@ def render(districts, info):
     return {
         "label": "Rain and soil", "title": f"Where rainfall and soil moisture disagree, {month_text(label)} (experimental)",
         "subtitle": f"Rainfall of the 3 months to {month_text(label)} against root-zone soil moisture of {month_text(label)}; the gap compares both with {ref[0]}–{ref[1]}",
-        "source": "CHIRPS rainfall (Climate Hazards Center) and NASA SMAP L4 soil moisture, compared by Tinga Lens", "demo": False,
+        "source": "CHIRPS rainfall (Climate Hazards Center) and NASA SMAP L4 soil moisture, compared by TingaLens", "demo": False,
         "categories": CATEGORIES,
         "how": ("EXPERIMENTAL. Rainfall and soil moisture usually move together, but not always. This map shows the districts where they "
                 f"do not, and the districts where both are low. \"Dry on both\" means dry on the Rainfall tab (the driest {DRY_PCT}% of {info['rain_ref'][0]}–{info['rain_ref'][1]}) "

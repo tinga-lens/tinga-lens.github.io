@@ -1,4 +1,4 @@
-// Tinga Lens - biodiversity: species lists for a district, and the species explorer.
+// TingaLens - biodiversity: species lists for a district, and the species explorer.
 // Everything shown comes from the files in data/bio/, built by scripts/biodiversity.py.
 (function () {
   let SP = null, GROUPS = [], PAIRS = null, REG = {}, NAMES = {}, geo = null;
@@ -14,7 +14,7 @@
   };
   const foot = extra => q(extra + "Each row is one recorded place. "
     + (PTS ? `To protect sensitive species, every position is rounded to ${PTS.generalise_deg} degree (about 11 km), so exact sites are not published. ` : "")
-    + "A place with no record does not mean the species is absent. " + $("cov-cite").textContent + " Tinga Lens, " + TL.site);
+    + "A place with no record does not mean the species is absent. " + $("cov-cite").textContent + " TingaLens, " + TL.site);
   let REGION = "", curSpecies = null, curRows = [];                         // region chosen on the map above; species open in the explorer
   const HINT = "Click a district on the map to list the species recorded there.";
   const F = { key: 0, name: 1, common: 2, group: 3, records: 4, districts: 5, first: 6, last: 7 };
@@ -133,7 +133,7 @@
     const c = cur.region ? [] : (CEN[cur.id] || ["", ""]);
     const lines = [[cur.region ? "Region" : "District"].concat(cur.region ? [] : ["District centre latitude", "District centre longitude"], ["Scientific name", "Common name", "Group", "Records", "Recorded places", "First year", "Latest year", "GBIF species key"]).map(q).join(",")];
     filtered().forEach(r => { const s = SP[r[0]]; lines.push([cur.name].concat(c, [s[F.name], s[F.common], GROUPS[s[F.group]], r[1], r[2], r[3], r[4], s[F.key]]).map(q).join(",")); });
-    lines.push("", q($("cov-cite").textContent + " Tinga Lens, " + TL.site));
+    lines.push("", q($("cov-cite").textContent + " TingaLens, " + TL.site));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
     a.download = `tinga-lens-species-${cur.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;
@@ -163,7 +163,7 @@
     const s = SP[curSpecies], q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
     const lines = [["Scientific name", "Common name", "Group", "District", "Region", "Records", "Latest year", "GBIF species key"].map(q).join(",")];
     curRows.forEach(r => lines.push([s[F.name], s[F.common], GROUPS[s[F.group]], NAMES[r.id] || "", REG[r.id] || "", r.n, r.last, s[F.key]].map(q).join(",")));
-    lines.push("", q((REGION ? `${REGION} Region only. ` : "All of Ghana. ") + "Districts not listed have no record; that does not mean the species is absent. " + $("cov-cite").textContent + " Tinga Lens, " + TL.site));
+    lines.push("", q((REGION ? `${REGION} Region only. ` : "All of Ghana. ") + "Districts not listed have no record; that does not mean the species is absent. " + $("cov-cite").textContent + " TingaLens, " + TL.site));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
     a.download = `tinga-lens-${s[F.name].toLowerCase().replace(/[^a-z0-9]+/g, "-")}${REGION ? "-" + REGION.toLowerCase().replace(/ /g, "-") : ""}-by-district.csv`;

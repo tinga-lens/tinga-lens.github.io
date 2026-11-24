@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - check that the Google Earth Engine key works.
+TingaLens - check that the Google Earth Engine key works.
 
 Reads the service account key from the EE_SERVICE_ACCOUNT_KEY secret, signs in,
 and asks Earth Engine one small question (how many Sentinel-1 radar images cover

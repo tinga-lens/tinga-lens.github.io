@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - river flood hazard.
+TingaLens - river flood hazard.
 
 Source: Global river flood hazard maps v2.1 from the European Commission's Joint Research
 Centre (JRC), part of the Copernicus Emergency Management Service (GloFAS). The maps are a

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - Rainy Season Tracker (EXPERIMENTAL, version 0.1).
+TingaLens - Rainy Season Tracker (EXPERIMENTAL, version 0.1).
 
 For every district: when did the rains start this year, and is that earlier or
 later than usual?  The rules below are CANDIDATE rules taken from methods used for

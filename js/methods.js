@@ -1,4 +1,4 @@
-// Tinga Lens - Data & Methods page. Text for each product comes from the product's own data file,
+// TingaLens - Data & Methods page. Text for each product comes from the product's own data file,
 // so the page always describes the version that is actually published.
 (function () {
   const keys = Object.keys(TL.products);
@@ -57,7 +57,7 @@
     // metadata example built from a real product
     const k0 = "soil", p0 = TL.products[k0], d0 = L[k0];
     if (d0) $("meta").textContent = JSON.stringify({ product: k0, display_name: p0.name, source: p0.source, updated: d0.updated, period: d0.subtitle,
-      baseline: p0.baseline, spatial_resolution: p0.resolution, unit: "percent of normal; category", version: p0.version, processing: "Tinga Lens",
+      baseline: p0.baseline, spatial_resolution: p0.resolution, unit: "percent of normal; category", version: p0.version, processing: "TingaLens",
       status: p0.status }, null, 2);
 
     if (!report) { $("validation").innerHTML = `<p class="sub">The fire model report is not published yet.</p>`; return; }

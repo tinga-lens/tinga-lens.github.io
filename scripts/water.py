@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - surface water change.
+TingaLens - surface water change.
 
 Source: JRC Global Surface Water v1.4 (Pekel et al. 2016), which maps open water on every
 cloud-free Landsat image from 1984 to 2021 at 30 m. Its "transition" map compares the first

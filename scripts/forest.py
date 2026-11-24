@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - forest loss layer.
+TingaLens - forest loss layer.
 
 Source: Hansen / UMD / Google Global Forest Change (30 m, yearly, CC BY 4.0).
 For each district:

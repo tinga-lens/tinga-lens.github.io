@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - flood-prone land (trial).
+TingaLens - flood-prone land (trial).
 
 Uses Google Earth Engine to look through ten years of Sentinel-1 radar images and count,
 for every 40 m piece of land, in how many years it was seen under water.
@@ -273,12 +273,12 @@ def publish(results, v, counts):
     lake_total = sum(r.get("shore2", 0) for _, r in results.values())
     print(f"Flooded in at least 2 of {n} years: {total:,.0f} km2 across Ghana, plus {lake_total:,.0f} km2 along the lake shore")
     write_layer("floodprone", {
-        "label": "Flood-prone land", "title": "Flood-prone land", "source": "Sentinel-1 radar, processed by Tinga Lens", "demo": False,
+        "label": "Flood-prone land", "title": "Flood-prone land", "source": "Sentinel-1 radar, processed by TingaLens", "demo": False,
         "subtitle": f"Land seen under water in at least 2 of the {n} years {first} to {last}",
         "build": BUILD, "images_by_year": counts,
         "settings": {"key": CHOSEN, **v, "years": [first, last], "scale_m": SCALE_M, "occurrence_pct": OCCURRENCE_PCT, "slope_deg": SLOPE_DEG},
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
-        "how": (f"Tinga Lens read every Sentinel-1 radar image of Ghana taken from {season} in the years {first} to {last}. "
+        "how": (f"TingaLens read every Sentinel-1 radar image of Ghana taken from {season} in the years {first} to {last}. "
                 f"A piece of land about {SCALE_M} m across is counted as flooded in a year when at least {v['hits']} images that year show it as open water "
                 f"and clearly darker than it normally is. Each district shows the area flooded in at least 2 of the {n} years. "
                 f"Rivers, lakes, lagoons and other land that is under water {OCCURRENCE_PCT}% of the time or more are not counted. "
@@ -287,7 +287,7 @@ def publish(results, v, counts):
                 f"Click a district to see the flooded area in each year."),
         "limits": [
             "'None seen by radar' means the radar did not see standing water on land here in at least 2 years. It does not prove the land never floods: under trees, in towns and in short floods the radar is blind.",
-            "This is Tinga Lens's own reading of the radar images. It has been compared with one mapped flood (lower Volta, 2023) but not checked on the ground.",
+            "This is TingaLens's own reading of the radar images. It has been compared with one mapped flood (lower Volta, 2023) but not checked on the ground.",
             "Radar cannot see water under trees or between buildings, so flooding in forests and towns is mostly missed. City street flooding, as in Accra, does not appear.",
             f"A flood must be seen on at least {v['hits']} images in a year. Each place is imaged every few days, so floods lasting only a day or two are missed.",
             "Land within about 3 to 6 km of Lake Volta and other large reservoirs is set apart as lake shore, using a coarse grid. Some river flooding close to the lake is put there by mistake, and narrow arms of the lake can be missed.",

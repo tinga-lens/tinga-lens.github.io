@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - built-up area and urban growth layer.
+TingaLens - built-up area and urban growth layer.
 
 Source: Global Human Settlement Layer, GHS-BUILT-S R2023A (European Commission, Joint Research Centre).
 It gives the built-up surface (buildings) in each 1 km cell, in square metres, every five years.

@@ -1,4 +1,4 @@
-// Tinga Lens - the map application. Used on the home page (all layers) and on each module page (its own layers).
+// TingaLens - the map application. Used on the home page (all layers) and on each module page (its own layers).
 // A page chooses its layers with <html data-layers="drought,soil">; with no list, every layer is shown.
 document.getElementById("app").innerHTML = `<nav class="mods" aria-label="Modules" id="mods" hidden></nav>
   <nav class="tabs" aria-label="Layers" id="tabs"></nav>
@@ -657,7 +657,7 @@ function render(key, d) {
     <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     ${t.note ? `<p class="sub" style="max-width:75ch">${esc(t.note)}</p>` : ""}`).join("");
   const today = new Date(), day = `${today.getDate()} ${["January","February","March","April","May","June","July","August","September","October","November","December"][today.getMonth()]} ${today.getFullYear()}`;
-  $("cite").textContent = `${TL.author} (${d.updated.slice(0, 4)}). ${d.title}: ${d.subtitle}${REGION ? ", " + REGION + " Region" : ""}. Tinga Lens`
+  $("cite").textContent = `${TL.author} (${d.updated.slice(0, 4)}). ${d.title}: ${d.subtitle}${REGION ? ", " + REGION + " Region" : ""}. TingaLens`
     + (prod ? `, product version ${prod.version}` : "") + `. ${TL.site}/${prod ? prod.page : ""}#${key}. Accessed ${day}. Source data: ${d.source}.`;
   $("foot-layer").innerHTML = `Map shown: updated ${esc(d.updated)}. Source: ${esc(d.source)}. `
     + d.credits.map(c => `<a href="${esc(c.url)}">${esc(c.text)}</a>. `).join("");
@@ -700,7 +700,7 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^
 const fileTag = () => `${D.key}${D.measure ? "-by-" + slug(D.measure).slice(0, 30) : ""}${REGION ? "-" + slug(REGION) : ""}`;
 // one text cell in each row of the CSV: where it names the source, version and date, so the file is understood without the page
 const shortSource = () => `tingalens.org, ${BASE.key}${(TL.products[BASE.key] || {}).version ? ", version " + (TL.products[BASE.key] || {}).version : ""}, updated ${BASE.updated}`;       // used in the very large files
-const sourceText = () => `${BASE.source}. Tinga Lens${(TL.products[BASE.key] || {}).version ? " product version " + (TL.products[BASE.key] || {}).version : ""}. Updated ${BASE.updated}. ${TL.site}`;
+const sourceText = () => `${BASE.source}. TingaLens${(TL.products[BASE.key] || {}).version ? " product version " + (TL.products[BASE.key] || {}).version : ""}. Updated ${BASE.updated}. ${TL.site}`;
 
 function saveCSV(lines, name) {
   const a = document.createElement("a");
@@ -814,7 +814,7 @@ function downloadDays() {              // the most recent days, one row per dist
   saveCSV(lines, `tinga-lens-${BASE.key}-recent-days-${BASE.updated}.csv`);
 }
 
-// The map as a picture. It is drawn fresh here (not copied from the screen), with the Tinga Lens
+// The map as a picture. It is drawn fresh here (not copied from the screen), with the TingaLens
 // name printed across it, so the name is part of the picture itself.
 function downloadImage() {
   const W = 1600, rb = regionBounds(), aspect = (rb.getNorth() - rb.getSouth()) / ((rb.getEast() - rb.getWest()) * Math.cos((rb.getNorth() + rb.getSouth()) / 2 * Math.PI / 180));
@@ -859,7 +859,7 @@ function downloadImage() {
   g.save(); g.beginPath(); g.rect(left - 30, top - 10, right - left + 60, bottom - top + 20); g.clip();
   g.translate(W / 2, H / 2); g.rotate(-Math.PI / 6);
   g.font = `700 44px ${SANS}`; g.fillStyle = "rgba(27,43,36,0.13)"; g.textBaseline = "middle";
-  for (let yy = -H; yy < H; yy += 190) for (let xx = -W; xx < W; xx += 520) g.fillText("Tinga Lens", xx + ((yy / 190) % 2 ? 260 : 0), yy);
+  for (let yy = -H; yy < H; yy += 190) for (let xx = -W; xx < W; xx += 520) g.fillText("TingaLens", xx + ((yy / 190) % 2 ? 260 : 0), yy);
   g.restore();
 
   // legend
@@ -896,12 +896,12 @@ function downloadImage() {
   g.strokeStyle = "#2D6A4F"; g.beginPath(); g.arc(60, 60, 30, -Math.PI / 2, Math.PI, false); g.stroke();
   g.fillStyle = "#A98467"; g.beginPath(); g.arc(60, 60, 11, 0, 7); g.fill();
   g.fillStyle = "#277DA1"; g.beginPath(); g.arc(23, 23, 7, 0, 7); g.fill(); g.restore();
-  g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `700 40px ${SANS}`; g.fillText("Tinga Lens", 160, fy + 30);
+  g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `700 40px ${SANS}`; g.fillText("TingaLens", 160, fy + 30);
   g.font = `400 24px ${SANS}`; g.fillStyle = "#56655C"; g.fillText(TL.site.replace("https://", ""), 160, fy + 76);
   g.font = `400 23px ${SANS}`;
   const version = (TL.products[BASE.key] || {}).version || "-";
   let ty = wrap(`Source: ${BASE.source}. Updated ${BASE.updated}. Product version ${version}. Boundaries: geoBoundaries (CC BY 4.0).`, 470, fy + 28, W - 540, 30);
-  wrap("© Tinga Lens. You may share this image unchanged with credit. To use it without the Tinga Lens name, or in a product or publication, ask first: see the About page.", 470, ty + 4, W - 540, 30);
+  wrap("© TingaLens. You may share this image unchanged with credit. To use it without the TingaLens name, or in a product or publication, ask first: see the About page.", 470, ty + 4, W - 540, 30);
 
   c.toBlob(blob => {
     const a = document.createElement("a");

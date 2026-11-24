@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - soil moisture layer.
+TingaLens - soil moisture layer.
 
 Source: NASA SMAP Level-4 (SPL4SMGP), 9 km, surface (0-5 cm) and root zone
 (0-100 cm) soil moisture. It merges SMAP satellite observations into a land

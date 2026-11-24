@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - fires layer.
+TingaLens - fires layer.
 
 Source: NASA FIRMS active fire detections from the VIIRS sensor (375 m), from 2012.
 Each detection is a satellite overpass seeing a hot spot; one fire can produce

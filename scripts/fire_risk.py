@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - fire probability (experimental).
+TingaLens - fire probability (experimental).
 
 Question answered for every district and every sampled day t (one every five days):
 
@@ -424,7 +424,7 @@ def main():
                      "district usually burns on those dates."),
         }],
         "label": "Fire risk", "title": "Estimated chance of a fire detection (experimental)",
-        "subtitle": f"{period}", "source": "Tinga Lens model on NASA SMAP, FIRMS, VIIRS and CHIRPS data", "demo": False,
+        "subtitle": f"{period}", "source": "TingaLens model on NASA SMAP, FIRMS, VIIRS and CHIRPS data", "demo": False,
         "categories": [{k: c[k] for k in ("key", "label", "note", "color")} for c in CATS],
         "how": (f"Each district shows the estimated chance that satellites record at least one fire in it during the {HORIZON} days shown. "
                 "The estimate comes from a statistical model (logistic regression) fitted to fires since 2015. It combines how "

@@ -1,10 +1,10 @@
-// Tinga Lens - site settings: navigation, modules and the product register.
+// TingaLens - site settings: navigation, modules and the product register.
 // Every product is one of three kinds, and the site labels each one:
 //   observed  = what a satellite recorded
 //   condition = an observation compared with what is normal for the place and season
-//   model     = a statistical estimate made by Tinga Lens
+//   model     = a statistical estimate made by TingaLens
 const TL = {
-  name: "Tinga Lens",
+  name: "TingaLens",
   tagline: "See Ghana's environment changing.",
   site: "https://tingalens.org",
   author: "Adekilae, F. A.",            // how the author appears in citations
@@ -29,9 +29,9 @@ const TL = {
     index: { label: "Published index", text: "A combined index published by another research group, averaged here by district." },
     condition: { label: "Environmental condition", text: "An observation compared with what is normal for that place and time of year." },
     pubmodel: { label: "Published model", text: "A model result published by another research group, added up here by district. It is not an observation." },
-    derived: { label: "Derived by Tinga Lens", text: "Worked out by Tinga Lens from satellite images using its own rules. It is the site's own reading, not something a satellite recorded directly, and it has only been checked in part." },
-    experimental: { label: "Experimental", text: "Worked out by Tinga Lens from rainfall data using candidate rules that have not yet been checked against rain-gauge records. Treat it as a first look, not a finding." },
-    model: { label: "Modeled risk", text: "A statistical estimate made by Tinga Lens. It is tested, but it is not an observation." },
+    derived: { label: "Derived by TingaLens", text: "Worked out by TingaLens from satellite images using its own rules. It is the site's own reading, not something a satellite recorded directly, and it has only been checked in part." },
+    experimental: { label: "Experimental", text: "Worked out by TingaLens from rainfall data using candidate rules that have not yet been checked against rain-gauge records. Treat it as a first look, not a finding." },
+    model: { label: "Modeled risk", text: "A statistical estimate made by TingaLens. It is tested, but it is not an observation." },
   },
   // one entry per layer file in data/; `tab` is the name shown on module pages
   products: {
@@ -42,19 +42,19 @@ const TL = {
             source: "NASA SMAP Level-4 (SPL4SMGP), NSIDC DAAC", type: "Satellite observations merged into a land model",
             resolution: "9 km", updates: "Every 5 days", baseline: "2015 onwards" },
     mismatch: { name: "Rain and soil moisture compared", tab: "Rain and soil (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
-                source: "CHIRPS rainfall and NASA SMAP L4 soil moisture, compared by Tinga Lens", type: "Derived by Tinga Lens from two published datasets",
+                source: "CHIRPS rainfall and NASA SMAP L4 soil moisture, compared by TingaLens", type: "Derived by TingaLens from two published datasets",
                 resolution: "about 5 km rainfall and 9 km soil moisture, averaged by district", updates: "Monthly", baseline: "2015 to last year (both measures)" },
     rainseason: { name: "Start of the rainy season", tab: "Rainy season (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.2 (experimental)",
-                  source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall using candidate rules",
+                  source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; start dates worked out by TingaLens", type: "Derived by TingaLens from satellite and rain-gauge rainfall using candidate rules",
                   resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
     dryspell: { name: "Longest dry spell", tab: "Dry spells (experimental)", module: "Drought", page: "pages/drought.html", status: "experimental", version: "0.1 (experimental)",
-                source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; dry spells counted by Tinga Lens", type: "Derived by Tinga Lens from satellite and rain-gauge rainfall",
+                source: "CHIRPS daily rainfall, Climate Hazards Center, UC Santa Barbara; dry spells counted by TingaLens", type: "Derived by TingaLens from satellite and rain-gauge rainfall",
                 resolution: "about 5 km, averaged by district", updates: "Weekly during the season", baseline: "1991–2020" },
     fires: { name: "Active fire detections", tab: "Observed fire", module: "Fire", page: "pages/fire.html", status: "observed", version: "1.1",
              source: "NASA FIRMS, VIIRS (S-NPP) 375 m active fires", type: "Satellite observation",
              resolution: "375 m detections, summed by district", updates: "Weekly", baseline: "2012 onwards" },
     firerisk: { name: "Fire probability", tab: "Fire probability", module: "Fire", page: "pages/fire.html", status: "model", version: "0.2 (experimental)",
-                source: "Tinga Lens logistic regression on SMAP, FIRMS, CHIRPS and VIIRS data", type: "Statistical model",
+                source: "TingaLens logistic regression on SMAP, FIRMS, CHIRPS and VIIRS data", type: "Statistical model",
                 resolution: "District, five-day periods", updates: "Weekly", baseline: "Fitted to 2015 onwards" },
     vegetation: { name: "Vegetation greenness anomaly", tab: "Vegetation condition", module: "Vegetation & Forest", page: "pages/vegetation.html", status: "condition", version: "1.1",
                   source: "NASA VIIRS vegetation index (VNP13A3), LP DAAC", type: "Satellite observation",
@@ -63,7 +63,7 @@ const TL = {
               source: "Global Forest Change (Hansen/UMD/Google/USGS/NASA), Landsat", type: "Derived from satellite images",
               resolution: "30 m, summed by district", updates: "Yearly", baseline: "Tree cover in 2000" },
     floodprone: { name: "Flood-prone land", tab: "Flood-prone land", module: "Flood", page: "pages/flood.html", status: "derived", version: "0.2 (experimental)",
-                  source: "Copernicus Sentinel-1 radar, processed by Tinga Lens in Google Earth Engine", type: "Derived from satellite radar images",
+                  source: "Copernicus Sentinel-1 radar, processed by TingaLens in Google Earth Engine", type: "Derived from satellite radar images",
                   resolution: "40 m, summed by district", updates: "Yearly", baseline: "Each place's usual radar picture, 2019 to 2021" },
     floodhazard: { name: "River flood hazard", tab: "River flood hazard", module: "Flood", page: "pages/flood.html", status: "pubmodel", version: "1.0",
                    source: "JRC global river flood hazard maps v2.1 (Copernicus Emergency Management Service); people and built-up area from GHSL 2020", type: "Published model, added up by district",
@@ -123,7 +123,7 @@ const TL = {
   // modules that are planned but have no data yet; the site shows no numbers for them
   planned: {
   },
-  disclaimer: "Tinga Lens provides research and environmental information derived from satellite, climate and geospatial datasets. Products may contain measurement, model and classification uncertainties. Tinga Lens should not be used as the sole source for emergency response, evacuation, disaster management or other safety-critical decisions. Consult the relevant Ghanaian authorities for official warnings and emergency information.",
+  disclaimer: "TingaLens provides research and environmental information derived from satellite, climate and geospatial datasets. Products may contain measurement, model and classification uncertainties. TingaLens should not be used as the sole source for emergency response, evacuation, disaster management or other safety-critical decisions. Consult the relevant Ghanaian authorities for official warnings and emergency information.",
 };
 
 // one layer for each main crop (built by scripts/crops.py)
@@ -213,7 +213,7 @@ TL.caveats = {
   fires: ["A detection is one satellite overpass, so one fire can be counted more than once. The latest days are rapid-release data that NASA later revises."],
   firerisk: ["Experimental estimate of the chance of at least one satellite fire detection in the district in five days. Not a fire warning."],
   forest: ["Tree cover loss includes logging, farming, fire and harvested plantations. Rates on small tree-cover bases exaggerate small areas."],
-  floodprone: ["Tinga Lens's own radar reading, not ground-checked. Radar misses flooding under forest and in towns, so “none detected” is not “no flooding”. Detection depends on how often a place is imaged."],
+  floodprone: ["TingaLens's own radar reading, not ground-checked. Radar misses flooding under forest and in towns, so “none detected” is not “no flooding”. Detection depends on how often a place is imaged."],
   floodhazard: ["Model result for larger rivers only. Sea flooding and street flooding (for example in Accra) are not included. † Volta delta districts are modelled without the Akosombo dam's control."],
   water: ["Dark blue mixes new reservoirs, the recovery of Lake Volta and water-filled mining pits. The record ends in 2021."],
   flood: ["One flood event only, from Copernicus radar mapping. Not a live flood map."],

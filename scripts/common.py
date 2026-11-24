@@ -1,5 +1,5 @@
 """
-Tinga Lens - shared helpers.
+TingaLens - shared helpers.
 
 Every layer script ends by calling write_layer(key, payload). The website
 (index.html) draws whatever the payload describes, so a new layer needs a new

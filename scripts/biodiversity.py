@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - biodiversity: recorded species by district.
+TingaLens - biodiversity: recorded species by district.
 
 Source: GBIF (Global Biodiversity Information Facility) occurrence records for Ghana.
 A record says that somebody saw or collected a species at a place and time. This script

@@ -1,10 +1,10 @@
-# Tinga Lens
+# TingaLens
 
 **Live site: https://tingalens.org**
 
 **See Ghana's environment changing.**
 
-Tinga Lens is an independent environmental monitoring platform for Ghana. It uses publicly available Earth observation,
+TingaLens is an independent environmental monitoring platform for Ghana. It uses publicly available Earth observation,
 climate and geospatial datasets, and processing code written for this project, to publish information for each of Ghana's districts.
 
 Platform: https://tingalens.org
@@ -24,12 +24,12 @@ The site also has district profiles, a region filter, downloads (CSV and map ima
 
 ## Data philosophy
 
-Tinga Lens distinguishes between:
+TingaLens distinguishes between:
 
 1. **Observed**: what a satellite recorded
 2. **Environmental condition**: an observation compared with what is normal for the place and season
 3. **Published index**: a combined index published by another research group, averaged here by district
-4. **Modeled risk**: a statistical estimate made by Tinga Lens
+4. **Modeled risk**: a statistical estimate made by TingaLens
 
 Each product documents its source, method, resolution, validation, limitations and version. The site shows no placeholder numbers.
 
@@ -64,7 +64,7 @@ On your own computer:
 
 ## Independence
 
-Tinga Lens uses only publicly available datasets and independently developed processing code.
+TingaLens uses only publicly available datasets and independently developed processing code.
 This repository contains no university research code, unpublished models, restricted or laboratory data.
 
 ## Data and licences
@@ -80,7 +80,7 @@ This repository contains no university research code, unpublished models, restri
 - Built-up area: Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC, CC BY 4.0
 - Human modification: Theobald and others (2025), Global Human Modification v3, The Nature Conservancy, CC BY 4.0
 - Species records: GBIF occurrence download (the DOI is shown on the Biodiversity page). Only records published under CC0 or CC BY are used; records under non-commercial licences are left out. Credit GBIF and the download DOI
-- Conservation status: not published. Tinga Lens does not redistribute IUCN Red List categories; see https://www.iucnredlist.org
+- Conservation status: not published. TingaLens does not redistribute IUCN Red List categories; see https://www.iucnredlist.org
 - Region names: geoBoundaries GHA ADM1 (OpenStreetMap)
 - Satellite background: Esri World Imagery, under Esri's terms
 - Cropland: ESA WorldCover 2021 v200, CC BY 4.0, read through Google Earth Engine
@@ -91,16 +91,16 @@ This repository contains no university research code, unpublished models, restri
 
 ## Disclaimer
 
-Tinga Lens is a research and environmental information platform. It does not replace official government warnings
+TingaLens is a research and environmental information platform. It does not replace official government warnings
 or emergency management information.
 ## Licence
 
-Tinga Lens uses separate licences for software and for original content:
+TingaLens uses separate licences for software and for original content:
 
 - **Software**: MIT licence, see `LICENSE`.
-- **Original documentation, text and data produced by Tinga Lens**: CC BY-NC 4.0 (non-commercial use), see `LICENSE-DATA.md`.
+- **Original documentation, text and data produced by TingaLens**: CC BY-NC 4.0 (non-commercial use), see `LICENSE-DATA.md`.
 - **Third-party materials**: subject to their original licences and terms of use (listed above).
-- **Tinga Lens name and logo**: rights reserved, see `NOTICE.md` and `TRADEMARKS.md`.
+- **TingaLens name and logo**: rights reserved, see `NOTICE.md` and `TRADEMARKS.md`.
 
 These licences apply only to materials and rights that the project owner is authorised to license. `NOTICE.md` explains the scope in detail.
 
@@ -108,6 +108,6 @@ These licences apply only to materials and rights that the project owner is auth
 
 ## How to cite
 
-Adekilae, F. A. (2026). *Tinga Lens: Environmental monitoring for Ghana* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23271190
+Adekilae, F. A. (2026). *TingaLens: Environmental monitoring for Ghana* (Version 1.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23271190
 
 The DOI above is the permanent identifier for all archived versions; it always resolves to the latest release. The first release (v1.0.0) is also citable as https://doi.org/10.5281/zenodo.23271191. Weekly data updates on https://tingalens.org are not archived as separate versions.

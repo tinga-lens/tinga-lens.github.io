@@ -1,4 +1,4 @@
-// Tinga Lens - "This month in Ghana": a short brief written from the published layer files.
+// TingaLens - "This month in Ghana": a short brief written from the published layer files.
 // Every sentence is assembled from figures already on the maps. Nothing is estimated or invented here.
 window.TLbrief = (function () {
   const num = s => { const v = parseFloat(String(s).replace(/,/g, "")); return isNaN(v) ? null : v; };
@@ -65,7 +65,7 @@ window.TLbrief = (function () {
   const niceDate = iso => { const [y, m, d] = iso.split("-").map(Number); return `${d} ${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][m - 1]} ${y}`; };
 
   function text(b) {                                   // the brief as plain text, for copying into a message
-    return [`Tinga Lens: this month in Ghana (data as of ${niceDate(b.updated)})`, ""].concat(b.sections.flatMap(s =>
+    return [`TingaLens: this month in Ghana (data as of ${niceDate(b.updated)})`, ""].concat(b.sections.flatMap(s =>
       [`${s.title.toUpperCase()} (${s.when})`, ...s.paras, ...(s.items.length ? [s.head + ": " + s.items.map(i => `${i[0]}${i[1] ? ", " + i[1] : ""} (${i[2]})`).join("; ") + "."] : []), ""]),
       ["Estimates from satellite and climate records. Not an official warning.", "https://tingalens.org/pages/brief.html"]).join("\n");
   }

@@ -17,7 +17,7 @@ Changes made after a detailed review of every layer by the Director at the Fores
 - Legend and ranking: class definitions no longer overlap ("driest 10 to 30%" instead of "driest 30%"); empty classes are hidden; ties are shown with "="; the ranking says how many years a district was drier or wetter than; rankings can now be shown in hectares, square kilometres, share of land or relative change, so large districts do not win by size alone.
 - Headline numbers now agree with the map: soil moisture, rainfall and vegetation are rated on the same rounded numbers the history file holds, and the fire-probability class uses the rounded percent.
 - Warnings now appear under the legend and in the downloaded PNG, not only in the Limits text. Districts with a special caveat carry a † (Volta delta below the Akosombo dam; provisional fire data) or a dashed outline (cropland in the forest zone).
-- Labels: added "Published model", "Derived by Tinga Lens" and "Experimental" to the label key. Flood-prone land is now "Derived", not "Observed". Version 0.x layers are marked experimental.
+- Labels: added "Published model", "Derived by TingaLens" and "Experimental" to the label key. Flood-prone land is now "Derived", not "Observed". Version 0.x layers are marked experimental.
 - Fires: "detections" instead of "fires"; the normal is the median of earlier years, not the mean; districts with under 10 detections now and normally are shown pale grey as "few detections"; provisional days are flagged; the download holds 90 days of day-by-day counts.
 - Fire probability: renamed "Estimated chance of a fire detection"; new "Compared with usual" view; limits explain that the dots are not fire locations and that windows start on fixed days.
 - Vegetation: districts with a value but under 5 earlier years are "Not enough years", no longer "Too cloudy".
@@ -43,7 +43,7 @@ Changes made after a detailed review of every layer by the Director at the Fores
 
 - Licence change before the first release: original data and text are now CC BY-NC 4.0 (non-commercial use; commercial use by permission). Code stays MIT. Added TRADEMARKS.md and a note in assets/logo/ stating that the name and logo are not licensed.
 - Biodiversity: IUCN Red List categories removed (their redistribution terms are not confirmed). The threatened-species counts, filter and list are gone; the species pages link to GBIF only. To protect sensitive species without those categories, every position in the record downloads is now rounded to 0.1 degree (about 11 km). Species counts and records are unchanged.
-- Licences added: MIT for the code, CC BY-NC 4.0 (non-commercial) for the original data and text to the extent Tinga Lens holds rights (the licence of each underlying data provider continues to apply), and a notice that the name and logo are not licensed. Species records use only GBIF records under CC0 or CC BY. The README no longer says "all rights reserved", that Google Earth Engine is not used, or that the biodiversity layer is non-commercial.
+- Licences added: MIT for the code, CC BY-NC 4.0 (non-commercial) for the original data and text to the extent TingaLens holds rights (the licence of each underlying data provider continues to apply), and a notice that the name and logo are not licensed. Species records use only GBIF records under CC0 or CC BY. The README no longer says "all rights reserved", that Google Earth Engine is not used, or that the biodiversity layer is non-commercial.
 - Platform release 1.0.0 is the first archived release (Zenodo). Product versions, shown on each map, are separate and are unchanged.
 - Visit and download counts with GoatCounter (no cookies, no personal data). Each download is recorded by what was taken and as a total; the home page shows the total once there is a real number. A line in the footer says what is counted.
 
@@ -53,7 +53,7 @@ Changes made after a detailed review of every layer by the Director at the Fores
 - Agriculture: main crop in each district and one map for each of nine main crops (maize, cassava, yam, rice, plantain, cocoa, sorghum, pearl millet, groundnut), from SPAM 2020 (a published model, not an observation). Built by `scripts/crops.py` from a free download; no Earth Engine is used. It has a trial mode that publishes nothing.
 - Agriculture: district crop profile (main crop, other major crops, estimated area and share) on the map and the Districts page.
 - Agriculture: soil maps now cover every district on one basis (average over all land). New soil layers: pH, organic matter (estimated from organic carbon), clay, sand and bulk density. The cropland-only value and the deeper soil are in the panel. A table of all values can be downloaded (data/soil-by-district.csv).
-- The purpose of Tinga Lens was added to the Home and About pages.
+- The purpose of TingaLens was added to the Home and About pages.
 - The photograph of the founder was added to the About page.
 
 ## 2026-10-06
@@ -64,7 +64,7 @@ Changes made after a detailed review of every layer by the Director at the Fores
 
 ## 2026-10-04
 
-- Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by Tinga Lens in Google Earth Engine. This is the first product that uses Earth Engine.
+- Flood-prone land 0.1 (experimental): land seen under water by Sentinel-1 radar in at least 2 of the years 2016 to 2025, worked out by TingaLens in Google Earth Engine. This is the first product that uses Earth Engine.
 - Flood-prone land 0.2: land along Lake Volta and other large reservoirs is reported separately, because the first version's ranking was led by lake-shore districts where the lake had risen over its banks. Early years with too few radar images are dropped automatically, because 2016 and 2017 showed far less flooding than later years. New colours.
 - Flood-prone land: 2017 shows far less flooding than later years with the same method, for reasons unrelated to the number of images. The script now starts the record at 2018; the published map still covers 2017 to 2025 until the next rebuild, which waits for Earth Engine allowance (one rebuild uses about a third of the free monthly quota).
 - River flood hazard 1.0: share of each district inside the modelled 1-in-100-year river flood zone (JRC global river flood hazard maps v2.1), with the people and built-up area inside it (GHSL 2020). A new product type, "Published model". Read through Earth Engine.
@@ -82,7 +82,7 @@ Changes made after a detailed review of every layer by the Director at the Fores
 - Recorded species 0.1 (GBIF): species counts by district, species lists, a species explorer, threatened species (IUCN Red List categories), and data coverage. Records under a non-commercial licence were added after an expert noted that mammals were under-represented; a table of records by group was added.
 - Observed flooding 0.1 (Copernicus Global Flood Monitoring): one event, the lower Volta flooding of September to November 2023.
 - Built-up area growth 1.0 (Global Human Settlement Layer), 2000 to 2020.
-- Region filter for the 16 regions; satellite background; map image downloads carrying the Tinga Lens name; a recommended citation for every map.
+- Region filter for the 16 regions; satellite background; map image downloads carrying the TingaLens name; a recommended citation for every map.
 - Redesign: map first on the home page, new typefaces and colours.
 - The site moved to https://tingalens.org.
 - Active fire detections: the update no longer stalls when the data provider is unreachable; it publishes up to the last complete day.

@@ -1,12 +1,12 @@
 # Limitations
 
-Tinga Lens publishes estimates derived from satellite, climate and model data. It does not replace official warnings.
+TingaLens publishes estimates derived from satellite, climate and model data. It does not replace official warnings.
 
 ## All products
 
 - Results are district averages. They do not describe individual farms, villages or streets.
 - District boundaries are the 260 districts of 2019. Newer districts are not yet shown.
-- No product has yet been systematically compared with ground measurements in Ghana by Tinga Lens.
+- No product has yet been systematically compared with ground measurements in Ghana by TingaLens.
 - Region names were assigned by matching the 2019 districts to the 16 current regions; three districts on a regional border were placed by where most of their land falls.
 - "Normal" depends on the length of the record: 1991–2020 for rainfall, 2015 onwards for soil moisture, 2012 onwards for vegetation and fires.
 
@@ -20,7 +20,7 @@ Tinga Lens publishes estimates derived from satellite, climate and model data. I
 - **Tree cover loss**: not the same as deforestation. It includes plantation harvests and counts cocoa, rubber and oil palm as tree cover. Regrowth is not subtracted.
 
 - **Observed flooding**: two past events only (lower Volta 2023, northern Ghana 2020). The area figure does not rank how badly districts were hit. Satellites pass every few days, and radar misses water under trees and between buildings, so the figures are a lower bound. Not a live flood map or a warning.
-- **Flood-prone land**: experimental and not checked on the ground. It is Tinga Lens's own reading of radar images for June to October. Lake and reservoir edges, irrigated rice, salt pans and seasonal wetlands can be counted as flooded; flooding in towns, under trees, or lasting only a day or two is missed. It shows where water has been seen repeatedly, not where it will flood next.
+- **Flood-prone land**: experimental and not checked on the ground. It is TingaLens's own reading of radar images for June to October. Lake and reservoir edges, irrigated rice, salt pans and seasonal wetlands can be counted as flooded; flooding in towns, under trees, or lasting only a day or two is missed. It shows where water has been seen repeatedly, not where it will flood next.
 - **River flood hazard**: a model of large rivers only, on a 90 m grid. It leaves out small streams, city drainage and the sea, and its documentation does not say that dams or flood defences are represented. It shows where water could reach, not where it has flooded. The people and built-up figures are estimates from a 2020 population grid.
 - **Surface water change**: compares the first and last years in which Landsat saw each place, which differ from place to place; the record ends in 2021. New water includes reservoirs, dugouts and mining pits. Water narrower than 30 m or under trees is missed.
 - **Built-up area growth**: buildings only, in 1 km cells; the latest date is 2020. Percent growth is large where there was little to begin with.

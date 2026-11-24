@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tinga Lens - vegetation greenness layer.
+TingaLens - vegetation greenness layer.
 
 Source: NASA VIIRS monthly vegetation index (VNP13A3, 1 km NDVI), from 2012.
 NDVI runs from about 0 (bare ground) to about 0.9 (dense green vegetation).
