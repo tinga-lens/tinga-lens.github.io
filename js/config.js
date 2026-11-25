@@ -26,6 +26,7 @@ const TL = {
     soilprops: { tab: "Soil", label: "Soil property" },
   },
   status: {
+    record: { label: "Published record", text: "A record published by another organisation and placed here in a district. TingaLens did not observe or model it." },
     observed: { label: "Observed", text: "What a satellite recorded." },
     index: { label: "Published index", text: "A combined index published by another research group, averaged here by district." },
     condition: { label: "Environmental condition", text: "An observation compared with what is normal for that place and time of year." },
@@ -117,6 +118,9 @@ const TL = {
     urban: { name: "Built-up area growth", tab: "Built-up area", module: "Human Pressure", page: "pages/pressure.html", status: "observed", version: "1.0",
              source: "Global Human Settlement Layer GHS-BUILT-S R2023A, European Commission JRC", type: "Derived from satellite images",
              resolution: "1 km, summed by district", updates: "With each new release", baseline: "Built-up area in 2000" },
+    minerals_map: { name: "Documented mineral and energy sites", tab: "Minerals & Energy", module: "Minerals & Energy", page: "pages/minerals.html", status: "record", version: "1.0",
+                    source: "U.S. Geological Survey, Compilation of Geospatial Data (GIS) for the Mineral Industries and Related Infrastructure of Africa (2024)", type: "Published records, placed in districts by TingaLens",
+                    resolution: "Individual sites, counted by district", updates: "When USGS publishes a new release", baseline: "2024 USGS release" },
     biodiversity: { name: "Recorded species", tab: "Recorded species", module: "Biodiversity", page: "pages/biodiversity.html", status: "observed", version: "0.1 (experimental)",
                     source: "GBIF occurrence records (CC0 and CC BY only)", type: "Field observations and museum specimens",
                     resolution: "Individual records, counted by district", updates: "Monthly", baseline: "All years on record" },

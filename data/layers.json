@@ -184,9 +184,12 @@
    "key": "biodiversity",
    "label": "Recorded species",
    "file": "data/biodiversity.json"
+  },
+  {
+   "key": "minerals_map",
+   "label": "Minerals & energy",
+   "file": "data/minerals_map.json"
   }
  ],
- "planned": [
-  "Mining"
- ]
+ "planned": []
 }

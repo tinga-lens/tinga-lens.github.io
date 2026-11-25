@@ -22,6 +22,9 @@ from pathlib import Path
 import geopandas as gpd
 from shapely.geometry import shape
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import write_layer   # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 GDB = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("Africa_GIS.gdb")
@@ -152,6 +155,39 @@ def main():
         "points": out,
     }
     (DATA / "minerals.json").write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf8")
+    # ---- the district layer shown on the home map: what kind of record the district has, never a total
+    cats = [("none", "No record", "not a sign of no minerals", "#e6e6e1"),
+            ("x", "Exploration project only", "", "#f3dfa8"), ("d", "Documented deposit", "with or without exploration projects", "#dba75b"),
+            ("f", "Mine, plant or oil and gas field", "with or without deposits and projects", "#8f4f1a")]
+    label = dict(RESOURCES)
+    districts = {}
+    for i, name, _poly in polys:
+        here = [r for r in out if r["d"] == i]
+        n = {k: sum(1 for r in here if r["kind"] == k) for k in ("facility", "deposit", "exploration")}
+        cat = "f" if n["facility"] else "d" if n["deposit"] else "x" if n["exploration"] else "none"
+        res = [label[k] for k, _ in RESOURCES if any(k in r["tags"] for r in here)]
+        biggest = {"f": "Mine, plant or field", "d": "Documented deposit", "x": "Exploration project", "none": "No record"}[cat]
+        districts[i] = {
+            "name": name, "cat": cat, "big": biggest if here else "None",
+            "big_note": "is the highest kind of record in this district. The three kinds are not added together, and one site can appear in more than one." if here else "recorded in the USGS compilation. This does not mean the district has no minerals.",
+            "tip": biggest if here else "No record",
+            "rows": [["Mines, plants and fields", str(n["facility"])], ["Documented deposits", str(n["deposit"])], ["Exploration projects", str(n["exploration"])],
+                     ["Resources recorded", ", ".join(res) if res else "None"]],
+            "v": [n["facility"], n["deposit"], n["exploration"]], "c": ["f", "d", "x"], "records": len(here),
+        }
+    write_layer("minerals_map", {
+        "label": "Minerals & energy", "title": "Documented mineral and energy sites", "subtitle": f"Records in the USGS compilation, {RELEASE[:4]} release",
+        "source": f"{doc['source']} {DOI}", "demo": False,
+        "categories": [{"key": k, "label": l, "note": n, "color": c} for k, l, n, c in cats],
+        "how": "Each district is coloured by the highest kind of record the U.S. Geological Survey has for it: a mine, plant or oil and gas field; a documented mineral deposit; or an exploration project. Click a district to see how many of each kind are recorded and which resources. The full map of points, with filters, is on the Minerals & Energy page.",
+        "limits": ["This is a record of documented sites, not a complete inventory. Many Ghanaian mines and deposits are not in it, and a district with no record may still have minerals.",
+                   "The three kinds of record overlap: a mine can also be listed as a deposit or a project. They are shown separately and never added into a total.",
+                   "Facility status reflects the USGS source year, not today. Locations are those USGS published. They are not a licence, boundary or survey.",
+                   "Offshore oil and gas fields (Jubilee, TEN, Sankofa) lie outside every district and are not counted here. They are on the Minerals & Energy page."],
+        "credits": [{"text": "U.S. Geological Survey, Compilation of Geospatial Data (GIS) for the Mineral Industries and Related Infrastructure of Africa", "url": DOI}],
+        "chart": {"kind": "bars", "unit": "", "x": ["Mines, plants, fields", "Deposits", "Exploration"], "caption": "Records of each kind in the district", "top": "", "bottom": ""},
+        "districts": districts,
+    })
     print(f"Wrote data/minerals.json: {len(out)} records ({dict(totals)}), {len(by)} districts with records, {len(outside)} outside every district: {outside}")
 
 

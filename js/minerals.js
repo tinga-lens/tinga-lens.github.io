@@ -61,7 +61,7 @@
       ["Status", p.status], [p.kind === "exploration" ? "Company" : "Operator", p.who], ["District", p.dn || "Offshore, outside every district"], ["Region", p.region],
       ["Notes", p.detail], ["Position", `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}`], ["USGS record", p.id]].filter(r => r[1])
       .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
-    side(`<div class="mn-detail"><h3>${esc(p.name)}</h3><span class="badge observed">Published record</span><dl>${rowsHtml}</dl>
+    side(`<div class="mn-detail"><h3>${esc(p.name)}</h3><span class="badge record">Published record</span><dl>${rowsHtml}</dl>
       <p class="sub" style="margin-top:10px">Source: USGS${p.src ? `, ${esc(p.src)}` : ""}. Released ${esc(DOC.release)}. This is a documented site, not a licence or boundary.</p></div>`);
   }
 
