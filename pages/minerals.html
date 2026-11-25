@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" data-root="../" data-page="Minerals & Energy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minerals &amp; Energy Resources | TingaLens</title>
+<meta name="description" content="Documented mines, mineral deposits, exploration projects and oil and gas fields in Ghana, from the U.S. Geological Survey.">
+<link rel="canonical" href="https://tingalens.org/pages/minerals.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TingaLens">
+<meta property="og:title" content="Minerals &amp; Energy Resources | TingaLens">
+<meta property="og:description" content="Documented mines, mineral deposits, exploration projects and oil and gas fields in Ghana, from the U.S. Geological Survey.">
+<meta property="og:url" content="https://tingalens.org/pages/minerals.html">
+<meta property="og:image" content="https://tingalens.org/assets/logo/share-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../vendor/leaflet.css">
+<link rel="stylesheet" href="../css/main.css?v=20261125a">
+<style>
+ .mn-tools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 10px;font-size:.9rem;color:var(--muted)}
+ .mn-tools select,.mn-tools input[type=search]{font:inherit;padding:6px;border-radius:5px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+ .mn-tools input[type=search]{flex:1 1 220px}
+ .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+ .chip{font:inherit;font-size:.88rem;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+ .chip i{width:11px;height:11px;border-radius:50%;display:inline-block}
+ .chip[aria-pressed="false"]{opacity:.45}
+ .mn-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:16px;align-items:start}
+ @media (max-width:860px){.mn-grid{grid-template-columns:1fr}}
+ #mn-map{height:620px;border-radius:6px;border:1px solid var(--line);background:var(--map)}
+ @media (max-width:860px){#mn-map{height:430px}}
+ .mn-side{max-height:620px;overflow-y:auto}
+ @media (max-width:860px){.mn-side{max-height:none}}
+ .mn-key{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.85rem;color:var(--muted);margin:8px 0 0}
+ .mn-key span{display:inline-flex;align-items:center;gap:6px}
+ .mn-key svg{width:14px;height:14px}
+ .mn-detail h3{margin:0 0 2px;font-size:1.15rem}
+ .mn-detail dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:.92rem}
+ .mn-detail dt{color:var(--muted)} .mn-detail dd{margin:0}
+ .mn-warn{border-left:3px solid var(--earth);padding:6px 12px;margin:10px 0;font-size:.93rem;background:var(--card);border-radius:0 6px 6px 0}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Minerals &amp; Energy Resources</h1>
+  <p class="lead">Where mines, mineral deposits, exploration projects and oil and gas fields have been documented in Ghana, shown with the district each one lies in. Select a resource, click a point for its details, or click a district to see what has been recorded there.</p>
+  <p class="mn-warn"><strong>This is a record of documented sites, not a complete inventory.</strong> It comes from one public compilation by the U.S. Geological Survey and leaves out many Ghanaian mines and deposits. A district with no points has no record here; it does not mean the district has no minerals. Locations are those published by USGS and are not a licence, boundary or survey.</p>
+  <div id="wait" class="card" hidden><span class="badge dev">Not loaded</span> <span id="wait-msg">The minerals file could not be loaded.</span></div>
+
+  <div id="mn" hidden>
+    <div class="chips" id="mn-res" role="group" aria-label="Resource"></div>
+    <div class="mn-tools">
+      <label>Record type <select id="mn-kind"><option value="">All types</option></select></label>
+      <label>Region <select id="mn-region"><option value="">All regions</option></select></label>
+      <input type="search" id="mn-q" name="tl-mineral-q" autocomplete="off" spellcheck="false" placeholder="Search by site name, company or district" aria-label="Search sites">
+    </div>
+    <div class="mn-grid">
+      <div><div id="mn-map"></div>
+        <div class="mn-key" id="mn-key"></div></div>
+      <div class="mn-side card" id="mn-side"><p class="sub" style="margin:0">Click a point on the map, or a row below, to see its details here. Click a district to see everything recorded in it.</p></div>
+    </div>
+
+    <h2 id="list">Sites shown</h2>
+    <p class="sub" id="mn-count"></p>
+    <div class="scroll"><table class="sp"><thead><tr><th>Site</th><th>Resource</th><th>Record type</th><th>Status</th><th>District</th><th>Region</th></tr></thead><tbody id="mn-rows"></tbody></table></div>
+    <p><button class="btn" id="mn-more" type="button" hidden>Show more</button> <button class="btn" id="mn-csv" type="button">Download these sites (CSV)</button></p>
+
+    <h2 id="coverage">What is recorded</h2>
+    <div class="facts" id="mn-facts"></div>
+    <div class="scroll"><table class="sp" style="max-width:760px"><thead><tr><th>Resource</th><th class="num">Mines, plants and fields</th><th class="num">Documented deposits</th><th class="num">Exploration projects</th></tr></thead><tbody id="mn-cov"></tbody></table></div>
+    <p class="note" id="mn-offshore" style="margin-top:12px"></p>
+  </div>
+
+  <section class="notes prose">
+    <h2>About this module</h2>
+    <p><strong>Where the records come from.</strong> <span class="badge observed">Published record</span> Every point is taken from the U.S. Geological Survey compilation <em>Mineral Industries and Related Infrastructure of Africa</em> (<a href="https://doi.org/10.5066/P97EQWXP">doi:10.5066/P97EQWXP</a>, public domain). It combines three USGS sources: facilities from the <em>Minerals Yearbook</em>, deposits from USGS Professional Paper 1802, and exploration projects from the USGS World Minerals Exploration Database. TingaLens has not added, moved or estimated any location.</p>
+    <p><strong>Three kinds of record, never added together.</strong> A <em>mine, plant or field</em> is an operating or once-operating facility. A <em>documented deposit</em> is a known occurrence of a mineral, whether or not it is mined. An <em>exploration or development project</em> is a company's prospect and may never become a mine. The same site can appear in more than one list, so TingaLens shows each list separately and does not give a single total of mines.</p>
+    <p><strong>Status and dates.</strong> Facility status is the one USGS lists, and a facility is assumed active unless the source says otherwise. It reflects the source year, not today. Exploration records show the last year a project was verified as active, where known.</p>
+    <p><strong>Not included.</strong> Small-scale and artisanal mining, mining licences and concessions, reserves and production figures, and many Ghanaian mines and prospects. These need records from the Geological Survey Authority, the Minerals Commission and the Petroleum Commission, and TingaLens does not yet use them. The page makes no statement about mining's effect on land, water or forests.</p>
+    <p class="sub" id="mn-cite"></p>
+  </section>
+</main>
+<script src="../vendor/leaflet.js"></script>
+<script src="../js/config.js?v=20261125a"></script>
+<script src="../js/site.js?v=20261125a"></script>
+<script src="../js/minerals.js?v=20261125a"></script>
+</body>
+</html>

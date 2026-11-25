@@ -18,6 +18,7 @@ const TL = {
     ["Drought", "pages/drought.html"], ["Fire", "pages/fire.html"],
     ["Vegetation & Forest", "pages/vegetation.html"], ["Flood", "pages/flood.html"], ["Agriculture", "pages/agriculture.html"],
     ["Human Pressure", "pages/pressure.html"], ["Biodiversity", "pages/biodiversity.html"],
+    ["Minerals & Energy", "pages/minerals.html"],
   ],
   // layers that share one tab and are chosen from a list under it (the list label and the tab name)
   groups: {
