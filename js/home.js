@@ -7,7 +7,7 @@
   const tag = (cls, label, text) => `<div class="sub lab"><span class="badge ${cls}">${esc(label)}</span> ${esc(text)}</div>`;
   const line = (fig, text) => `<div><span class="fig">${esc(fig)}</span><div class="sub" style="margin:0">${esc(text)}</div></div>`;
 
-  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity", "pressure", "floodprone"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi, hp, fp]) => {
+  Promise.all(["drought", "soil", "fires", "firerisk", "vegetation", "forest", "urban", "flood", "biodiversity", "pressure", "floodprone", "minerals"].map(load)).then(([dr, so, fi, fr, ve, fo, ur, fl, bi, hp, fp, mn]) => {
     const out = [];
 
     // Drought: rainfall and soil moisture, districts drier than normal
@@ -67,6 +67,10 @@
     } else out.push(soon("Urban", "Urban exposure", "pages/pressure.html", "Where people and new development meet environmental hazards. No data is published yet."));
     if (bi && bi.coverage) out.push(card("Biodiversity", "Recorded species", "pages/biodiversity.html",
       line(bi.coverage.species.toLocaleString(), `species recorded in Ghana, from ${bi.coverage.records.toLocaleString()} records`), ["observed"]));
+    if (mn && mn.counts) out.push(card("Minerals & Energy", "Minerals and energy resources", "pages/minerals.html",
+      line(String(mn.counts.facility), "documented mines, plants and oil and gas fields")
+      + line(String(mn.counts.deposit), "documented mineral deposits")
+      + line(String(mn.counts.exploration), `exploration projects, from the U.S. Geological Survey (${mn.release.slice(0, 4)}). A record of documented sites, not a complete list.`), ["observed"]));
     $("cards").innerHTML = out.filter(Boolean).join("");
   });
 
