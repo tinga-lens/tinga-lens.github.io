@@ -88,6 +88,102 @@
     a.download = "tingalens-minerals-and-energy.csv"; document.body.append(a); a.click(); a.remove();
   }
 
+
+  // The map as a picture, drawn fresh (not copied from the screen) with the TingaLens name printed across it.
+  function image() {
+    const W = 1600, SERIF = '"Source Serif 4", Georgia, serif', SANS = '"Source Sans 3", Arial, sans-serif';
+    let w = 180, e = -180, s = 90, n = -90;
+    const ext = (lon, lat) => { w = Math.min(w, lon); e = Math.max(e, lon); s = Math.min(s, lat); n = Math.max(n, lat); };
+    geo.features.forEach(f => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(p => p[0].forEach(([lo, la]) => ext(lo, la))));
+    PTS.forEach(p => ext(p.lon, p.lat));                         // keeps the offshore fields in the picture
+    const k = Math.cos((n + s) / 2 * Math.PI / 180), aspect = (n - s) / ((e - w) * k);
+    const shownRes = [...on].filter(r => rows.some(p => p.res === r || p.tags.includes(r)));
+    const notes = ["A record of documented sites, not a complete inventory. A district or place with no point has no record here; it does not mean there are no minerals. Locations are those published by USGS and are not a licence, boundary or survey.",
+                   "The three kinds of record overlap and are never added together. Offshore fields lie outside every district."];
+    const NH = 30 * notes.reduce((a, t) => a + Math.ceil(t.length / 105), 0) + 30;
+    const H = Math.round(260 + Math.max(Math.min(1060 * aspect, 1390), 80 + (shownRes.length + 4) * 60) + 250 + NH);
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+    const wrap = (text, x, y, maxW, lh) => {
+      let line = "";
+      for (const t of String(text).split(" ")) {
+        if (g.measureText(line + t).width > maxW && line) { g.fillText(line.trim(), x, y); y += lh; line = ""; }
+        line += t + " ";
+      }
+      g.fillText(line.trim(), x, y); return y + lh;
+    };
+    g.fillStyle = "#1B2B24"; g.textBaseline = "top";
+    g.font = `600 54px ${SERIF}`; let y = wrap("Documented mineral and energy sites", 70, 60, W - 140, 62);
+    const sub = `Records in the USGS compilation, ${DOC.release.slice(0, 4)} release` + (sel.region ? `. ${sel.region} Region` : "") + `. ${rows.length} of ${PTS.length} records shown`;
+    g.font = `400 30px ${SANS}`; g.fillStyle = "#56655C"; y = wrap(sub, 70, y + 6, W - 140, 38);
+
+    const top = y + 24, bottom = H - 250 - NH, left = 70, right = W - 470;
+    const sc = Math.min((right - left) / ((e - w) * k), (bottom - top) / (n - s));
+    const ox = left + ((right - left) - (e - w) * k * sc) / 2;
+    const X = lon => ox + (lon - w) * k * sc, Y = lat => top + (n - lat) * sc;
+    geo.features.forEach(f => {
+      g.beginPath();
+      (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(p => p.forEach(ring => { ring.forEach(([lo, la], i) => i ? g.lineTo(X(lo), Y(la)) : g.moveTo(X(lo), Y(la))); g.closePath(); }));
+      g.fillStyle = "#e9ece8"; g.fill("evenodd"); g.strokeStyle = "#8a948e"; g.lineWidth = 1; g.stroke();
+    });
+    const dotAt = (p, r, scale) => {
+      const col = COLOR[p.res] || COLOR.other, x = X(p.lon), yy = Y(p.lat);
+      g.beginPath(); g.arc(x, yy, r * scale, 0, 7);
+      if (p.kind === "facility") { g.fillStyle = col; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 2; g.stroke(); }
+      else if (p.kind === "deposit") { g.fillStyle = "#fff"; g.fill(); g.strokeStyle = col; g.lineWidth = 4; g.stroke(); }
+      else { g.globalAlpha = 0.5; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 1.5; g.stroke(); }
+    };
+    ["exploration", "deposit", "facility"].forEach(kd => rows.filter(p => p.kind === kd).forEach(p => dotAt(p, kd === "exploration" ? 6 : 9, 1)));
+
+    // the name, repeated across the map so cropping does not remove it
+    g.save(); g.beginPath(); g.rect(left - 30, top - 10, right - left + 60, bottom - top + 20); g.clip();
+    g.translate(W / 2, H / 2); g.rotate(-Math.PI / 6);
+    g.font = `700 44px ${SANS}`; g.fillStyle = "rgba(27,43,36,0.13)"; g.textBaseline = "middle";
+    for (let yy = -H; yy < H; yy += 190) for (let xx = -W; xx < W; xx += 520) g.fillText("TingaLens", xx + ((yy / 190) % 2 ? 260 : 0), yy);
+    g.restore();
+
+    // legend: resource colours, then the three kinds of record
+    let ly = top + 10; const lx = W - 430;
+    g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `600 28px ${SANS}`; g.fillText("Resource", lx, ly); ly += 46;
+    shownRes.forEach(r => {
+      g.beginPath(); g.arc(lx + 17, ly + 17, 13, 0, 7); g.fillStyle = COLOR[r]; g.fill();
+      g.fillStyle = "#1B2B24"; g.font = `400 26px ${SANS}`; g.fillText(lab(r), lx + 48, ly + 2); ly += 44;
+    });
+    ly += 20; g.font = `600 28px ${SANS}`; g.fillText("Kind of record", lx, ly); ly += 46;
+    [["facility", "Mine, plant or field"], ["deposit", "Documented deposit"], ["exploration", "Exploration project"]].forEach(([kd, t]) => {
+      const x0 = lx + 17, y0 = ly + 17, col = "#6B7B73";
+      g.beginPath(); g.arc(x0, y0, kd === "exploration" ? 8 : 12, 0, 7);
+      if (kd === "facility") { g.fillStyle = col; g.fill(); }
+      else if (kd === "deposit") { g.fillStyle = "#fff"; g.fill(); g.strokeStyle = col; g.lineWidth = 4; g.stroke(); }
+      else { g.globalAlpha = 0.5; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 1.5; g.stroke(); }
+      g.fillStyle = "#1B2B24"; g.font = `400 26px ${SANS}`; g.fillText(t, lx + 48, ly + 2); ly += 44;
+    });
+
+    g.fillStyle = "#33433A"; g.font = `400 23px ${SANS}`; g.textBaseline = "top";
+    let ny = bottom + 22; notes.forEach(t => { ny = wrap(t, 70, ny, W - 140, 30); });
+
+    // footer: brand, source and terms
+    const fy = H - 215;
+    g.strokeStyle = "#D5DBCF"; g.lineWidth = 2; g.beginPath(); g.moveTo(70, fy); g.lineTo(W - 70, fy); g.stroke();
+    g.save(); g.translate(70, fy + 26); g.scale(0.6, 0.6); g.lineCap = "round"; g.lineWidth = 10;
+    g.strokeStyle = "#17252A"; g.beginPath(); g.arc(60, 60, 52, -Math.PI / 2, Math.PI, false); g.stroke();
+    g.strokeStyle = "#2D6A4F"; g.beginPath(); g.arc(60, 60, 30, -Math.PI / 2, Math.PI, false); g.stroke();
+    g.fillStyle = "#A98467"; g.beginPath(); g.arc(60, 60, 11, 0, 7); g.fill();
+    g.fillStyle = "#277DA1"; g.beginPath(); g.arc(23, 23, 7, 0, 7); g.fill(); g.restore();
+    g.textBaseline = "top"; g.fillStyle = "#1B2B24"; g.font = `700 40px ${SANS}`; g.fillText("TingaLens", 160, fy + 30);
+    g.font = `400 24px ${SANS}`; g.fillStyle = "#56655C"; g.fillText(TL.site.replace("https://", ""), 160, fy + 76);
+    g.font = `400 23px ${SANS}`;
+    const ty = wrap(`Source: ${DOC.source} ${DOC.doi}. Released ${DOC.release}. Public domain. Boundaries: geoBoundaries (CC BY 4.0).`, 470, fy + 28, W - 540, 30);
+    wrap("© TingaLens. You may share this image unchanged with credit. To use it without the TingaLens name, or in a product or publication, ask first: see the About page.", 470, ty + 4, W - 540, 30);
+
+    c.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "tingalens-minerals-and-energy.png";
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png");
+  }
+
   Promise.all([getJSON("data/minerals.json"), getJSON("data/districts.geojson")]).then(([doc, g]) => {
     DOC = doc; PTS = doc.points; geo = g;
     doc.resources.forEach(r => LAB[r.key] = r.label);
@@ -110,7 +206,7 @@
     $("mn-region").onchange = e => { sel.region = e.target.value; sel.district = null; redraw(); };
     $("mn-q").oninput = e => { sel.q = e.target.value.trim(); redraw(); };
     $("mn-more").onclick = () => { shown += 40; drawList(); };
-    $("mn-csv").onclick = csv;
+    $("mn-csv").onclick = csv; $("mn-png").onclick = image;
 
     // map
     map = L.map("mn-map", { zoomSnap: 0.25, attributionControl: false });
